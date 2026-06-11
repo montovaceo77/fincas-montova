@@ -258,7 +258,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
 <div class="toast" id="toast"></div>
 
 <script>
-var WS = 'https://script.google.com/macros/s/AKfycbxkhY-9WUyxI2GKtDcIY1ObO5C4758-1ny_RV_mn3HDCreVYjYsjpdx7-Wi90oWSSD2/exec';
+var WS = 'https://script.google.com/macros/s/AKfycbzlajsHgw8-Babp9EEqqt3MhvKtWTE4ZKXc_808GfwetETUEHHUkq16FpUKdarMX4Eo/exec';
 var lotes = [], preparaciones = [];
 var loteFilter = 'todos';
 var expandedPrep = {};
@@ -392,6 +392,18 @@ function fetchPreparaciones() {
 }
 
 function addLote(ld, pd) {
+function addLote(ld, pd) {
+  // Validar que no exista un lote activo con la misma finca + variedad + numero
+  var existe = lotes.find(function(x){
+    return String(x.Finca||x.finca||'') === String(ld.finca) &&
+           String(x.Variedad||x.variedad||'') === String(ld.variedad) &&
+           String(x.Lote||x.lote||'') === String(ld.lote) &&
+           (x.Estado||x.estado||'').toLowerCase() === 'activo';
+  });
+  if (existe) {
+    showToast('Este lote ya esta activo. Finaliza el ciclo primero.');
+    return;
+  }
   var tempId = Date.now();
   lotes.push({ID:tempId, Finca:ld.finca, Variedad:ld.variedad, Lote:ld.lote, Fecha_Inicio:ld.fecha_inicio, Estado:'activo'});
   renderLotes();
@@ -417,13 +429,19 @@ function finalizarLote(id) {
 function reprogramarLote(id) {
   var l = lotes.find(function(x){ return String(x.ID)===String(id); });
   if (!l) return;
-  var fecha = prompt('Fecha de inicio del nuevo ciclo (AAAA-MM-DD):');
-  if (!fecha) return;
-  l.Fecha_Inicio = fecha;
-  l.Estado = 'activo';
-  renderLotes();
-  showToast('Lote reprogramado');
-  sendToServer({action:'reprogramarLote', id:id, fecha_inicio:fecha});
+  // Pre-fill form with finca, variedad, lote and open modal
+  document.getElementById('l-finca').value = l.Finca||l.finca||'';
+  document.getElementById('l-variedad').value = l.Variedad||l.variedad||'';
+  document.getElementById('l-num').value = l.Lote||l.lote||'';
+  document.getElementById('l-fecha').value = new Date().toISOString().split('T')[0];
+  // Lock finca, variedad, lote so they can't be changed
+  document.getElementById('l-finca').disabled = true;
+  document.getElementById('l-variedad').disabled = true;
+  document.getElementById('l-num').disabled = true;
+  // Mark as reprogramacion
+  document.getElementById('overlay-lote').dataset.reprogramarId = id;
+  document.getElementById('overlay-lote').classList.add('open');
+  actualizarSemanaYDias();
 }
 
 function getPrep(finca, variedad, lote) {
@@ -570,6 +588,22 @@ function renderLotes() {
   });
 }
 
+function resetLoteModal() {
+  document.getElementById('overlay-lote').classList.remove('open');
+  delete document.getElementById('overlay-lote').dataset.reprogramarId;
+  document.getElementById('l-finca').disabled = false;
+  document.getElementById('l-variedad').disabled = false;
+  document.getElementById('l-num').disabled = false;
+  ['l-fecha','p-picada','p-desinfeccion','p-app1-fecha','p-app2-fecha'].forEach(function(id){ document.getElementById(id).value=''; });
+  ['p-app1-p1','p-app1-p2','p-app1-p3','p-app1-p4','p-app1-p5','p-app2-p1','p-app2-p2','p-app2-p3','p-app2-p4','p-app2-p5'].forEach(function(id){ document.getElementById(id).checked=false; });
+  document.getElementById('app1-prods').style.display='none';
+  document.getElementById('app2-prods').style.display='none';
+  document.getElementById('toggle-app1-prods').textContent='+ Seleccionar productos';
+  document.getElementById('toggle-app2-prods').textContent='+ Seleccionar productos';
+  document.getElementById('l-semana-anio').textContent='';
+  ['dia-picada','dia-desinfeccion','dia-app1','dia-app2'].forEach(function(id){ document.getElementById(id).textContent=''; });
+}
+
 function initLoteModal() {
   document.getElementById('toggle-app1-prods').addEventListener('click', function(){
     var box = document.getElementById('app1-prods');
@@ -593,11 +627,9 @@ function initLoteModal() {
     });
   });
 
-  document.getElementById('btn-cancel-lote').addEventListener('click', function(){
-    document.getElementById('overlay-lote').classList.remove('open');
-  });
+  document.getElementById('btn-cancel-lote').addEventListener('click', resetLoteModal);
   document.getElementById('overlay-lote').addEventListener('click', function(e){
-    if (e.target===this) this.classList.remove('open');
+    if (e.target===this) resetLoteModal();
   });
   document.getElementById('btn-save-lote').addEventListener('click', function(){
     var finca   = document.getElementById('l-finca').value;
@@ -622,15 +654,24 @@ function initLoteModal() {
       app2p4:       document.getElementById('p-app2-p4').checked ? 'Producto 4' : '',
       app2p5:       document.getElementById('p-app2-p5').checked ? 'Producto 5' : ''
     };
-    addLote(ld, pd);
-    document.getElementById('overlay-lote').classList.remove('open');
-    // reset
-    ['p-picada','p-desinfeccion','p-app1-fecha','p-app2-fecha'].forEach(function(id){ document.getElementById(id).value=''; });
-    ['p-app1-p1','p-app1-p2','p-app1-p3','p-app1-p4','p-app1-p5','p-app2-p1','p-app2-p2','p-app2-p3','p-app2-p4','p-app2-p5'].forEach(function(id){ document.getElementById(id).checked=false; });
-    document.getElementById('app1-prods').style.display='none';
-    document.getElementById('app2-prods').style.display='none';
-    document.getElementById('toggle-app1-prods').textContent='+ Seleccionar productos';
-    document.getElementById('toggle-app2-prods').textContent='+ Seleccionar productos';
+    var repId = document.getElementById('overlay-lote').dataset.reprogramarId;
+    if (repId) {
+      // Reprogramacion: update existing lote
+      var l = lotes.find(function(x){ return String(x.ID)===String(repId); });
+      if (l) { l.Fecha_Inicio = fecha; l.Estado = 'activo'; }
+      renderLotes();
+      showToast('Lote reprogramado');
+      sendToServer({action:'reprogramarLote', id:repId, fecha_inicio:fecha});
+      sendToServer({action:'addPreparacion', finca:finca, variedad:variedad, lote:loteNum,
+        fecha_picada:pd.picada, fecha_desinfeccion:pd.desinfeccion,
+        fecha_app1:pd.app1fecha, app1_p1:pd.app1p1, app1_p2:pd.app1p2, app1_p3:pd.app1p3, app1_p4:pd.app1p4, app1_p5:pd.app1p5,
+        fecha_app2:pd.app2fecha, app2_p1:pd.app2p1, app2_p2:pd.app2p2, app2_p3:pd.app2p3, app2_p4:pd.app2p4, app2_p5:pd.app2p5
+      });
+      setTimeout(function(){ fetchLotes(); fetchPreparaciones(); }, 5000);
+    } else {
+      addLote(ld, pd);
+    }
+    resetLoteModal();
   });
 }
 </script>
