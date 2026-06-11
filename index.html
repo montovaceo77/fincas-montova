@@ -317,7 +317,7 @@ function fmtDate(iso) {
 function actualizarHints() {
   var fi = document.getElementById('l-fecha').value;
   var sa = calcSemanaAnio(fi);
-  document.getElementById('l-semana-anio').textContent = sa ? 'Semana ' + sa + ' del anio' : '';
+  document.getElementById('l-semana-anio').textContent = sa ? 'Semana ' + sa + ' / ' + new Date().getFullYear() : '';
 
   var labores = ['p-picada', 'p-desinfeccion', 'p-app1-fecha', 'p-app2-fecha'];
   var hints   = ['dia-picada', 'dia-desinfeccion', 'dia-app1', 'dia-app2'];
