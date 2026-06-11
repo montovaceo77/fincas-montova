@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Fincas Montova</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --verde:       #3B6B4A;
+  --verde-light: #EAF2EC;
+  --verde-mid:   #6A9B78;
+  --verde-pale:  #F2F8F4;
+  --verde-dark:  #2A4D36;
+  --ink:         #1E2E24;
+  --ink-mid:     #5A7060;
+  --ink-soft:    #9AB0A0;
+  --cream:       #F8FAF8;
+  --white:       #FFFFFF;
+  --border:      #D4E4D8;
+  --rose:        #C4848F;
+  --rose-bg:     #F9EBED;
+  --amber:       #C4A87A;
+  --amber-bg:    #F7F0E6;
+  --semana-bg:   #EAF2EC;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--ink); min-height: 100vh; font-size: 14px; line-height: 1.6; padding-bottom: 70px; }
+
+/* Header */
+.header { background: var(--verde-dark); padding: 1rem 1.25rem 0.875rem; position: sticky; top: 0; z-index: 100; }
+.header-inner { max-width: 720px; margin: 0 auto; display: flex; align-items: baseline; justify-content: space-between; }
+.logo { font-size: 17px; font-weight: 600; color: var(--white); letter-spacing: 0.01em; }
+.logo span { color: var(--verde-mid); font-weight: 300; }
+.header-date { font-size: 11px; color: var(--verde-mid); }
+
+/* Bottom nav */
+.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--white); border-top: 1px solid var(--border); display: flex; z-index: 200; }
+.nav-btn { flex: 1; padding: 12px 0 14px; font-size: 12px; font-family: 'DM Sans', sans-serif; color: var(--ink-soft); background: none; border: none; cursor: pointer; letter-spacing: 0.01em; }
+.nav-btn.on { color: var(--verde); font-weight: 600; border-top: 2px solid var(--verde); }
+
+/* Main */
+.main { max-width: 720px; margin: 0 auto; padding: 1.25rem 1.25rem 1rem; }
+.section { display: none; }
+.section.on { display: block; }
+
+/* Section header */
+.sec-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }
+.sec-title { font-size: 16px; font-weight: 600; color: var(--ink); }
+.btn-add { font-size: 13px; padding: 7px 16px; background: var(--verde); color: var(--white); border: none; border-radius: 8px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-weight: 500; }
+.btn-add:hover { background: var(--verde-dark); }
+
+/* Filters */
+.filter-bar { display: flex; gap: 6px; margin-bottom: 1.25rem; flex-wrap: wrap; }
+.fb { font-size: 12px; font-family: 'DM Sans', sans-serif; padding: 5px 14px; border-radius: 20px; border: 1px solid var(--border); background: var(--white); color: var(--ink-mid); cursor: pointer; }
+.fb.on { background: var(--verde-light); border-color: var(--verde-mid); color: var(--verde-dark); font-weight: 500; }
+
+/* Lote card */
+.lote-card { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 10px; transition: border-color 0.15s; }
+.lote-card:hover { border-color: var(--verde-mid); }
+.lote-card.inactivo { opacity: 0.5; }
+.lote-top { display: flex; align-items: flex-start; gap: 10px; }
+.semana-badge { background: var(--semana-bg); color: var(--verde-dark); font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 8px; flex-shrink: 0; text-align: center; min-width: 64px; }
+.semana-badge .s-num { font-size: 20px; line-height: 1; display: block; }
+.semana-badge .s-label { font-size: 10px; font-weight: 400; color: var(--verde-mid); }
+.lote-body { flex: 1; min-width: 0; }
+.lote-nombre { font-size: 15px; font-weight: 600; color: var(--ink); }
+.lote-meta { display: flex; gap: 8px; margin-top: 4px; flex-wrap: wrap; align-items: center; }
+.tag { font-size: 11px; padding: 2px 9px; border-radius: 10px; font-weight: 500; }
+.tag-finca { background: var(--verde-light); color: var(--verde-dark); }
+.tag-variedad { background: var(--amber-bg); color: #7A5C1E; }
+.tag-inactivo { background: #F0F0F0; color: #888; }
+.lote-fecha { font-size: 11px; color: var(--ink-soft); margin-top: 3px; }
+.lote-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.btn-icon { font-size: 12px; padding: 5px 10px; border: 1px solid var(--border); border-radius: 8px; background: transparent; color: var(--ink-mid); cursor: pointer; font-family: 'DM Sans', sans-serif; }
+.btn-icon:hover { background: var(--verde-light); color: var(--verde-dark); border-color: var(--verde-mid); }
+.btn-icon.danger:hover { background: var(--rose-bg); color: var(--rose); border-color: var(--rose); }
+
+/* Preparacion section inside card */
+.prep-toggle { font-size: 12px; color: var(--ink-soft); cursor: pointer; margin-top: 8px; display: inline-block; background: none; border: none; font-family: 'DM Sans', sans-serif; padding: 0; }
+.prep-toggle:hover { color: var(--verde); }
+.prep-box { margin-top: 10px; border-top: 1px solid var(--border); padding-top: 10px; }
+.prep-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.prep-item { background: var(--verde-pale); border-radius: 8px; padding: 8px 12px; }
+.prep-item-label { font-size: 10px; color: var(--ink-soft); letter-spacing: 0.04em; margin-bottom: 2px; }
+.prep-item-val { font-size: 13px; font-weight: 500; color: var(--ink); }
+.prep-item-val.vacio { color: var(--ink-soft); font-weight: 400; font-style: italic; }
+.prep-productos { font-size: 12px; color: var(--ink-mid); margin-top: 2px; }
+
+/* Progress bar semanas */
+.semana-bar-wrap { margin-top: 8px; }
+.semana-bar-bg { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.semana-bar-fill { height: 100%; background: var(--verde-mid); border-radius: 2px; transition: width 0.3s; }
+.semana-bar-label { font-size: 11px; color: var(--ink-soft); margin-top: 3px; }
+
+/* Empty */
+.empty { text-align: center; padding: 3rem 1rem; color: var(--ink-soft); font-size: 14px; }
+
+/* FAB */
+.fab { position: fixed; bottom: 4.5rem; right: 1.25rem; width: 48px; height: 48px; border-radius: 50%; background: var(--verde); color: white; font-size: 24px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(59,107,74,0.35); z-index: 150; }
+.fab:hover { background: var(--verde-dark); }
+
+/* Modal */
+.overlay { display: none; position: fixed; inset: 0; background: rgba(30,46,36,0.4); z-index: 300; align-items: flex-end; justify-content: center; }
+.overlay.open { display: flex; }
+.modal { background: var(--white); border-radius: 20px 20px 0 0; padding: 1.5rem 1.25rem 2rem; width: 100%; max-width: 720px; max-height: 92vh; overflow-y: auto; }
+.modal-title { font-size: 17px; font-weight: 600; color: var(--ink); margin-bottom: 1.25rem; }
+.field { margin-bottom: 1rem; }
+.field label { display: block; font-size: 11px; color: var(--ink-soft); letter-spacing: 0.04em; margin-bottom: 5px; text-transform: uppercase; }
+.field input, .field select { width: 100%; font-size: 14px; font-family: 'DM Sans', sans-serif; color: var(--ink); background: var(--verde-pale); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; outline: none; }
+.field input:focus, .field select:focus { border-color: var(--verde-mid); }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.field-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.modal-section { font-size: 12px; font-weight: 600; color: var(--verde-dark); letter-spacing: 0.04em; text-transform: uppercase; margin: 1.25rem 0 0.75rem; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+.modal-actions { display: flex; gap: 8px; margin-top: 1.25rem; }
+.btn-primary { flex: 1; padding: 11px; background: var(--verde); color: white; border: none; border-radius: 10px; font-size: 14px; font-family: 'DM Sans', sans-serif; font-weight: 500; cursor: pointer; }
+.btn-primary:hover { background: var(--verde-dark); }
+.btn-secondary { padding: 11px 20px; background: transparent; color: var(--ink-mid); border: 1px solid var(--border); border-radius: 10px; font-size: 14px; font-family: 'DM Sans', sans-serif; cursor: pointer; }
+
+/* Toast */
+.toast { position: fixed; bottom: 5.5rem; left: 50%; transform: translateX(-50%); background: var(--ink); color: white; font-size: 13px; padding: 8px 18px; border-radius: 20px; opacity: 0; transition: opacity 0.2s; z-index: 500; pointer-events: none; white-space: nowrap; }
+.toast.show { opacity: 1; }
+
+@media (max-width: 480px) {
+  .field-row { grid-template-columns: 1fr; }
+  .field-row-3 { grid-template-columns: 1fr 1fr; }
+  .prep-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div class="logo">Fincas <span>Montova</span></div>
+    <div class="header-date" id="hdate"></div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="section on" id="sec-lotes">
+    <div class="sec-header">
+      <div class="sec-title">Programacion de lotes</div>
+    </div>
+    <div class="filter-bar">
+      <button class="fb on" data-f="todos">Todos</button>
+      <button class="fb" data-f="activo">Activos</button>
+      <button class="fb" data-f="inactivo">Inactivos</button>
+      <button class="fb" data-f="Flor Esperancita">Flor Esperancita</button>
+      <button class="fb" data-f="Flor de Agua 3">Flor de Agua 3</button>
+      <button class="fb" data-f="Oasis Garden">Oasis Garden</button>
+      <button class="fb" data-f="Flor Madera">Flor Madera</button>
+    </div>
+    <div id="lotes-list"></div>
+  </div>
+</div>
+
+<button class="fab" id="fab">+</button>
+
+<nav class="bottom-nav">
+  <button class="nav-btn on" data-nav="lotes">Programacion</button>
+</nav>
+
+<!-- Modal nuevo lote -->
+<div class="overlay" id="overlay-lote">
+  <div class="modal">
+    <div class="modal-title">Programar lote</div>
+    <div class="field-row">
+      <div class="field">
+        <label>Finca</label>
+        <select id="l-finca">
+          <option value="Flor Esperancita">Flor Esperancita</option>
+          <option value="Flor de Agua 3">Flor de Agua 3</option>
+          <option value="Oasis Garden">Oasis Garden</option>
+          <option value="Flor Madera">Flor Madera</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Variedad</label>
+        <select id="l-variedad">
+          <option value="Lemon">Lemon</option>
+          <option value="Esmeralda">Esmeralda</option>
+          <option value="Shocking">Shocking</option>
+          <option value="Blanca">Blanca</option>
+        </select>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Numero de lote</label>
+        <select id="l-num">
+          <option value="">Selecciona...</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Fecha de inicio</label>
+        <input type="date" id="l-fecha" />
+        <div id="l-semana-anio" style="font-size:11px;color:var(--verde-mid);margin-top:4px"></div>
+      </div>
+    </div>
+
+    <div class="modal-section">Preparacion del suelo</div>
+
+    <div class="field-row">
+      <div class="field">
+        <label>Picada de camas</label>
+        <input type="date" id="p-picada" />
+        <div id="dia-picada" style="font-size:11px;color:var(--verde-mid);margin-top:4px"></div>
+      </div>
+      <div class="field">
+        <label>Desinfeccion del suelo</label>
+        <input type="date" id="p-desinfeccion" />
+        <div id="dia-desinfeccion" style="font-size:11px;color:var(--verde-mid);margin-top:4px"></div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Aplicacion 1 - Fecha</label>
+      <input type="date" id="p-app1-fecha" />
+      <div id="dia-app1" style="font-size:11px;color:var(--verde-mid);margin-top:4px"></div>
+    </div>
+    <div style="margin-bottom:1rem">
+      <button type="button" id="toggle-app1-prods" style="font-size:12px;color:var(--verde-mid);background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;padding:0">+ Seleccionar productos</button>
+      <div id="app1-prods" style="display:none;margin-top:10px;background:var(--verde-pale);border-radius:8px;padding:10px 12px;">
+        <div style="font-size:11px;color:var(--ink-soft);letter-spacing:0.04em;margin-bottom:8px">PRODUCTOS APLICACION 1</div>
+        <label style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);cursor:pointer"><input type="checkbox" id="p-app1-p1" value="Producto 1" style="width:16px;height:16px;accent-color:var(--verde)"> <span style="font-size:14px">Producto 1</span></label>
+        <label style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);cursor:pointer"><input type="checkbox" id="p-app1-p2" value="Producto 2" style="width:16px;height:16px;accent-color:var(--verde)"> <span style="font-size:14px">Producto 2</span></label>
+        <label style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);cursor:pointer"><input type="checkbox" id="p-app1-p3" value="Producto 3" style="width:16px;height:16px;accent-color:var(--verde)"> <span style="font-size:14px">Producto 3</span></label>
+        <label style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);cursor:pointer"><input type="checkbox" id="p-app1-p4" value="Producto 4" style="width:16px;height:16px;accent-color:var(--verde)"> <span style="font-size:14px">Producto 4</span></label>
+        <label style="display:flex;align-items:center;gap:8px;padding:6px 0;cursor:pointer"><input type="checkbox" id="p-app1-p5" value="Producto 5" style="width:16px;height:16px;accent-color:var(--verde)"> <span style="font-size:14px">Producto 5</span></label>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Aplicacion 2 - Fecha</label>
+      <input type="date" id="p-app2-fecha" />
+      <div id="dia-app2" style="font-size:11px;color:var(--verde-mid);margin-top:4px"></div>
+    </div>
+    <div style="margin-bottom:1rem">
+      <button type="button" id="toggle-app2-prods" style="font-size:12px;color:var(--verde-mid);background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;padding:0">+ Seleccionar productos</button>
+      <div id="app2-prods" style="display:none;margin-top:10px;background:var(--verde-pale);border-radius:8px;padding:10px 12px;">
+        <div style="font-size:11px;color:var(--ink-soft);letter-spacing:0.04em;margin-bottom:8px">PRODUCTOS APLICACION 2</div>
+        <label style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);cursor:pointer"><input type="checkbox" id="p-app2-p1" value="Producto 1" style="width:16px;height:16px;accent-color:var(--verde)"> <span style="font-size:14px">Producto 1</span></label>
+        <label style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);cursor:pointer"><input type="checkbox" id="p-app2-p2" value="Producto 2" style="width:16px;height:16px;accent-color:var(--verde)"> <span style="font-size:14px">Producto 2</span></label>
+        <label style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);cursor:pointer"><input type="checkbox" id="p-app2-p3" value="Producto 3" style="width:16px;height:16px;accent-color:var(--verde)"> <span style="font-size:14px">Producto 3</span></label>
+        <label style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);cursor:pointer"><input type="checkbox" id="p-app2-p4" value="Producto 4" style="width:16px;height:16px;accent-color:var(--verde)"> <span style="font-size:14px">Producto 4</span></label>
+        <label style="display:flex;align-items:center;gap:8px;padding:6px 0;cursor:pointer"><input type="checkbox" id="p-app2-p5" value="Producto 5" style="width:16px;height:16px;accent-color:var(--verde)"> <span style="font-size:14px">Producto 5</span></label>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-secondary" id="btn-cancel-lote">Cancelar</button>
+      <button class="btn-primary" id="btn-save-lote">Programar lote</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var WS = 'https://script.google.com/macros/s/AKfycbxkhY-9WUyxI2GKtDcIY1ObO5C4758-1ny_RV_mn3HDCreVYjYsjpdx7-Wi90oWSSD2/exec';
+var lotes = [], preparaciones = [];
+var loteFilter = 'todos';
+var expandedPrep = {};
+
+window.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('hdate').textContent = new Date().toLocaleDateString('es-CO', {weekday:'long', day:'numeric', month:'long'});
+  poblarLoteNums();
+  initFilters();
+  initLoteModal();
+  initFab();
+  fetchLotes();
+  fetchPreparaciones();
+});
+
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 2000);
+}
+
+function sendToServer(body) {
+  fetch(WS, {method:'POST', body:JSON.stringify(body)}).catch(function(){});
+}
+
+function poblarLoteNums() {
+  var sel = document.getElementById('l-num');
+  sel.innerHTML = '<option value="">Selecciona...</option>';
+  for (var i = 1; i <= 32; i++) {
+    var opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = 'Lote ' + i;
+    sel.appendChild(opt);
+  }
+}
+
+function calcSemanaAnio(fechaISO) {
+  if (!fechaISO) return null;
+  var d = new Date(fechaISO + 'T12:00:00');
+  if (isNaN(d)) return null;
+  // Get Monday of week 1 (ISO week)
+  var jan4 = new Date(d.getFullYear(), 0, 4);
+  var monday1 = new Date(jan4);
+  monday1.setDate(jan4.getDate() - (jan4.getDay() || 7) + 1);
+  var diff = d - monday1;
+  return Math.floor(diff / (7 * 24 * 60 * 60 * 1000)) + 1;
+}
+
+function calcDiaRelativo(fechaInicioISO, fechaLaborISO) {
+  if (!fechaInicioISO || !fechaLaborISO) return null;
+  var inicio = new Date(fechaInicioISO + 'T12:00:00');
+  var labor  = new Date(fechaLaborISO  + 'T12:00:00');
+  if (isNaN(inicio) || isNaN(labor)) return null;
+  var diff = Math.round((labor - inicio) / (24 * 60 * 60 * 1000));
+  return diff + 1;
+}
+
+function calcSemana(fechaISO) {
+  if (!fechaISO) return null;
+  var inicio = new Date(fechaISO + 'T12:00:00');
+  if (isNaN(inicio)) return null;
+  var hoy = new Date();
+  var diff = Math.floor((hoy - inicio) / (7 * 24 * 60 * 60 * 1000));
+  return diff < 0 ? 0 : diff;
+}
+
+function actualizarSemanaYDias() {
+  var fechaInicio = document.getElementById('l-fecha').value;
+  var semAnio = calcSemanaAnio(fechaInicio);
+  var semEl = document.getElementById('l-semana-anio');
+  if (semEl) semEl.textContent = semAnio ? 'Semana ' + semAnio + ' del año' : '';
+  var labores = ['p-picada','p-desinfeccion','p-app1-fecha','p-app2-fecha'];
+  var labels  = ['dia-picada','dia-desinfeccion','dia-app1','dia-app2'];
+  labores.forEach(function(id, i) {
+    var val = document.getElementById(id).value;
+    var labelEl = document.getElementById(labels[i]);
+    if (!labelEl) return;
+    if (fechaInicio && val) {
+      var dia = calcDiaRelativo(fechaInicio, val);
+      labelEl.textContent = dia !== null ? 'Dia ' + dia + ' del ciclo' : '';
+    } else {
+      labelEl.textContent = '';
+    }
+  });
+}
+
+function getDateISO(val) {
+  if (!val) return '';
+  var s = String(val).trim();
+  if (s.match(/^\d{4}-\d{2}-\d{2}/)) return s.substring(0,10);
+  return '';
+}
+
+function fmtDate(iso) {
+  if (!iso) return '';
+  var p = iso.split('-');
+  if (p.length < 3) return iso;
+  return p[2] + '/' + p[1] + '/' + p[0];
+}
+
+function initFab() {
+  document.getElementById('fab').addEventListener('click', function(){
+    document.getElementById('l-fecha').value = new Date().toISOString().split('T')[0];
+    document.getElementById('overlay-lote').classList.add('open');
+  });
+}
+
+function initFilters() {
+  document.querySelectorAll('.fb').forEach(function(b) {
+    b.addEventListener('click', function(){
+      loteFilter = this.dataset.f;
+      document.querySelectorAll('.fb').forEach(function(x){ x.classList.remove('on'); });
+      this.classList.add('on');
+      renderLotes();
+    });
+  });
+}
+
+function fetchLotes() {
+  fetch(WS + '?action=getLotes').then(function(r){ return r.json(); }).then(function(data){
+    lotes = Array.isArray(data) ? data : [];
+    renderLotes();
+  }).catch(function(){ lotes = []; renderLotes(); });
+}
+
+function fetchPreparaciones() {
+  fetch(WS + '?action=getPreparacion').then(function(r){ return r.json(); }).then(function(data){
+    preparaciones = Array.isArray(data) ? data : [];
+    renderLotes();
+  }).catch(function(){ preparaciones = []; });
+}
+
+function addLote(ld, pd) {
+  var tempId = Date.now();
+  lotes.push({ID:tempId, Finca:ld.finca, Variedad:ld.variedad, Lote:ld.lote, Fecha_Inicio:ld.fecha_inicio, Estado:'activo'});
+  renderLotes();
+  showToast('Lote programado');
+  sendToServer({action:'addLote', finca:ld.finca, variedad:ld.variedad, lote:ld.lote, fecha_inicio:ld.fecha_inicio});
+  sendToServer({action:'addPreparacion', finca:ld.finca, variedad:ld.variedad, lote:ld.lote,
+    fecha_picada:pd.picada, fecha_desinfeccion:pd.desinfeccion,
+    fecha_app1:pd.app1fecha, app1_p1:pd.app1p1, app1_p2:pd.app1p2, app1_p3:pd.app1p3, app1_p4:pd.app1p4, app1_p5:pd.app1p5,
+    fecha_app2:pd.app2fecha, app2_p1:pd.app2p1, app2_p2:pd.app2p2, app2_p3:pd.app2p3, app2_p4:pd.app2p4, app2_p5:pd.app2p5
+  });
+  setTimeout(function(){ fetchLotes(); fetchPreparaciones(); }, 5000);
+}
+
+function finalizarLote(id) {
+  if (!confirm('Finalizar el ciclo de este lote? Volvera a semana 0.')) return;
+  var l = lotes.find(function(x){ return String(x.ID)===String(id); });
+  if (l) { l.Estado='inactivo'; l.Fecha_Inicio=''; }
+  renderLotes();
+  showToast('Ciclo finalizado');
+  sendToServer({action:'finalizarLote', id:id});
+}
+
+function reprogramarLote(id) {
+  var l = lotes.find(function(x){ return String(x.ID)===String(id); });
+  if (!l) return;
+  var fecha = prompt('Fecha de inicio del nuevo ciclo (AAAA-MM-DD):');
+  if (!fecha) return;
+  l.Fecha_Inicio = fecha;
+  l.Estado = 'activo';
+  renderLotes();
+  showToast('Lote reprogramado');
+  sendToServer({action:'reprogramarLote', id:id, fecha_inicio:fecha});
+}
+
+function getPrep(finca, variedad, lote) {
+  return preparaciones.find(function(p){
+    return String(p.Finca||p.finca||'') === String(finca) &&
+           String(p.Variedad||p.variedad||'') === String(variedad) &&
+           String(p.Lote||p.lote||'') === String(lote);
+  });
+}
+
+function renderLotes() {
+  var vis = lotes;
+  if (loteFilter === 'activo')   vis = lotes.filter(function(l){ return (l.Estado||'').toLowerCase()==='activo'; });
+  else if (loteFilter === 'inactivo') vis = lotes.filter(function(l){ return (l.Estado||'').toLowerCase()==='inactivo'; });
+  else if (loteFilter !== 'todos') vis = lotes.filter(function(l){ return (l.Finca||l.finca||'')===loteFilter; });
+
+  var container = document.getElementById('lotes-list');
+  if (!vis.length) { container.innerHTML = '<div class="empty">No hay lotes aqui todavia</div>'; return; }
+
+  vis.sort(function(a,b){
+    var sa = calcSemana(getDateISO(a.Fecha_Inicio||a.fecha_inicio||''));
+    var sb = calcSemana(getDateISO(b.Fecha_Inicio||b.fecha_inicio||''));
+    return (sb||0) - (sa||0);
+  });
+
+  var html = '';
+  vis.forEach(function(l) {
+    var id = l.ID;
+    var finca = l.Finca||l.finca||'';
+    var variedad = l.Variedad||l.variedad||'';
+    var loteNum = l.Lote||l.lote||'';
+    var estado = (l.Estado||l.estado||'activo').toLowerCase();
+    var fechaISO = getDateISO(l.Fecha_Inicio||l.fecha_inicio||'');
+    var semana = estado==='activo' ? calcSemana(fechaISO) : null;
+    var prep = getPrep(finca, variedad, loteNum);
+    var ePrep = expandedPrep[id];
+
+    var pct = semana !== null ? Math.min(100, Math.round((semana/34)*100)) : 0;
+    var semanaColor = semana !== null && semana >= 31 ? 'color:var(--rose)' : '';
+
+    html += '<div class="lote-card' + (estado==='inactivo'?' inactivo':'') + '">';
+    html += '<div class="lote-top">';
+
+    // Semana badge
+    html += '<div class="semana-badge">';
+    if (semana !== null) {
+      html += '<span class="s-num" style="' + semanaColor + '">' + semana + '</span>';
+      html += '<span class="s-label">semana</span>';
+    } else {
+      html += '<span class="s-num" style="color:var(--ink-soft)">-</span>';
+      html += '<span class="s-label">inactivo</span>';
+    }
+    html += '</div>';
+
+    // Body
+    html += '<div class="lote-body">';
+    html += '<div class="lote-nombre">' + finca + ' &middot; Lote ' + loteNum + '</div>';
+    html += '<div class="lote-meta">';
+    html += '<span class="tag tag-finca">' + finca + '</span>';
+    html += '<span class="tag tag-variedad">' + variedad + '</span>';
+    if (estado==='inactivo') html += '<span class="tag tag-inactivo">Inactivo</span>';
+    html += '</div>';
+    if (fechaISO) {
+      var semAnio = calcSemanaAnio(fechaISO);
+      html += '<div class="lote-fecha">Inicio: ' + fmtDate(fechaISO) + (semAnio ? ' &nbsp;&middot;&nbsp; Semana ' + semAnio + ' del año' : '') + '</div>';
+    }
+
+    if (semana !== null) {
+      html += '<div class="semana-bar-wrap">';
+      html += '<div class="semana-bar-bg"><div class="semana-bar-fill" style="width:' + pct + '%"></div></div>';
+      html += '<div class="semana-bar-label">Semana ' + semana + ' de 34</div>';
+      html += '</div>';
+    }
+
+    html += '<button class="prep-toggle" data-id="' + id + '">' + (ePrep ? 'ocultar preparacion' : 'ver preparacion del suelo') + '</button>';
+    html += '</div>';
+
+    // Actions
+    html += '<div class="lote-actions">';
+    if (estado==='activo') {
+      html += '<button class="btn-icon danger" data-finalizar="' + id + '">Finalizar</button>';
+    } else {
+      html += '<button class="btn-icon" data-reprogramar="' + id + '">Reprogramar</button>';
+    }
+    html += '</div>';
+    html += '</div>';
+
+    // Prep box
+    if (ePrep && prep) {
+      html += '<div class="prep-box">';
+      html += '<div class="prep-grid">';
+
+      function prepItem(label, val, fechaLaborISO) {
+        var isEmpty = !val || String(val).trim()==='';
+        var diaStr = '';
+        if (!isEmpty && fechaISO && fechaLaborISO) {
+          var dia = calcDiaRelativo(fechaISO, fechaLaborISO);
+          if (dia !== null) diaStr = ' <span style="font-size:10px;color:var(--verde-mid)">Dia ' + dia + '</span>';
+        }
+        return '<div class="prep-item"><div class="prep-item-label">' + label + '</div><div class="prep-item-val' + (isEmpty?' vacio':'') + '">' + (isEmpty ? 'No registrado' : val + diaStr) + '</div></div>';
+      }
+
+      var picadaISO = getDateISO(prep.Fecha_Picada||prep.fecha_picada||'');
+      var desinfISO = getDateISO(prep.Fecha_Desinfeccion||prep.fecha_desinfeccion||'');
+      var app1ISO   = getDateISO(prep.Fecha_App1||prep.fecha_app1||'');
+      var app2ISO   = getDateISO(prep.Fecha_App2||prep.fecha_app2||'');
+
+      html += prepItem('Picada de camas', fmtDate(picadaISO), picadaISO);
+      html += prepItem('Desinfeccion', fmtDate(desinfISO), desinfISO);
+
+      var app1fecha = fmtDate(app1ISO);
+      var app1prods = [prep.App1_P1||prep.app1_p1, prep.App1_P2||prep.app1_p2, prep.App1_P3||prep.app1_p3, prep.App1_P4||prep.app1_p4, prep.App1_P5||prep.app1_p5].filter(function(p){ return p && String(p).trim(); }).join(', ');
+      var app1dia = (fechaISO && app1ISO) ? calcDiaRelativo(fechaISO, app1ISO) : null;
+      var app1html = '<div class="prep-item"><div class="prep-item-label">Aplicacion 1</div><div class="prep-item-val' + (!app1fecha?' vacio':'') + '">' + (app1fecha || 'No registrada') + (app1dia ? ' <span style="font-size:10px;color:var(--verde-mid)">Dia ' + app1dia + '</span>' : '') + '</div>' + (app1prods ? '<div class="prep-productos">' + app1prods + '</div>' : '') + '</div>';
+      html += app1html;
+
+      var app2fecha = fmtDate(app2ISO);
+      var app2prods = [prep.App2_P1||prep.app2_p1, prep.App2_P2||prep.app2_p2, prep.App2_P3||prep.app2_p3, prep.App2_P4||prep.app2_p4, prep.App2_P5||prep.app2_p5].filter(function(p){ return p && String(p).trim(); }).join(', ');
+      var app2dia = (fechaISO && app2ISO) ? calcDiaRelativo(fechaISO, app2ISO) : null;
+      var app2html = '<div class="prep-item"><div class="prep-item-label">Aplicacion 2</div><div class="prep-item-val' + (!app2fecha?' vacio':'') + '">' + (app2fecha || 'No registrada') + (app2dia ? ' <span style="font-size:10px;color:var(--verde-mid)">Dia ' + app2dia + '</span>' : '') + '</div>' + (app2prods ? '<div class="prep-productos">' + app2prods + '</div>' : '') + '</div>';
+      html += app2html;
+
+      html += '</div></div>';
+    } else if (ePrep && !prep) {
+      html += '<div class="prep-box"><div style="font-size:13px;color:var(--ink-soft)">Sin preparacion del suelo registrada</div></div>';
+    }
+
+    html += '</div>';
+  });
+
+  container.innerHTML = html;
+
+  container.querySelectorAll('.prep-toggle').forEach(function(el){
+    el.addEventListener('click', function(){
+      expandedPrep[el.dataset.id] = !expandedPrep[el.dataset.id];
+      renderLotes();
+    });
+  });
+  container.querySelectorAll('[data-finalizar]').forEach(function(el){
+    el.addEventListener('click', function(){ finalizarLote(el.dataset.finalizar); });
+  });
+  container.querySelectorAll('[data-reprogramar]').forEach(function(el){
+    el.addEventListener('click', function(){ reprogramarLote(el.dataset.reprogramar); });
+  });
+}
+
+function initLoteModal() {
+  document.getElementById('toggle-app1-prods').addEventListener('click', function(){
+    var box = document.getElementById('app1-prods');
+    var visible = box.style.display !== 'none';
+    box.style.display = visible ? 'none' : 'block';
+    this.textContent = visible ? '+ Agregar productos' : '- Ocultar productos';
+  });
+  document.getElementById('toggle-app2-prods').addEventListener('click', function(){
+    var box = document.getElementById('app2-prods');
+    var visible = box.style.display !== 'none';
+    box.style.display = visible ? 'none' : 'block';
+    this.textContent = visible ? '+ Agregar productos' : '- Ocultar productos';
+  });
+
+  document.getElementById('l-fecha').addEventListener('change', function(){
+    actualizarSemanaYDias();
+  });
+  ['p-picada','p-desinfeccion','p-app1-fecha','p-app2-fecha'].forEach(function(id){
+    document.getElementById(id).addEventListener('change', function(){
+      actualizarSemanaYDias();
+    });
+  });
+
+  document.getElementById('btn-cancel-lote').addEventListener('click', function(){
+    document.getElementById('overlay-lote').classList.remove('open');
+  });
+  document.getElementById('overlay-lote').addEventListener('click', function(e){
+    if (e.target===this) this.classList.remove('open');
+  });
+  document.getElementById('btn-save-lote').addEventListener('click', function(){
+    var finca   = document.getElementById('l-finca').value;
+    var variedad= document.getElementById('l-variedad').value;
+    var loteNum = document.getElementById('l-num').value;
+    var fecha   = document.getElementById('l-fecha').value;
+    if (!loteNum || !fecha) { showToast('Selecciona el lote y la fecha de inicio'); return; }
+    var ld = {finca:finca, variedad:variedad, lote:loteNum, fecha_inicio:fecha};
+    var pd = {
+      picada:       document.getElementById('p-picada').value,
+      desinfeccion: document.getElementById('p-desinfeccion').value,
+      app1fecha:    document.getElementById('p-app1-fecha').value,
+      app1p1:       document.getElementById('p-app1-p1').checked ? 'Producto 1' : '',
+      app1p2:       document.getElementById('p-app1-p2').checked ? 'Producto 2' : '',
+      app1p3:       document.getElementById('p-app1-p3').checked ? 'Producto 3' : '',
+      app1p4:       document.getElementById('p-app1-p4').checked ? 'Producto 4' : '',
+      app1p5:       document.getElementById('p-app1-p5').checked ? 'Producto 5' : '',
+      app2fecha:    document.getElementById('p-app2-fecha').value,
+      app2p1:       document.getElementById('p-app2-p1').checked ? 'Producto 1' : '',
+      app2p2:       document.getElementById('p-app2-p2').checked ? 'Producto 2' : '',
+      app2p3:       document.getElementById('p-app2-p3').checked ? 'Producto 3' : '',
+      app2p4:       document.getElementById('p-app2-p4').checked ? 'Producto 4' : '',
+      app2p5:       document.getElementById('p-app2-p5').checked ? 'Producto 5' : ''
+    };
+    addLote(ld, pd);
+    document.getElementById('overlay-lote').classList.remove('open');
+    // reset
+    ['p-picada','p-desinfeccion','p-app1-fecha','p-app2-fecha'].forEach(function(id){ document.getElementById(id).value=''; });
+    ['p-app1-p1','p-app1-p2','p-app1-p3','p-app1-p4','p-app1-p5','p-app2-p1','p-app2-p2','p-app2-p3','p-app2-p4','p-app2-p5'].forEach(function(id){ document.getElementById(id).checked=false; });
+    document.getElementById('app1-prods').style.display='none';
+    document.getElementById('app2-prods').style.display='none';
+    document.getElementById('toggle-app1-prods').textContent='+ Seleccionar productos';
+    document.getElementById('toggle-app2-prods').textContent='+ Seleccionar productos';
+  });
+}
+</script>
+</body>
+</html>
