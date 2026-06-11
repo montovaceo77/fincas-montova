@@ -233,7 +233,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
 <div class="toast" id="toast"></div>
 
 <script>
-var WS = 'https://script.google.com/macros/s/AKfycbzX-6YZAtOeEHgUVQFg3aLM0b6hfcY-BStKG9A6R-FrcjnWYQxC01dxkF5aRuaso9Jk/exec';
+var WS = 'https://script.google.com/macros/s/AKfycbw4_I-odv-ZBj4zPS5dDy6MCti4hTdN6OVZvZBB093leGwDjMqoWmiUsJEL2clrb-W2/exec';
 var lotes = [];
 var preparaciones = [];
 var loteFilter = 'todos';
@@ -502,7 +502,7 @@ function finalizarLote(id) {
   if (l) { l.Estado = 'inactivo'; l.Fecha_Inicio = ''; }
   renderLotes();
   showToast('Ciclo finalizado');
-  sendToServer({action:'finalizarLote', id:id});
+  sendToServer({action:'finalizarLote', id:id, finca: l.Finca||l.finca||'', variedad: l.Variedad||l.variedad||'', lote: l.Lote||l.lote||''});
 }
 
 function getPrep(finca, variedad, lote, fechaInicioCiclo) {
