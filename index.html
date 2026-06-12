@@ -233,7 +233,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
 <div class="toast" id="toast"></div>
 
 <script>
-var WS = 'https://script.google.com/macros/s/AKfycbzJEnrow55ok0yAkXOkmT5CKMB7R4E5_U6aWTyO49tJv7fq9a0cwZqSsM06M1vpmJu-/exec';
+var WS = 'https://script.google.com/macros/s/AKfycbzn_L7pr5i4Jac8E5HYMsS-GA30X5QexMe3hAZnHzHFtbYXTwuhIjH2eTurAF2GRmeA/exec';
 var lotes = [];
 var preparaciones = [];
 var loteFilter = 'todos';
@@ -448,7 +448,7 @@ function initModal() {
       if (l) { l.Fecha_Inicio = fecha; l.Estado = 'activo'; }
       renderLotes();
       showToast('Lote reprogramado');
-      sendToServer({action:'reprogramarLote', id:reprogramarId, fecha_inicio:fecha});
+      sendToServer({action:'reprogramarLote', finca:finca, variedad:variedad, lote:loteNum, fecha_inicio:fecha});
       sendToServer({action:'addPreparacion', finca:finca, variedad:variedad, lote:loteNum,
         fecha_inicio_ciclo:fecha,
         fecha_picada:pd.picada, fecha_desinfeccion:pd.desinfeccion,
@@ -499,7 +499,7 @@ function fetchPreparaciones() {
 function finalizarLote(id) {
   if (!confirm('Finalizar el ciclo de este lote? Volvera a semana 0.')) return;
   var l = lotes.find(function(x) { return String(x.ID) === String(id); });
-  if (l) { l.Estado = 'inactivo'; l.Fecha_Inicio = ''; }
+  if (l) { l.Estado = 'inactivo'; }
   renderLotes();
   showToast('Ciclo finalizado');
   sendToServer({action:'finalizarLote', id:id, finca: l.Finca||l.finca||'', variedad: l.Variedad||l.variedad||'', lote: l.Lote||l.lote||''});
