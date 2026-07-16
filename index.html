@@ -137,6 +137,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
 <nav class="bottom-nav">
   <button class="nav-btn on" onclick="showTab('programacion', this)">Programacion</button>
   <button class="nav-btn" onclick="showTab('fumigacion', this)">Fumigacion</button>
+  <button class="nav-btn" onclick="showTab('labores', this)">Labores de Campo</button>
 </nav>
 
 <!-- Modal lote -->
@@ -727,6 +728,56 @@ function renderLotes() {
   </div>
 </div>
 
+<div id="sec-labores" style="display:none; padding-bottom:70px;">
+  <div class="main" style="max-width:480px;">
+
+    <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
+      <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 1</span>
+      <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:4px;">Fecha de la labor</label>
+      <p style="font-size:12px; color:var(--ink-mid); margin-bottom:12px;">Semana del año en curso</p>
+      <input type="date" id="lab-fecha" style="width:100%; padding:10px 12px; font-size:15px; border:1px solid var(--border); border-radius:8px; color:var(--ink); background:#fafafa;" />
+      <div id="lab-fecha-semana" style="font-size:12px; font-weight:600; color:var(--verde-dark); margin-top:8px;"></div>
+    </div>
+
+    <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
+      <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 2</span>
+      <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:12px;">Finca</label>
+      <select id="lab-finca" style="width:100%; padding:10px 12px; font-size:15px; border:1px solid var(--border); border-radius:8px; color:var(--ink); background:#fafafa;">
+        <option value="Flor Esperancita">Flor Esperancita</option>
+        <option value="Flor de Agua 3">Flor de Agua 3</option>
+        <option value="Oasis Garden">Oasis Garden</option>
+        <option value="Flor Madera">Flor Madera</option>
+      </select>
+    </div>
+
+    <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
+      <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 3</span>
+      <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:12px;">Numero de lote</label>
+      <select id="lab-lote-select" style="width:100%; padding:10px 12px; font-size:15px; border:1px solid var(--border); border-radius:8px; color:var(--ink); background:#fafafa;"></select>
+      <div id="lab-lote-info"></div>
+    </div>
+
+    <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
+      <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 4</span>
+      <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:4px;">Labor de Campo</label>
+      <p style="font-size:12px; color:var(--ink-mid); margin-bottom:8px;">Puedes elegir mas de una</p>
+      <div id="lab-labor-lista" style="height:200px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; padding:6px; display:flex; flex-direction:column; gap:6px; background:#fafafa;"></div>
+      <p style="font-size:11px; color:var(--ink-soft); margin-top:6px; text-align:right;">Desliza para ver mas</p>
+    </div>
+
+    <div style="display:flex; gap:10px; margin-top:0.5rem;">
+      <button id="lab-guardar-btn" onclick="labGuardar()" style="flex:1; padding:15px; font-size:16px; font-weight:600; background:var(--verde-dark); color:#fff; border:none; border-radius:12px; cursor:pointer;">Guardar registro</button>
+      <button onclick="labLimpiar()" style="padding:15px 18px; font-size:15px; font-weight:600; border-radius:12px; cursor:pointer; background:var(--white); border:1px solid var(--border); color:var(--ink-mid); white-space:nowrap;">Nuevo registro</button>
+    </div>
+    <div id="lab-loading" style="display:none; margin-top:1rem; background:var(--white); border:1px solid var(--border); border-radius:12px; padding:1rem 1.25rem; font-size:14px; color:var(--ink-mid); text-align:center;">Guardando registro...</div>
+    <div id="lab-ok" style="display:none; margin-top:1rem; background:var(--verde-light); border:1px solid var(--verde-mid); border-radius:12px; padding:1rem 1.25rem;">
+      <div style="font-size:15px; font-weight:600; color:var(--verde-dark); margin-bottom:4px;">Registro guardado con exito</div>
+      <div id="lab-ok-txt" style="font-size:13px; color:var(--verde);"></div>
+    </div>
+    <div id="lab-error" style="display:none; margin-top:1rem; background:#fff0f0; border:1px solid #ffcccc; border-radius:12px; padding:1rem 1.25rem; font-size:14px; color:#c0392b;">Hubo un problema al guardar. Intenta de nuevo.</div>
+  </div>
+</div>
+
 <script>
 // ===== FUMIGACION MODULE =====
 var FUM_FINCAS = ['Oasis Garden','Flor de agua 3','Flor Esperancita','Flor Madera'];
@@ -752,11 +803,11 @@ function fetchFumigaciones() {
 }
 
 function showTab(tab, btn) {
-  // Toggle programacion section visibility
-  var secProg = document.getElementById('lotes-list') && document.getElementById('lotes-list').closest('.main');
+  // Toggle section visibility
   var mainDiv = document.querySelector('.main');
   var fabBtn = document.getElementById('fab');
   var secFum = document.getElementById('sec-fumigacion');
+  var secLab = document.getElementById('sec-labores');
 
   document.querySelectorAll('.nav-btn').forEach(function(b){ b.classList.remove('on'); });
   btn.classList.add('on');
@@ -765,10 +816,17 @@ function showTab(tab, btn) {
     if (mainDiv) mainDiv.style.display = 'none';
     if (fabBtn) fabBtn.style.display = 'none';
     secFum.style.display = 'block';
+    secLab.style.display = 'none';
+  } else if (tab === 'labores') {
+    if (mainDiv) mainDiv.style.display = 'none';
+    if (fabBtn) fabBtn.style.display = 'none';
+    secFum.style.display = 'none';
+    secLab.style.display = 'block';
   } else {
     if (mainDiv) mainDiv.style.display = '';
     if (fabBtn) fabBtn.style.display = '';
     secFum.style.display = 'none';
+    secLab.style.display = 'none';
   }
 }
 
@@ -1018,6 +1076,139 @@ function fumLimpiar() {
   fumMkItemBtn(FUM_PRODUCTOS, fumSelProductos, 'fum-productos-lista', false);
   fumMkItemBtn(FUM_FERTILIZANTES, fumSelFertilizantes, 'fum-fertilizantes-lista', false);
   fumRenderEquipo();
+})();
+
+// ===== LABORES DE CAMPO MODULE =====
+var LAB_LABORES = ['Subida de mallas','Bajada de mallas','Seleccion','Encamadas','Fertilizacion'];
+var labSelLabor = [];
+var labVariedadActual = '';
+
+function poblarLabLoteSelect() {
+  var sel = document.getElementById('lab-lote-select');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Selecciona un lote</option>';
+  for (var i = 1; i <= 33; i++) {
+    var opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = 'Lote ' + i;
+    sel.appendChild(opt);
+  }
+}
+
+function labActualizarFechaSemana() {
+  var fecha = document.getElementById('lab-fecha').value;
+  var el = document.getElementById('lab-fecha-semana');
+  if (!el) return;
+  if (!fecha) { el.textContent = ''; return; }
+  var sa = calcSemanaAnio(fecha);
+  var yearNum = new Date(fecha + 'T12:00:00').getFullYear();
+  el.textContent = sa ? 'Semana ' + sa + ' / ' + yearNum : '';
+}
+
+function labActualizarInfoLote() {
+  var finca = document.getElementById('lab-finca') ? document.getElementById('lab-finca').value : '';
+  var info = document.getElementById('lab-lote-info');
+  if (!info) return;
+  var loteNum = document.getElementById('lab-lote-select') ? document.getElementById('lab-lote-select').value : '';
+  if (!loteNum) { info.innerHTML = ''; return; }
+  var l = lotes.find(function(x) {
+    return String(x.Finca || x.finca || '') === String(finca) &&
+           String(x.Lote || x.lote || '') === String(loteNum) &&
+           String(x.Estado || x.estado || '').toLowerCase() === 'activo';
+  });
+  var loteLabel = 'Lote ' + loteNum;
+  var ultima = null;
+  fumigaciones.forEach(function(r) {
+    var rFinca = String(r.Finca || r.finca || '');
+    var rLotes = String(r.Lotes || r.lotes || '').split(',').map(function(s){ return s.trim(); });
+    if (rFinca === String(finca) && rLotes.indexOf(loteLabel) !== -1) {
+      var f = getISO(r.Fecha || r.fecha || '');
+      if (f && (!ultima || f > ultima)) ultima = f;
+    }
+  });
+  var ultimaLinea = '<div><strong>Ultima fumigacion/fertilizacion:</strong> ' + (ultima ? fmtDate(ultima) : 'Sin registros previos') + '</div>';
+  if (!l) {
+    labVariedadActual = '';
+    info.innerHTML = '<div style="background:var(--verde-light); border:1px solid var(--verde-mid); border-radius:8px; padding:10px 12px; margin-top:10px; font-size:13px; color:var(--verde-dark); line-height:1.6;">' +
+      '<div style="color:var(--ink-soft);">No hay un ciclo activo registrado para este lote en Fincas Montova</div>' +
+      ultimaLinea +
+    '</div>';
+    return;
+  }
+  var fechaISO = getISO(l.Fecha_Inicio || l.fecha_inicio || '');
+  var variedad = l.Variedad || l.variedad || '';
+  labVariedadActual = variedad;
+  var semana = calcSemanaCiclo(fechaISO);
+  info.innerHTML = '<div style="background:var(--verde-light); border:1px solid var(--verde-mid); border-radius:8px; padding:10px 12px; margin-top:10px; font-size:13px; color:var(--verde-dark); line-height:1.6;">' +
+    '<div><strong>Variedad:</strong> ' + variedad + '</div>' +
+    '<div><strong>Inicio del lote:</strong> ' + fmtDate(fechaISO) + '</div>' +
+    '<div><strong>Semana del ciclo:</strong> ' + (semana !== null ? semana : '-') + ' de 34</div>' +
+    ultimaLinea +
+  '</div>';
+}
+
+async function labGuardar() {
+  var fecha = document.getElementById('lab-fecha').value;
+  var finca = document.getElementById('lab-finca').value;
+  var loteNum = document.getElementById('lab-lote-select').value;
+  if (!fecha || !finca || !loteNum || !labSelLabor.length) {
+    alert('Completa todos los pasos antes de guardar.');
+    return;
+  }
+  var btn = document.getElementById('lab-guardar-btn');
+  btn.disabled = true;
+  document.getElementById('lab-loading').style.display = 'block';
+  document.getElementById('lab-ok').style.display = 'none';
+  document.getElementById('lab-error').style.display = 'none';
+  var payload = {
+    action: 'addLaborCampo',
+    fecha: fecha,
+    finca: finca,
+    variedad: labVariedadActual,
+    lote: 'Lote ' + loteNum,
+    labor: labSelLabor.join(', ')
+  };
+  try {
+    await fetch(WS, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+    document.getElementById('lab-loading').style.display = 'none';
+    document.getElementById('lab-ok-txt').textContent = finca + ' · Lote ' + loteNum;
+    document.getElementById('lab-ok').style.display = 'block';
+    btn.disabled = false;
+    labResetCampos();
+  } catch(e) {
+    document.getElementById('lab-loading').style.display = 'none';
+    document.getElementById('lab-error').style.display = 'block';
+    btn.disabled = false;
+  }
+}
+
+function labResetCampos() {
+  labSelLabor.length = 0;
+  document.getElementById('lab-fecha').value = new Date().toISOString().split('T')[0];
+  document.getElementById('lab-finca').selectedIndex = 0;
+  labActualizarFechaSemana();
+  poblarLabLoteSelect();
+  document.getElementById('lab-lote-select').value = '';
+  labActualizarInfoLote();
+  fumMkItemBtn(LAB_LABORES, labSelLabor, 'lab-labor-lista', false);
+}
+
+function labLimpiar() {
+  document.getElementById('lab-ok').style.display = 'none';
+  document.getElementById('lab-error').style.display = 'none';
+  labResetCampos();
+}
+
+// Init labores de campo
+(function() {
+  document.getElementById('lab-fecha').value = new Date().toISOString().split('T')[0];
+  document.getElementById('lab-fecha').addEventListener('change', labActualizarFechaSemana);
+  labActualizarFechaSemana();
+  document.getElementById('lab-finca').addEventListener('change', labActualizarInfoLote);
+  poblarLabLoteSelect();
+  document.getElementById('lab-lote-select').addEventListener('change', labActualizarInfoLote);
+  labActualizarInfoLote();
+  fumMkItemBtn(LAB_LABORES, labSelLabor, 'lab-labor-lista', false);
 })();
 </script>
 
