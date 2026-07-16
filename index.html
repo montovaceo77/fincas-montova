@@ -138,6 +138,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
   <button class="nav-btn on" onclick="showTab('programacion', this)">Programacion</button>
   <button class="nav-btn" onclick="showTab('fumigacion', this)">Fumigacion</button>
   <button class="nav-btn" onclick="showTab('labores', this)">Labores de Campo</button>
+  <button class="nav-btn" onclick="showTab('monitoreo', this)">Monitoreo</button>
 </nav>
 
 <!-- Modal lote -->
@@ -784,6 +785,64 @@ function renderLotes() {
   </div>
 </div>
 
+<div id="sec-monitoreo" style="display:none; padding-bottom:70px;">
+  <div class="main" style="max-width:480px;">
+
+    <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
+      <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 1</span>
+      <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:4px;">Fecha del monitoreo</label>
+      <p style="font-size:12px; color:var(--ink-mid); margin-bottom:12px;">Semana del año en curso</p>
+      <input type="date" id="mon-fecha" style="width:100%; padding:10px 12px; font-size:15px; border:1px solid var(--border); border-radius:8px; color:var(--ink); background:#fafafa;" />
+      <div id="mon-fecha-semana" style="font-size:12px; font-weight:600; color:var(--verde-dark); margin-top:8px;"></div>
+    </div>
+
+    <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
+      <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 2</span>
+      <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:12px;">Finca</label>
+      <select id="mon-finca" style="width:100%; padding:10px 12px; font-size:15px; border:1px solid var(--border); border-radius:8px; color:var(--ink); background:#fafafa;">
+        <option value="Flor Esperancita">Flor Esperancita</option>
+        <option value="Flor de Agua 3">Flor de Agua 3</option>
+        <option value="Oasis Garden">Oasis Garden</option>
+        <option value="Flor Madera">Flor Madera</option>
+      </select>
+    </div>
+
+    <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
+      <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 3</span>
+      <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:12px;">Numero de lote</label>
+      <select id="mon-lote-select" style="width:100%; padding:10px 12px; font-size:15px; border:1px solid var(--border); border-radius:8px; color:var(--ink); background:#fafafa;"></select>
+      <div id="mon-lote-info"></div>
+    </div>
+
+    <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
+      <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 4</span>
+      <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:12px;">Numero de cama</label>
+      <input type="text" inputmode="numeric" pattern="[0-9]*" id="mon-cama" placeholder="Ej: 12" style="width:100%; padding:10px 12px; font-size:15px; border:1px solid var(--border); border-radius:8px; color:var(--ink); background:#fafafa;" />
+    </div>
+
+    <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
+      <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 5</span>
+      <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:4px;">Plagas y enfermedades por cuadrante</label>
+      <p style="font-size:12px; color:var(--ink-mid); margin-bottom:12px;">El lote se divide en 4 cuadrantes. Selecciona uno y marca lo que encuentres en el.</p>
+      <div id="mon-cuadrantes-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px; width:100%;"></div>
+      <div id="mon-cuadrante-activo-label" style="font-size:13px; font-weight:600; color:var(--verde-dark); margin-bottom:8px;"></div>
+      <div id="mon-plagas-lista" style="height:200px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; padding:6px; display:flex; flex-direction:column; gap:6px; background:#fafafa;"></div>
+      <p style="font-size:11px; color:var(--ink-soft); margin-top:6px; text-align:right;">Desliza para ver mas</p>
+    </div>
+
+    <div style="display:flex; gap:10px; margin-top:0.5rem;">
+      <button id="mon-guardar-btn" onclick="monGuardar()" style="flex:1; padding:15px; font-size:16px; font-weight:600; background:var(--verde-dark); color:#fff; border:none; border-radius:12px; cursor:pointer;">Guardar registro</button>
+      <button onclick="monLimpiar()" style="padding:15px 18px; font-size:15px; font-weight:600; border-radius:12px; cursor:pointer; background:var(--white); border:1px solid var(--border); color:var(--ink-mid); white-space:nowrap;">Nuevo registro</button>
+    </div>
+    <div id="mon-loading" style="display:none; margin-top:1rem; background:var(--white); border:1px solid var(--border); border-radius:12px; padding:1rem 1.25rem; font-size:14px; color:var(--ink-mid); text-align:center;">Guardando registro...</div>
+    <div id="mon-ok" style="display:none; margin-top:1rem; background:var(--verde-light); border:1px solid var(--verde-mid); border-radius:12px; padding:1rem 1.25rem;">
+      <div style="font-size:15px; font-weight:600; color:var(--verde-dark); margin-bottom:4px;">Registro guardado con exito</div>
+      <div id="mon-ok-txt" style="font-size:13px; color:var(--verde);"></div>
+    </div>
+    <div id="mon-error" style="display:none; margin-top:1rem; background:#fff0f0; border:1px solid #ffcccc; border-radius:12px; padding:1rem 1.25rem; font-size:14px; color:#c0392b;">Hubo un problema al guardar. Intenta de nuevo.</div>
+  </div>
+</div>
+
 <script>
 // ===== FUMIGACION MODULE =====
 var FUM_FINCAS = ['Oasis Garden','Flor de agua 3','Flor Esperancita','Flor Madera'];
@@ -814,6 +873,7 @@ function showTab(tab, btn) {
   var fabBtn = document.getElementById('fab');
   var secFum = document.getElementById('sec-fumigacion');
   var secLab = document.getElementById('sec-labores');
+  var secMon = document.getElementById('sec-monitoreo');
 
   document.querySelectorAll('.nav-btn').forEach(function(b){ b.classList.remove('on'); });
   btn.classList.add('on');
@@ -823,16 +883,25 @@ function showTab(tab, btn) {
     if (fabBtn) fabBtn.style.display = 'none';
     secFum.style.display = 'block';
     secLab.style.display = 'none';
+    secMon.style.display = 'none';
   } else if (tab === 'labores') {
     if (mainDiv) mainDiv.style.display = 'none';
     if (fabBtn) fabBtn.style.display = 'none';
     secFum.style.display = 'none';
     secLab.style.display = 'block';
+    secMon.style.display = 'none';
+  } else if (tab === 'monitoreo') {
+    if (mainDiv) mainDiv.style.display = 'none';
+    if (fabBtn) fabBtn.style.display = 'none';
+    secFum.style.display = 'none';
+    secLab.style.display = 'none';
+    secMon.style.display = 'block';
   } else {
     if (mainDiv) mainDiv.style.display = '';
     if (fabBtn) fabBtn.style.display = '';
     secFum.style.display = 'none';
     secLab.style.display = 'none';
+    secMon.style.display = 'none';
   }
 }
 
@@ -1271,6 +1340,228 @@ function labLimpiar() {
   labActualizarInfoLote();
   fumMkItemBtn(LAB_LABORES, labSelLabor, 'lab-labor-lista', false);
   labRenderFert();
+})();
+
+// ===== MONITOREO MODULE =====
+var monCuadrantes = {1:[], 2:[], 3:[], 4:[]};
+var monCuadranteActivo = 1;
+
+function poblarMonLoteSelect() {
+  var sel = document.getElementById('mon-lote-select');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Selecciona un lote</option>';
+  for (var i = 1; i <= 33; i++) {
+    var opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = 'Lote ' + i;
+    sel.appendChild(opt);
+  }
+}
+
+function monActualizarFechaSemana() {
+  var fecha = document.getElementById('mon-fecha').value;
+  var el = document.getElementById('mon-fecha-semana');
+  if (!el) return;
+  if (!fecha) { el.textContent = ''; return; }
+  var sa = calcSemanaAnio(fecha);
+  var yearNum = new Date(fecha + 'T12:00:00').getFullYear();
+  el.textContent = sa ? 'Semana ' + sa + ' / ' + yearNum : '';
+}
+
+function monActualizarInfoLote() {
+  var finca = document.getElementById('mon-finca') ? document.getElementById('mon-finca').value : '';
+  var info = document.getElementById('mon-lote-info');
+  if (!info) return;
+  var loteNum = document.getElementById('mon-lote-select') ? document.getElementById('mon-lote-select').value : '';
+  if (!loteNum) { info.innerHTML = ''; return; }
+  var loteLabel = 'Lote ' + loteNum;
+
+  var l = lotes.find(function(x) {
+    return String(x.Finca || x.finca || '') === String(finca) &&
+           String(x.Lote || x.lote || '') === String(loteNum) &&
+           String(x.Estado || x.estado || '').toLowerCase() === 'activo';
+  });
+
+  var ultimaFum = null;
+  fumigaciones.forEach(function(r) {
+    var rFinca = String(r.Finca || r.finca || '');
+    var rLotes = String(r.Lotes || r.lotes || '').split(',').map(function(s){ return s.trim(); });
+    if (rFinca === String(finca) && rLotes.indexOf(loteLabel) !== -1) {
+      var f = getISO(r.Fecha || r.fecha || '');
+      if (f && (!ultimaFum || f > ultimaFum)) ultimaFum = f;
+    }
+  });
+  var ultimaFumLinea = '<div><strong>Ultima fumigacion:</strong> ' + (ultimaFum ? fmtDate(ultimaFum) : 'Sin registros previos') + '</div>';
+
+  var ultimaFert = null;
+  laboresCampo.forEach(function(r) {
+    var rFinca = String(r.Finca || r.finca || '');
+    var rLote = String(r.Lote || r.lote || '');
+    var rLabor = String(r.Labor || r.labor || '');
+    if (rFinca === String(finca) && rLote === loteLabel && rLabor.indexOf('Fertilizacion') !== -1) {
+      var f = getISO(r.Fecha || r.fecha || '');
+      if (f && (!ultimaFert || f > ultimaFert)) ultimaFert = f;
+    }
+  });
+  var semanasFert = null;
+  if (ultimaFert) {
+    var hoyFert = new Date(new Date().toISOString().split('T')[0] + 'T12:00:00');
+    var fechaFert = new Date(ultimaFert + 'T12:00:00');
+    semanasFert = Math.floor((hoyFert - fechaFert) / (7 * 24 * 60 * 60 * 1000));
+    if (semanasFert < 0) semanasFert = 0;
+  }
+  var fertLinea = '<div><strong>Semanas desde la ultima fertilizacion:</strong> ' + (semanasFert !== null ? semanasFert : 'Sin fertilizaciones registradas') + '</div>';
+
+  if (!l) {
+    info.innerHTML = '<div style="background:var(--verde-light); border:1px solid var(--verde-mid); border-radius:8px; padding:10px 12px; margin-top:10px; font-size:13px; color:var(--verde-dark); line-height:1.6;">' +
+      '<div style="color:var(--ink-soft);">No hay un ciclo activo registrado para este lote en Fincas Montova</div>' +
+      ultimaFumLinea +
+      fertLinea +
+    '</div>';
+    return;
+  }
+  var fechaISO = getISO(l.Fecha_Inicio || l.fecha_inicio || '');
+  var variedad = l.Variedad || l.variedad || '';
+  var semana = calcSemanaCiclo(fechaISO);
+  info.innerHTML = '<div style="background:var(--verde-light); border:1px solid var(--verde-mid); border-radius:8px; padding:10px 12px; margin-top:10px; font-size:13px; color:var(--verde-dark); line-height:1.6;">' +
+    '<div><strong>Variedad:</strong> ' + variedad + '</div>' +
+    '<div><strong>Inicio del lote:</strong> ' + fmtDate(fechaISO) + '</div>' +
+    '<div><strong>Semana de programacion:</strong> ' + (semana !== null ? semana : '-') + ' de 34</div>' +
+    ultimaFumLinea +
+    fertLinea +
+  '</div>';
+}
+
+function monRenderCuadrantes() {
+  var c = document.getElementById('mon-cuadrantes-grid');
+  if (!c) return;
+  c.innerHTML = '';
+  [1, 2, 3, 4].forEach(function(n) {
+    var btn = document.createElement('button');
+    var activo = monCuadranteActivo === n;
+    var items = monCuadrantes[n];
+    btn.style.cssText = 'border-radius:10px; cursor:pointer; display:flex; flex-direction:column; align-items:flex-start; justify-content:flex-start; text-align:left; padding:8px; gap:4px; min-height:90px; background:'+(activo?'var(--verde-dark)':(items.length?'var(--verde-light)':'#fff'))+'; border:1.5px solid '+(activo?'var(--verde-dark)':(items.length?'var(--verde-mid)':'var(--border)'))+';';
+    var titulo = document.createElement('div');
+    titulo.style.cssText = 'font-size:13px; font-weight:700; color:'+(activo?'#fff':(items.length?'var(--verde-dark)':'var(--ink-mid)'))+';';
+    titulo.textContent = 'Cuadrante ' + n;
+    btn.appendChild(titulo);
+    if (items.length) {
+      var lista = document.createElement('div');
+      lista.style.cssText = 'font-size:11px; line-height:1.4; color:'+(activo?'#fff':'var(--verde-dark)')+'; opacity:'+(activo?'0.95':'1')+';';
+      lista.textContent = items.join(', ');
+      btn.appendChild(lista);
+    }
+    btn.onclick = function() {
+      monCuadranteActivo = n;
+      monRenderCuadrantes();
+      monRenderPlagasList();
+    };
+    c.appendChild(btn);
+  });
+}
+
+function monRenderPlagasList() {
+  var label = document.getElementById('mon-cuadrante-activo-label');
+  if (label) label.textContent = 'Plagas/enfermedades en Cuadrante ' + monCuadranteActivo;
+  var c = document.getElementById('mon-plagas-lista');
+  if (!c) return;
+  c.innerHTML = '';
+  var selArr = monCuadrantes[monCuadranteActivo];
+  FUM_PLAGAS.forEach(function(item) {
+    var btn = document.createElement('button');
+    var sel = selArr.indexOf(item) !== -1;
+    btn.style.cssText = 'padding:10px 12px; font-size:13px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; background:'+(sel?'var(--verde-light)':'#fff')+'; border:1px solid '+(sel?'var(--verde-mid)':'var(--border)')+'; color:'+(sel?'var(--verde-dark)':'var(--ink-mid)')+'; font-weight:'+(sel?'600':'400')+'; width:100%; text-align:left; flex-shrink:0;';
+    var chk = document.createElement('div');
+    chk.style.cssText = 'width:20px; height:20px; border-radius:50%; border:1.5px solid '+(sel?'var(--verde-dark)':'var(--border)')+'; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:11px; background:'+(sel?'var(--verde-dark)':'transparent')+'; color:#fff;';
+    chk.textContent = sel ? '✓' : '';
+    var sp = document.createElement('span');
+    sp.textContent = item;
+    btn.appendChild(chk);
+    btn.appendChild(sp);
+    btn.onclick = function() {
+      var idx = selArr.indexOf(item);
+      if (idx > -1) selArr.splice(idx, 1); else selArr.push(item);
+      monRenderPlagasList();
+      monRenderCuadrantes();
+    };
+    c.appendChild(btn);
+  });
+}
+
+async function monGuardar() {
+  var fecha = document.getElementById('mon-fecha').value;
+  var finca = document.getElementById('mon-finca').value;
+  var loteNum = document.getElementById('mon-lote-select').value;
+  var cama = document.getElementById('mon-cama').value.trim();
+  var totalMarcado = monCuadrantes[1].length + monCuadrantes[2].length + monCuadrantes[3].length + monCuadrantes[4].length;
+  if (!fecha || !finca || !loteNum || !cama || !totalMarcado) {
+    alert('Completa todos los pasos antes de guardar. Marca al menos una plaga en algun cuadrante.');
+    return;
+  }
+  var btn = document.getElementById('mon-guardar-btn');
+  btn.disabled = true;
+  document.getElementById('mon-loading').style.display = 'block';
+  document.getElementById('mon-ok').style.display = 'none';
+  document.getElementById('mon-error').style.display = 'none';
+  var payload = {
+    action: 'addMonitoreo',
+    fecha: fecha,
+    finca: finca,
+    lote: 'Lote ' + loteNum,
+    cama: cama,
+    cuadrante_1: monCuadrantes[1].join(', '),
+    cuadrante_2: monCuadrantes[2].join(', '),
+    cuadrante_3: monCuadrantes[3].join(', '),
+    cuadrante_4: monCuadrantes[4].join(', ')
+  };
+  try {
+    await fetch(WS, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+    document.getElementById('mon-loading').style.display = 'none';
+    document.getElementById('mon-ok-txt').textContent = finca + ' · Lote ' + loteNum + ' · Cama ' + cama;
+    document.getElementById('mon-ok').style.display = 'block';
+    btn.disabled = false;
+    monResetCampos();
+  } catch(e) {
+    document.getElementById('mon-loading').style.display = 'none';
+    document.getElementById('mon-error').style.display = 'block';
+    btn.disabled = false;
+  }
+}
+
+function monResetCampos() {
+  monCuadrantes = {1:[], 2:[], 3:[], 4:[]};
+  monCuadranteActivo = 1;
+  document.getElementById('mon-fecha').value = new Date().toISOString().split('T')[0];
+  document.getElementById('mon-finca').selectedIndex = 0;
+  document.getElementById('mon-cama').value = '';
+  monActualizarFechaSemana();
+  poblarMonLoteSelect();
+  document.getElementById('mon-lote-select').value = '';
+  monActualizarInfoLote();
+  monRenderCuadrantes();
+  monRenderPlagasList();
+}
+
+function monLimpiar() {
+  document.getElementById('mon-ok').style.display = 'none';
+  document.getElementById('mon-error').style.display = 'none';
+  monResetCampos();
+}
+
+// Init monitoreo
+(function() {
+  document.getElementById('mon-fecha').value = new Date().toISOString().split('T')[0];
+  document.getElementById('mon-fecha').addEventListener('change', monActualizarFechaSemana);
+  monActualizarFechaSemana();
+  document.getElementById('mon-finca').addEventListener('change', monActualizarInfoLote);
+  poblarMonLoteSelect();
+  document.getElementById('mon-lote-select').addEventListener('change', monActualizarInfoLote);
+  document.getElementById('mon-cama').addEventListener('input', function() {
+    this.value = this.value.replace(/[^0-9]/g, '');
+  });
+  monActualizarInfoLote();
+  monRenderCuadrantes();
+  monRenderPlagasList();
 })();
 </script>
 
