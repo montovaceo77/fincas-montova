@@ -135,7 +135,8 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
 <button class="fab" id="fab">+</button>
 
 <nav class="bottom-nav">
-  <button class="nav-btn on">Programacion</button>
+  <button class="nav-btn on" onclick="showTab('programacion', this)">Programacion</button>
+  <button class="nav-btn" onclick="showTab('fumigacion', this)">Fumigacion</button>
 </nav>
 
 <!-- Modal lote -->
@@ -650,5 +651,329 @@ function renderLotes() {
   });
 }
 </script>
+
+<!-- Seccion Fumigacion -->
+<div id="sec-fumigacion" style="display:none; padding-bottom:70px;">
+  <div class="main" style="max-width:480px;">
+
+    <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
+      <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 1</span>
+      <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:4px;">Fecha de la aplicacion</label>
+      <p style="font-size:12px; color:var(--ink-mid); margin-bottom:12px;">Semana del año en curso</p>
+      <input type="date" id="fum-fecha" style="width:100%; padding:10px 12px; font-size:15px; border:1px solid var(--border); border-radius:8px; color:var(--ink); background:#fafafa;" />
+      <div id="fum-fecha-semana" style="font-size:12px; font-weight:600; color:var(--verde-dark); margin-top:8px;"></div>
+    </div>
+
+    <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
+      <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 2</span>
+      <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:12px;">Finca en la que se realiza la aplicacion</label>
+      <div id="fum-fincas-lista" style="display:flex; flex-direction:column; gap:8px;"></div>
+    </div>
+
+    <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
+      <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 3</span>
+      <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:12px;">Lote fumigado</label>
+      <select id="fum-lote-select" style="width:100%; padding:10px 12px; font-size:15px; border:1px solid var(--border); border-radius:8px; color:var(--ink); background:#fafafa;"></select>
+      <div id="fum-lote-info"></div>
+    </div>
+
+    <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
+      <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 4</span>
+      <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:4px;">¿Contra qué plaga se realiza la aplicación?</label>
+      <p style="font-size:12px; color:var(--ink-mid); margin-bottom:8px;">Puedes elegir mas de una</p>
+      <div id="fum-plagas-lista" style="height:200px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; padding:6px; display:flex; flex-direction:column; gap:6px; background:#fafafa;"></div>
+      <p style="font-size:11px; color:var(--ink-soft); margin-top:6px; text-align:right;">Desliza para ver mas</p>
+    </div>
+
+    <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
+      <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 5</span>
+      <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:4px;">Productos aplicados</label>
+      <p style="font-size:12px; color:var(--ink-mid); margin-bottom:8px;">Puedes elegir mas de uno</p>
+      <div id="fum-productos-lista" style="height:200px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; padding:6px; display:flex; flex-direction:column; gap:6px; background:#fafafa;"></div>
+      <p style="font-size:11px; color:var(--ink-soft); margin-top:6px; text-align:right;">Desliza para ver mas</p>
+    </div>
+
+    <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
+      <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 6</span>
+      <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:4px;">Equipo de fumigacion</label>
+      <p style="font-size:12px; color:var(--ink-mid); margin-bottom:8px;">Puedes elegir mas de uno</p>
+      <div id="fum-equipo-container"><div style="background:#f9fafb; border-radius:8px; padding:0.75rem 1rem; font-size:13px; color:var(--ink-soft); text-align:center; border:1px solid var(--border);">Primero selecciona la finca</div></div>
+    </div>
+
+    <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
+      <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 7</span>
+      <span style="display:inline-block; background:#e5e7eb; color:#9ca3af; font-size:10px; padding:3px 10px; border-radius:6px; margin-left:6px; letter-spacing:1px;">Opcional</span>
+      <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-top:8px; margin-bottom:4px;">Novedades o comentarios</label>
+      <textarea id="fum-novedades" rows="4" style="width:100%; padding:10px 12px; font-size:14px; border:1px solid var(--border); border-radius:8px; color:var(--ink); background:#fafafa; resize:vertical; font-family:inherit; line-height:1.5;" placeholder="Escribe aqui cualquier novedad..."></textarea>
+    </div>
+
+    <div style="display:flex; gap:10px; margin-top:0.5rem;">
+      <button id="fum-guardar-btn" onclick="fumGuardar()" style="flex:1; padding:15px; font-size:16px; font-weight:600; background:var(--verde-dark); color:#fff; border:none; border-radius:12px; cursor:pointer;">Guardar registro</button>
+      <button onclick="fumLimpiar()" style="padding:15px 18px; font-size:15px; border-radius:12px; cursor:pointer; background:var(--white); border:1px solid var(--border); color:var(--ink-mid);">&#8635;</button>
+    </div>
+    <div id="fum-loading" style="display:none; margin-top:1rem; background:var(--white); border:1px solid var(--border); border-radius:12px; padding:1rem 1.25rem; font-size:14px; color:var(--ink-mid); text-align:center;">Guardando registro...</div>
+    <div id="fum-ok" style="display:none; margin-top:1rem; background:var(--verde-light); border:1px solid var(--verde-mid); border-radius:12px; padding:1rem 1.25rem;">
+      <div style="font-size:15px; font-weight:600; color:var(--verde-dark); margin-bottom:4px;">Registro guardado con exito</div>
+      <div id="fum-ok-txt" style="font-size:13px; color:var(--verde);"></div>
+    </div>
+    <div id="fum-error" style="display:none; margin-top:1rem; background:#fff0f0; border:1px solid #ffcccc; border-radius:12px; padding:1rem 1.25rem; font-size:14px; color:#c0392b;">Hubo un problema al guardar. Intenta de nuevo.</div>
+  </div>
+</div>
+
+<script>
+// ===== FUMIGACION MODULE =====
+var FUM_FINCAS = ['Oasis Garden','Flor de agua 3','Flor Esperancita','Flor Madera'];
+var FUM_LOTES = Array.from({length:33}, function(_,i){ return 'Lote '+(i+1); });
+var FUM_PLAGAS = ['Afido','Alternaria','Babosa','Botritis','Ceniza','Control malezas','Mancha foliar','Secadera','Thirps','Acaro','Acaro blanco'];
+var FUM_PRODUCTOS = ['Abafec 100 cc','Agrifos 100 cc','Athirn 50 cc','Cal brava','Carial opti 200 cc','Chakal 100 cc','Divino 100 cc','Elosal 200 cc','Fungitox 200 cc','Gramoxone 100 cm','Incipio 50 cc','LS 60','Mesulfuron 150 cc','Metarez','Panser 100 cm','Propamotal 200 cc','Rally 100 cc','Sencor 5 cm','Zafiro 200 cc','Zorvec 100 cc'];
+var FUM_EQUIPOS = {
+  'Flor de agua 3': ['Antony Jose Gonzalez Diaz','Edison De Jesus Otalvaro Giraldo','Esneider De Jesus Ocampo Soto','German Antonio Valencia Orozco','Luis Ernesto Ocampo Ocampo','Nestor Emilio Giraldo Acevedo','Sebastian Ocampo Rios','Yonathan Enrique Gonzalez Diaz','Santiago Patino Marulanda','Yorman Alexander Otalvaro Orozco'],
+  'Oasis Garden': ['Carlos Andres Garcia Areiza','Cristian Danilo Ocampo Arboleda','Eliecer De Jesus Valencia Osorio','Elkin Arias Escobar','Guillermo Antonio Pavas Ramirez','Hernan Dario Duque Arango','John Jairo Bedoya Uribe','Juan David Palencia Doria','Julian Esteban Londono Alzate','Lino De Jesus Quintero Castano','Pedro Luis Pavas Martinez'],
+  'Flor Madera': ['Agustin Davila Marin','Belisario Ocampo','Cristian Dario Lopez Jaramillo','Daniel De Jesus Cardona Castro','Henry Antonio Franco Jaramillo','Luis Antonio Pavas Cardona','Neiser De Jesus Alvarez Tabares','Wilmar Alonso Castro Tabares'],
+  'Flor Esperancita': ['Jose Angel Rivera Rivera','Diego Alexander Garcia Usma']
+};
+
+var fumSelFinca=[], fumSelLotes=[], fumSelPlagas=[], fumSelProductos=[], fumSelEquipo=[];
+
+function showTab(tab, btn) {
+  // Toggle programacion section visibility
+  var secProg = document.getElementById('lotes-list') && document.getElementById('lotes-list').closest('.main');
+  var mainDiv = document.querySelector('.main');
+  var fabBtn = document.getElementById('fab');
+  var secFum = document.getElementById('sec-fumigacion');
+
+  document.querySelectorAll('.nav-btn').forEach(function(b){ b.classList.remove('on'); });
+  btn.classList.add('on');
+
+  if (tab === 'fumigacion') {
+    if (mainDiv) mainDiv.style.display = 'none';
+    if (fabBtn) fabBtn.style.display = 'none';
+    secFum.style.display = 'block';
+  } else {
+    if (mainDiv) mainDiv.style.display = '';
+    if (fabBtn) fabBtn.style.display = '';
+    secFum.style.display = 'none';
+  }
+}
+
+function fumMkItemBtn(items, selArr, containerId, single) {
+  var c = document.getElementById(containerId);
+  if (!c) return;
+  c.innerHTML = '';
+  items.forEach(function(item) {
+    var btn = document.createElement('button');
+    var sel = (function(a,i){ for(var x=0;x<a.length;x++){if(a[x]===i)return true;}return false; })(selArr, item);
+    btn.style.cssText = 'padding:10px 12px; font-size:13px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; background:'+(sel?'var(--verde-light)':'#fff')+'; border:1px solid '+(sel?'var(--verde-mid)':'var(--border)')+'; color:'+(sel?'var(--verde-dark)':'var(--ink-mid)')+'; font-weight:'+(sel?'600':'400')+'; width:100%; text-align:left; flex-shrink:0;';
+    var chk = document.createElement('div');
+    chk.style.cssText = 'width:20px; height:20px; border-radius:50%; border:1.5px solid '+(sel?'var(--verde-dark)':'var(--border)')+'; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:11px; background:'+(sel?'var(--verde-dark)':'transparent')+'; color:#fff;';
+    chk.textContent = sel ? '✓' : '';
+    var sp = document.createElement('span');
+    sp.textContent = item;
+    btn.appendChild(chk);
+    btn.appendChild(sp);
+    btn.onclick = function() {
+      if (single) { selArr.length = 0; selArr.push(item); }
+      else {
+        var idx = -1;
+        for(var x=0;x<selArr.length;x++){if(selArr[x]===item){idx=x;break;}}
+        if (idx > -1) selArr.splice(idx, 1); else selArr.push(item);
+      }
+      fumMkItemBtn(items, selArr, containerId, single);
+    };
+    c.appendChild(btn);
+  });
+}
+
+function fumMkGrid(items, arr, containerId) {
+  var c = document.getElementById(containerId);
+  if (!c) return;
+  c.innerHTML = '';
+  items.forEach(function(item) {
+    var btn = document.createElement('button');
+    var sel = (function(a,i){ for(var x=0;x<a.length;x++){if(a[x]===i)return true;}return false; })(arr, item);
+    btn.style.cssText = 'padding:10px 6px; font-size:13px; border-radius:8px; cursor:pointer; text-align:center; background:'+(sel?'var(--verde-light)':'#f9fafb')+'; border:1px solid '+(sel?'var(--verde-mid)':'var(--border)')+'; color:'+(sel?'var(--verde-dark)':'var(--ink-mid)')+'; font-weight:'+(sel?'600':'400')+';';
+    btn.textContent = item;
+    btn.onclick = function() {
+      var idx = -1;
+      for(var x=0;x<arr.length;x++){if(arr[x]===item){idx=x;break;}}
+      if (idx > -1) arr.splice(idx, 1); else arr.push(item);
+      fumMkGrid(items, arr, containerId);
+    };
+    c.appendChild(btn);
+  });
+}
+
+function fumRenderFincas() {
+  var c = document.getElementById('fum-fincas-lista');
+  if (!c) return;
+  c.innerHTML = '';
+  FUM_FINCAS.forEach(function(f) {
+    var btn = document.createElement('button');
+    var sel = fumSelFinca.indexOf(f) !== -1;
+    btn.style.cssText = 'padding:10px 12px; font-size:13px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; background:'+(sel?'var(--verde-light)':'#fff')+'; border:1px solid '+(sel?'var(--verde-mid)':'var(--border)')+'; color:'+(sel?'var(--verde-dark)':'var(--ink-mid)')+'; font-weight:'+(sel?'600':'400')+'; width:100%; text-align:left;';
+    var chk = document.createElement('div');
+    chk.style.cssText = 'width:20px; height:20px; border-radius:50%; border:1.5px solid '+(sel?'var(--verde-dark)':'var(--border)')+'; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:11px; background:'+(sel?'var(--verde-dark)':'transparent')+'; color:#fff;';
+    chk.textContent = sel ? '✓' : '';
+    var sp = document.createElement('span');
+    sp.textContent = f;
+    btn.appendChild(chk);
+    btn.appendChild(sp);
+    btn.onclick = function() {
+      fumSelFinca.length = 0; fumSelFinca.push(f);
+      fumSelEquipo.length = 0;
+      fumRenderFincas(); fumRenderEquipo(); fumActualizarInfoLote();
+    };
+    c.appendChild(btn);
+  });
+}
+
+function poblarFumLoteSelect() {
+  var sel = document.getElementById('fum-lote-select');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Selecciona un lote</option>';
+  for (var i = 1; i <= 33; i++) {
+    var opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = 'Lote ' + i;
+    sel.appendChild(opt);
+  }
+}
+
+function fumActualizarInfoLote() {
+  var finca = fumSelFinca[0];
+  var info = document.getElementById('fum-lote-info');
+  if (!info) return;
+  var loteNum = document.getElementById('fum-lote-select') ? document.getElementById('fum-lote-select').value : '';
+  if (!finca) {
+    info.innerHTML = '<div style="background:#f9fafb; border-radius:8px; padding:0.75rem 1rem; font-size:13px; color:var(--ink-soft); text-align:center; border:1px solid var(--border); margin-top:10px;">Primero selecciona la finca</div>';
+    return;
+  }
+  if (!loteNum) { info.innerHTML = ''; return; }
+  var l = lotes.find(function(x) {
+    return String(x.Finca || x.finca || '') === String(finca) &&
+           String(x.Lote || x.lote || '') === String(loteNum) &&
+           String(x.Estado || x.estado || '').toLowerCase() === 'activo';
+  });
+  if (!l) {
+    info.innerHTML = '<div style="background:#f9fafb; border-radius:8px; padding:0.75rem 1rem; font-size:13px; color:var(--ink-soft); text-align:center; border:1px solid var(--border); margin-top:10px;">No hay un ciclo activo registrado para este lote en Fincas Montova</div>';
+    return;
+  }
+  var fechaISO = getISO(l.Fecha_Inicio || l.fecha_inicio || '');
+  var variedad = l.Variedad || l.variedad || '';
+  var semana = calcSemanaCiclo(fechaISO);
+  info.innerHTML = '<div style="background:var(--verde-light); border:1px solid var(--verde-mid); border-radius:8px; padding:10px 12px; margin-top:10px; font-size:13px; color:var(--verde-dark); line-height:1.6;">' +
+    '<div><strong>Variedad:</strong> ' + variedad + '</div>' +
+    '<div><strong>Inicio del lote:</strong> ' + fmtDate(fechaISO) + '</div>' +
+    '<div><strong>Semana del ciclo:</strong> ' + (semana !== null ? semana : '-') + ' de 34</div>' +
+  '</div>';
+}
+
+function fumRenderEquipo() {
+  var finca = fumSelFinca[0];
+  var cont = document.getElementById('fum-equipo-container');
+  if (!cont) return;
+  if (!finca) { cont.innerHTML = '<div style="background:#f9fafb; border-radius:8px; padding:0.75rem 1rem; font-size:13px; color:var(--ink-soft); text-align:center; border:1px solid var(--border);">Primero selecciona la finca</div>'; return; }
+  cont.innerHTML = '<div id="fum-equipo-lista" style="height:200px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; padding:6px; display:flex; flex-direction:column; gap:6px; background:#fafafa;"></div><p style="font-size:11px; color:var(--ink-soft); margin-top:6px; text-align:right;">Desliza para ver mas</p>';
+  var equipos = (FUM_EQUIPOS[finca] || []);
+  var c = document.getElementById('fum-equipo-lista');
+  equipos.forEach(function(name) {
+    var btn = document.createElement('button');
+    var sel = fumSelEquipo.indexOf(name) !== -1;
+    btn.style.cssText = 'padding:10px 12px; font-size:13px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; background:'+(sel?'var(--verde-light)':'#fff')+'; border:1px solid '+(sel?'var(--verde-mid)':'var(--border)')+'; color:'+(sel?'var(--verde-dark)':'var(--ink-mid)')+'; font-weight:'+(sel?'600':'400')+'; width:100%; text-align:left; flex-shrink:0;';
+    var chk = document.createElement('div');
+    chk.style.cssText = 'width:20px; height:20px; border-radius:50%; border:1.5px solid '+(sel?'var(--verde-dark)':'var(--border)')+'; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:11px; background:'+(sel?'var(--verde-dark)':'transparent')+'; color:#fff;';
+    chk.textContent = sel ? '✓' : '';
+    var sp = document.createElement('span');
+    sp.textContent = name;
+    btn.appendChild(chk);
+    btn.appendChild(sp);
+    btn.onclick = function() {
+      var idx = fumSelEquipo.indexOf(name);
+      if (idx > -1) fumSelEquipo.splice(idx, 1); else fumSelEquipo.push(name);
+      fumRenderEquipo();
+    };
+    c.appendChild(btn);
+  });
+}
+
+async function fumGuardar() {
+  var fecha = document.getElementById('fum-fecha').value;
+  if (!fecha || !fumSelFinca.length || !fumSelLotes.length || !fumSelPlagas.length || !fumSelProductos.length || !fumSelEquipo.length) {
+    alert('Completa los pasos del 1 al 6 antes de guardar.');
+    return;
+  }
+  var btn = document.getElementById('fum-guardar-btn');
+  btn.disabled = true;
+  document.getElementById('fum-loading').style.display = 'block';
+  document.getElementById('fum-ok').style.display = 'none';
+  document.getElementById('fum-error').style.display = 'none';
+  var payload = {
+    action: 'addFumigacion',
+    fecha: fecha,
+    finca: fumSelFinca[0],
+    lotes: fumSelLotes.join(', '),
+    productos: fumSelProductos.join(', '),
+    plagas: fumSelPlagas.join(', '),
+    equipo: fumSelEquipo.join(', '),
+    novedades: document.getElementById('fum-novedades').value.trim()
+  };
+  try {
+    await fetch(WS, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+    document.getElementById('fum-loading').style.display = 'none';
+    document.getElementById('fum-ok-txt').textContent = fumSelFinca[0] + ' · ' + fumSelLotes.join(', ');
+    document.getElementById('fum-ok').style.display = 'block';
+    btn.disabled = false;
+  } catch(e) {
+    document.getElementById('fum-loading').style.display = 'none';
+    document.getElementById('fum-error').style.display = 'block';
+    btn.disabled = false;
+  }
+}
+
+function fumActualizarFechaSemana() {
+  var fecha = document.getElementById('fum-fecha').value;
+  var el = document.getElementById('fum-fecha-semana');
+  if (!el) return;
+  if (!fecha) { el.textContent = ''; return; }
+  var sa = calcSemanaAnio(fecha);
+  var yearNum = new Date(fecha + 'T12:00:00').getFullYear();
+  el.textContent = sa ? 'Semana ' + sa + ' / ' + yearNum : '';
+}
+
+function fumLimpiar() {
+  fumSelFinca=[]; fumSelLotes=[]; fumSelPlagas=[]; fumSelProductos=[]; fumSelEquipo=[];
+  document.getElementById('fum-fecha').value = new Date().toISOString().split('T')[0];
+  document.getElementById('fum-novedades').value = '';
+  document.getElementById('fum-ok').style.display = 'none';
+  document.getElementById('fum-error').style.display = 'none';
+  fumActualizarFechaSemana();
+  fumRenderFincas();
+  poblarFumLoteSelect();
+  document.getElementById('fum-lote-select').value = '';
+  fumActualizarInfoLote();
+  fumMkItemBtn(FUM_PLAGAS, fumSelPlagas, 'fum-plagas-lista', false);
+  fumMkItemBtn(FUM_PRODUCTOS, fumSelProductos, 'fum-productos-lista', false);
+  fumRenderEquipo();
+}
+
+// Init fumigacion
+(function() {
+  document.getElementById('fum-fecha').value = new Date().toISOString().split('T')[0];
+  document.getElementById('fum-fecha').addEventListener('change', fumActualizarFechaSemana);
+  fumActualizarFechaSemana();
+  fumRenderFincas();
+  poblarFumLoteSelect();
+  document.getElementById('fum-lote-select').addEventListener('change', function() {
+    fumSelLotes.length = 0;
+    if (this.value) fumSelLotes.push('Lote ' + this.value);
+    fumActualizarInfoLote();
+  });
+  fumActualizarInfoLote();
+  fumMkItemBtn(FUM_PLAGAS, fumSelPlagas, 'fum-plagas-lista', false);
+  fumMkItemBtn(FUM_PRODUCTOS, fumSelProductos, 'fum-productos-lista', false);
+  fumRenderEquipo();
+})();
+</script>
+
 </body>
 </html>
