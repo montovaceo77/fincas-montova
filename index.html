@@ -75,7 +75,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
 .prep-item-val.vacio { color: var(--ink-soft); font-weight: 400; font-style: italic; }
 .prep-productos { font-size: 12px; color: var(--ink-mid); margin-top: 2px; }
 
-.fab { position: fixed; bottom: 4.5rem; right: 1.25rem; width: 48px; height: 48px; border-radius: 50%; background: var(--verde); color: white; font-size: 24px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(59,107,74,0.35); z-index: 150; }
+.fab { position: fixed; bottom: 4.5rem; right: 1.25rem; left: 1.25rem; max-width: 480px; margin: 0 auto; height: 50px; border-radius: 12px; background: var(--verde); color: white; font-size: 15px; font-weight: 600; font-family: 'DM Sans', sans-serif; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 16px rgba(59,107,74,0.35); z-index: 150; }
 .fab:hover { background: var(--verde-dark); }
 
 .overlay { display: none; position: fixed; inset: 0; background: rgba(30,46,36,0.4); z-index: 300; align-items: flex-end; justify-content: center; }
@@ -132,7 +132,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
   <div id="lotes-list"></div>
 </div>
 
-<button class="fab" id="fab">+</button>
+<button class="fab" id="fab"><span style="font-size:18px; line-height:1;">+</span> Programar lote</button>
 
 <nav class="bottom-nav">
   <button class="nav-btn on" onclick="showTab('programacion', this)">Programacion</button>
@@ -718,7 +718,7 @@ function renderLotes() {
 
     <div style="display:flex; gap:10px; margin-top:0.5rem;">
       <button id="fum-guardar-btn" onclick="fumGuardar()" style="flex:1; padding:15px; font-size:16px; font-weight:600; background:var(--verde-dark); color:#fff; border:none; border-radius:12px; cursor:pointer;">Guardar registro</button>
-      <button onclick="fumLimpiar()" style="padding:15px 18px; font-size:15px; border-radius:12px; cursor:pointer; background:var(--white); border:1px solid var(--border); color:var(--ink-mid);">&#8635;</button>
+      <button onclick="fumLimpiar()" style="padding:15px 18px; font-size:15px; font-weight:600; border-radius:12px; cursor:pointer; background:var(--white); border:1px solid var(--border); color:var(--ink-mid); white-space:nowrap;">Nuevo registro</button>
     </div>
     <div id="fum-loading" style="display:none; margin-top:1rem; background:var(--white); border:1px solid var(--border); border-radius:12px; padding:1rem 1.25rem; font-size:14px; color:var(--ink-mid); text-align:center;">Guardando registro...</div>
     <div id="fum-ok" style="display:none; margin-top:1rem; background:var(--verde-light); border:1px solid var(--verde-mid); border-radius:12px; padding:1rem 1.25rem;">
@@ -962,6 +962,7 @@ async function fumGuardar() {
     document.getElementById('fum-ok-txt').textContent = fumSelFinca[0] + ' · ' + fumSelLotes.join(', ');
     document.getElementById('fum-ok').style.display = 'block';
     btn.disabled = false;
+    setTimeout(fetchFumigaciones, 3000);
   } catch(e) {
     document.getElementById('fum-loading').style.display = 'none';
     document.getElementById('fum-error').style.display = 'block';
