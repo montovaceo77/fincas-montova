@@ -199,11 +199,10 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
     <div id="app1-prods" style="display:none">
       <div class="chk-list">
         <div class="chk-list-title">PRODUCTOS APLICACION 1</div>
-        <label class="chk-item"><input type="checkbox" id="a1p1" value="Producto 1"><span>Producto 1</span></label>
-        <label class="chk-item"><input type="checkbox" id="a1p2" value="Producto 2"><span>Producto 2</span></label>
-        <label class="chk-item"><input type="checkbox" id="a1p3" value="Producto 3"><span>Producto 3</span></label>
-        <label class="chk-item"><input type="checkbox" id="a1p4" value="Producto 4"><span>Producto 4</span></label>
-        <label class="chk-item"><input type="checkbox" id="a1p5" value="Producto 5"><span>Producto 5</span></label>
+        <label class="chk-item"><input type="checkbox" id="a1p1" value="Alicerce 100 gr"><span>Alicerce 100 gr</span></label>
+        <label class="chk-item"><input type="checkbox" id="a1p2" value="Humus 1 L"><span>Humus 1 L</span></label>
+        <label class="chk-item"><input type="checkbox" id="a1p3" value="Melaza 1 kg"><span>Melaza 1 kg</span></label>
+        <label class="chk-item"><input type="checkbox" id="a1p4" value="Trichoderma 330 gr"><span>Trichoderma 330 gr</span></label>
       </div>
     </div>
 
@@ -216,11 +215,10 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
     <div id="app2-prods" style="display:none">
       <div class="chk-list">
         <div class="chk-list-title">PRODUCTOS APLICACION 2</div>
-        <label class="chk-item"><input type="checkbox" id="a2p1" value="Producto 1"><span>Producto 1</span></label>
-        <label class="chk-item"><input type="checkbox" id="a2p2" value="Producto 2"><span>Producto 2</span></label>
-        <label class="chk-item"><input type="checkbox" id="a2p3" value="Producto 3"><span>Producto 3</span></label>
-        <label class="chk-item"><input type="checkbox" id="a2p4" value="Producto 4"><span>Producto 4</span></label>
-        <label class="chk-item"><input type="checkbox" id="a2p5" value="Producto 5"><span>Producto 5</span></label>
+        <label class="chk-item"><input type="checkbox" id="a2p1" value="Alicerce 100 gr"><span>Alicerce 100 gr</span></label>
+        <label class="chk-item"><input type="checkbox" id="a2p2" value="Humus 1 L"><span>Humus 1 L</span></label>
+        <label class="chk-item"><input type="checkbox" id="a2p3" value="Melaza 1 kg"><span>Melaza 1 kg</span></label>
+        <label class="chk-item"><input type="checkbox" id="a2p4" value="Trichoderma 330 gr"><span>Trichoderma 330 gr</span></label>
       </div>
     </div>
 
@@ -439,9 +437,9 @@ function initModal() {
       picada:       document.getElementById('p-picada').value,
       desinfeccion: document.getElementById('p-desinfeccion').value,
       app1fecha:    document.getElementById('p-app1-fecha').value,
-      app1p1: getChk('a1p1'), app1p2: getChk('a1p2'), app1p3: getChk('a1p3'), app1p4: getChk('a1p4'), app1p5: getChk('a1p5'),
+      app1p1: getChk('a1p1'), app1p2: getChk('a1p2'), app1p3: getChk('a1p3'), app1p4: getChk('a1p4'),
       app2fecha:    document.getElementById('p-app2-fecha').value,
-      app2p1: getChk('a2p1'), app2p2: getChk('a2p2'), app2p3: getChk('a2p3'), app2p4: getChk('a2p4'), app2p5: getChk('a2p5')
+      app2p1: getChk('a2p1'), app2p2: getChk('a2p2'), app2p3: getChk('a2p3'), app2p4: getChk('a2p4')
     };
 
     if (reprogramarId) {
@@ -453,8 +451,8 @@ function initModal() {
       sendToServer({action:'addPreparacion', finca:finca, variedad:variedad, lote:loteNum,
         fecha_inicio_ciclo:fecha,
         fecha_picada:pd.picada, fecha_desinfeccion:pd.desinfeccion,
-        fecha_app1:pd.app1fecha, app1_p1:pd.app1p1, app1_p2:pd.app1p2, app1_p3:pd.app1p3, app1_p4:pd.app1p4, app1_p5:pd.app1p5,
-        fecha_app2:pd.app2fecha, app2_p1:pd.app2p1, app2_p2:pd.app2p2, app2_p3:pd.app2p3, app2_p4:pd.app2p4, app2_p5:pd.app2p5
+        fecha_app1:pd.app1fecha, app1_p1:pd.app1p1, app1_p2:pd.app1p2, app1_p3:pd.app1p3, app1_p4:pd.app1p4,
+        fecha_app2:pd.app2fecha, app2_p1:pd.app2p1, app2_p2:pd.app2p2, app2_p3:pd.app2p3, app2_p4:pd.app2p4
       });
       setTimeout(function() { fetchLotes(); fetchPreparaciones(); }, 5000);
     } else {
@@ -474,8 +472,8 @@ function initModal() {
       sendToServer({action:'addPreparacion', finca:finca, variedad:variedad, lote:loteNum,
         fecha_inicio_ciclo:fecha,
         fecha_picada:pd.picada, fecha_desinfeccion:pd.desinfeccion,
-        fecha_app1:pd.app1fecha, app1_p1:pd.app1p1, app1_p2:pd.app1p2, app1_p3:pd.app1p3, app1_p4:pd.app1p4, app1_p5:pd.app1p5,
-        fecha_app2:pd.app2fecha, app2_p1:pd.app2p1, app2_p2:pd.app2p2, app2_p3:pd.app2p3, app2_p4:pd.app2p4, app2_p5:pd.app2p5
+        fecha_app1:pd.app1fecha, app1_p1:pd.app1p1, app1_p2:pd.app1p2, app1_p3:pd.app1p3, app1_p4:pd.app1p4,
+        fecha_app2:pd.app2fecha, app2_p1:pd.app2p1, app2_p2:pd.app2p2, app2_p3:pd.app2p3, app2_p4:pd.app2p4
       });
       setTimeout(function() { fetchLotes(); fetchPreparaciones(); }, 5000);
     }
@@ -962,6 +960,7 @@ async function fumGuardar() {
     document.getElementById('fum-ok-txt').textContent = fumSelFinca[0] + ' · ' + fumSelLotes.join(', ');
     document.getElementById('fum-ok').style.display = 'block';
     btn.disabled = false;
+    fumResetCampos();
     setTimeout(fetchFumigaciones, 3000);
   } catch(e) {
     document.getElementById('fum-loading').style.display = 'none';
@@ -980,12 +979,10 @@ function fumActualizarFechaSemana() {
   el.textContent = sa ? 'Semana ' + sa + ' / ' + yearNum : '';
 }
 
-function fumLimpiar() {
+function fumResetCampos() {
   fumSelFinca=[]; fumSelLotes=[]; fumSelPlagas=[]; fumSelProductos=[]; fumSelFertilizantes=[]; fumSelEquipo=[];
   document.getElementById('fum-fecha').value = new Date().toISOString().split('T')[0];
   document.getElementById('fum-novedades').value = '';
-  document.getElementById('fum-ok').style.display = 'none';
-  document.getElementById('fum-error').style.display = 'none';
   fumActualizarFechaSemana();
   fumRenderFincas();
   poblarFumLoteSelect();
@@ -995,6 +992,12 @@ function fumLimpiar() {
   fumMkItemBtn(FUM_PRODUCTOS, fumSelProductos, 'fum-productos-lista', false);
   fumMkItemBtn(FUM_FERTILIZANTES, fumSelFertilizantes, 'fum-fertilizantes-lista', false);
   fumRenderEquipo();
+}
+
+function fumLimpiar() {
+  document.getElementById('fum-ok').style.display = 'none';
+  document.getElementById('fum-error').style.display = 'none';
+  fumResetCampos();
 }
 
 // Init fumigacion
