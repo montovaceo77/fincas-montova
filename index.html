@@ -765,6 +765,12 @@ function renderLotes() {
       <p style="font-size:11px; color:var(--ink-soft); margin-top:6px; text-align:right;">Desliza para ver mas</p>
     </div>
 
+    <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
+      <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 5</span>
+      <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:12px;">Fertilizacion</label>
+      <div id="lab-fert-lista" style="display:flex; gap:8px;"></div>
+    </div>
+
     <div style="display:flex; gap:10px; margin-top:0.5rem;">
       <button id="lab-guardar-btn" onclick="labGuardar()" style="flex:1; padding:15px; font-size:16px; font-weight:600; background:var(--verde-dark); color:#fff; border:none; border-radius:12px; cursor:pointer;">Guardar registro</button>
       <button onclick="labLimpiar()" style="padding:15px 18px; font-size:15px; font-weight:600; border-radius:12px; cursor:pointer; background:var(--white); border:1px solid var(--border); color:var(--ink-mid); white-space:nowrap;">Nuevo registro</button>
@@ -1079,9 +1085,36 @@ function fumLimpiar() {
 })();
 
 // ===== LABORES DE CAMPO MODULE =====
-var LAB_LABORES = ['Subida de mallas','Bajada de mallas','Seleccion','Encamadas','Fertilizacion'];
+var LAB_LABORES = ['Bajada de mallas','Encamadas','Seleccion','Subida de mallas'];
 var labSelLabor = [];
 var labVariedadActual = '';
+var labSelFert = [];
+var laboresCampo = [];
+
+function fetchLaboresCampo() {
+  fetch(WS + '?action=getLaboresCampo').then(function(r) { return r.json(); }).then(function(data) {
+    laboresCampo = Array.isArray(data) ? data : [];
+    labActualizarInfoLote();
+  }).catch(function() { laboresCampo = []; });
+}
+
+function labRenderFert() {
+  var c = document.getElementById('lab-fert-lista');
+  if (!c) return;
+  c.innerHTML = '';
+  ['Si', 'No'].forEach(function(opt) {
+    var btn = document.createElement('button');
+    var sel = labSelFert[0] === opt;
+    btn.style.cssText = 'flex:1; padding:12px; font-size:14px; border-radius:8px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; background:'+(sel?'var(--verde-light)':'#fff')+'; border:1px solid '+(sel?'var(--verde-mid)':'var(--border)')+'; color:'+(sel?'var(--verde-dark)':'var(--ink-mid)')+'; font-weight:'+(sel?'600':'400')+';';
+    btn.textContent = (opt === 'Si' ? 'Si' : 'No');
+    btn.onclick = function() {
+      labSelFert.length = 0;
+      labSelFert.push(opt);
+      labRenderFert();
+    };
+    c.appendChild(btn);
+  });
+}
 
 function poblarLabLoteSelect() {
   var sel = document.getElementById('lab-lote-select');
@@ -1127,11 +1160,32 @@ function labActualizarInfoLote() {
     }
   });
   var ultimaLinea = '<div><strong>Ultima fumigacion/fertilizacion:</strong> ' + (ultima ? fmtDate(ultima) : 'Sin registros previos') + '</div>';
+
+  var ultimaFert = null;
+  laboresCampo.forEach(function(r) {
+    var rFinca = String(r.Finca || r.finca || '');
+    var rLote = String(r.Lote || r.lote || '');
+    var rLabor = String(r.Labor || r.labor || '');
+    if (rFinca === String(finca) && rLote === loteLabel && rLabor.indexOf('Fertilizacion') !== -1) {
+      var f = getISO(r.Fecha || r.fecha || '');
+      if (f && (!ultimaFert || f > ultimaFert)) ultimaFert = f;
+    }
+  });
+  var semanasFert = null;
+  if (ultimaFert) {
+    var hoyFert = new Date(new Date().toISOString().split('T')[0] + 'T12:00:00');
+    var fechaFert = new Date(ultimaFert + 'T12:00:00');
+    semanasFert = Math.floor((hoyFert - fechaFert) / (7 * 24 * 60 * 60 * 1000));
+    if (semanasFert < 0) semanasFert = 0;
+  }
+  var fertLinea = '<div><strong>Semanas desde la ultima fertilizacion:</strong> ' + (semanasFert !== null ? semanasFert : 'Sin fertilizaciones registradas') + '</div>';
+
   if (!l) {
     labVariedadActual = '';
     info.innerHTML = '<div style="background:var(--verde-light); border:1px solid var(--verde-mid); border-radius:8px; padding:10px 12px; margin-top:10px; font-size:13px; color:var(--verde-dark); line-height:1.6;">' +
       '<div style="color:var(--ink-soft);">No hay un ciclo activo registrado para este lote en Fincas Montova</div>' +
       ultimaLinea +
+      fertLinea +
     '</div>';
     return;
   }
@@ -1144,6 +1198,7 @@ function labActualizarInfoLote() {
     '<div><strong>Inicio del lote:</strong> ' + fmtDate(fechaISO) + '</div>' +
     '<div><strong>Semana del ciclo:</strong> ' + (semana !== null ? semana : '-') + ' de 34</div>' +
     ultimaLinea +
+    fertLinea +
   '</div>';
 }
 
@@ -1151,7 +1206,7 @@ async function labGuardar() {
   var fecha = document.getElementById('lab-fecha').value;
   var finca = document.getElementById('lab-finca').value;
   var loteNum = document.getElementById('lab-lote-select').value;
-  if (!fecha || !finca || !loteNum || !labSelLabor.length) {
+  if (!fecha || !finca || !loteNum || !labSelFert.length) {
     alert('Completa todos los pasos antes de guardar.');
     return;
   }
@@ -1160,13 +1215,15 @@ async function labGuardar() {
   document.getElementById('lab-loading').style.display = 'block';
   document.getElementById('lab-ok').style.display = 'none';
   document.getElementById('lab-error').style.display = 'none';
+  var laborFinal = labSelLabor.slice();
+  if (labSelFert[0] === 'Si') laborFinal.push('Fertilizacion');
   var payload = {
     action: 'addLaborCampo',
     fecha: fecha,
     finca: finca,
     variedad: labVariedadActual,
     lote: 'Lote ' + loteNum,
-    labor: labSelLabor.join(', ')
+    labor: laborFinal.join(', ')
   };
   try {
     await fetch(WS, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
@@ -1175,6 +1232,7 @@ async function labGuardar() {
     document.getElementById('lab-ok').style.display = 'block';
     btn.disabled = false;
     labResetCampos();
+    setTimeout(fetchLaboresCampo, 3000);
   } catch(e) {
     document.getElementById('lab-loading').style.display = 'none';
     document.getElementById('lab-error').style.display = 'block';
@@ -1184,6 +1242,7 @@ async function labGuardar() {
 
 function labResetCampos() {
   labSelLabor.length = 0;
+  labSelFert.length = 0;
   document.getElementById('lab-fecha').value = new Date().toISOString().split('T')[0];
   document.getElementById('lab-finca').selectedIndex = 0;
   labActualizarFechaSemana();
@@ -1191,6 +1250,7 @@ function labResetCampos() {
   document.getElementById('lab-lote-select').value = '';
   labActualizarInfoLote();
   fumMkItemBtn(LAB_LABORES, labSelLabor, 'lab-labor-lista', false);
+  labRenderFert();
 }
 
 function labLimpiar() {
@@ -1207,8 +1267,10 @@ function labLimpiar() {
   document.getElementById('lab-finca').addEventListener('change', labActualizarInfoLote);
   poblarLabLoteSelect();
   document.getElementById('lab-lote-select').addEventListener('change', labActualizarInfoLote);
+  fetchLaboresCampo();
   labActualizarInfoLote();
   fumMkItemBtn(LAB_LABORES, labSelLabor, 'lab-labor-lista', false);
+  labRenderFert();
 })();
 </script>
 
