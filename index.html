@@ -139,6 +139,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
   <button class="nav-btn" onclick="showTab('fumigacion', this)">Fumigacion</button>
   <button class="nav-btn" onclick="showTab('labores', this)">Labores de Campo</button>
   <button class="nav-btn" onclick="showTab('monitoreo', this)">Monitoreo</button>
+  <button class="nav-btn" onclick="showTab('ingreso', this)">Ingreso a Sala</button>
 </nav>
 
 <!-- Modal lote -->
@@ -843,6 +844,61 @@ function renderLotes() {
   </div>
 </div>
 
+<div id="sec-ingreso" style="display:none; padding-bottom:70px;">
+  <div class="main" style="max-width:480px;">
+
+    <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
+      <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 1</span>
+      <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:4px;">Fecha de ingreso</label>
+      <p style="font-size:12px; color:var(--ink-mid); margin-bottom:12px;">Semana del año en curso</p>
+      <input type="date" id="ing-fecha" style="width:100%; padding:10px 12px; font-size:15px; border:1px solid var(--border); border-radius:8px; color:var(--ink); background:#fafafa;" />
+      <div id="ing-fecha-semana" style="font-size:12px; font-weight:600; color:var(--verde-dark); margin-top:8px;"></div>
+    </div>
+
+    <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
+      <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 2</span>
+      <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:12px;">Finca</label>
+      <select id="ing-finca" style="width:100%; padding:10px 12px; font-size:15px; border:1px solid var(--border); border-radius:8px; color:var(--ink); background:#fafafa;">
+        <option value="Flor Esperancita">Flor Esperancita</option>
+        <option value="Flor de Agua 3">Flor de Agua 3</option>
+        <option value="Oasis Garden">Oasis Garden</option>
+        <option value="Flor Madera">Flor Madera</option>
+      </select>
+    </div>
+
+    <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
+      <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 3</span>
+      <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:12px;">Numero de lote</label>
+      <select id="ing-lote-select" style="width:100%; padding:10px 12px; font-size:15px; border:1px solid var(--border); border-radius:8px; color:var(--ink); background:#fafafa;"></select>
+      <div id="ing-lote-info"></div>
+    </div>
+
+    <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
+      <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 4</span>
+      <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:12px;">Tipo de flor</label>
+      <div id="ing-tipo-lista" style="display:flex; flex-direction:column; gap:8px;"></div>
+    </div>
+
+    <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
+      <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 5</span>
+      <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:12px;">Cantidad</label>
+      <input type="text" inputmode="numeric" pattern="[0-9]*" id="ing-cantidad" placeholder="Ej: 150" style="width:100%; padding:10px 12px; font-size:15px; border:1px solid var(--border); border-radius:8px; color:var(--ink); background:#fafafa;" />
+      <div id="ing-acumulado-info"></div>
+    </div>
+
+    <div style="display:flex; gap:10px; margin-top:0.5rem;">
+      <button id="ing-guardar-btn" onclick="ingGuardar()" style="flex:1; padding:15px; font-size:16px; font-weight:600; background:var(--verde-dark); color:#fff; border:none; border-radius:12px; cursor:pointer;">Guardar registro</button>
+      <button onclick="ingLimpiar()" style="padding:15px 18px; font-size:15px; font-weight:600; border-radius:12px; cursor:pointer; background:var(--white); border:1px solid var(--border); color:var(--ink-mid); white-space:nowrap;">Nuevo registro</button>
+    </div>
+    <div id="ing-loading" style="display:none; margin-top:1rem; background:var(--white); border:1px solid var(--border); border-radius:12px; padding:1rem 1.25rem; font-size:14px; color:var(--ink-mid); text-align:center;">Guardando registro...</div>
+    <div id="ing-ok" style="display:none; margin-top:1rem; background:var(--verde-light); border:1px solid var(--verde-mid); border-radius:12px; padding:1rem 1.25rem;">
+      <div style="font-size:15px; font-weight:600; color:var(--verde-dark); margin-bottom:4px;">Registro guardado con exito</div>
+      <div id="ing-ok-txt" style="font-size:13px; color:var(--verde);"></div>
+    </div>
+    <div id="ing-error" style="display:none; margin-top:1rem; background:#fff0f0; border:1px solid #ffcccc; border-radius:12px; padding:1rem 1.25rem; font-size:14px; color:#c0392b;">Hubo un problema al guardar. Intenta de nuevo.</div>
+  </div>
+</div>
+
 <script>
 // ===== FUMIGACION MODULE =====
 var FUM_FINCAS = ['Oasis Garden','Flor de agua 3','Flor Esperancita','Flor Madera'];
@@ -868,40 +924,29 @@ function fetchFumigaciones() {
 }
 
 function showTab(tab, btn) {
-  // Toggle section visibility
   var mainDiv = document.querySelector('.main');
   var fabBtn = document.getElementById('fab');
-  var secFum = document.getElementById('sec-fumigacion');
-  var secLab = document.getElementById('sec-labores');
-  var secMon = document.getElementById('sec-monitoreo');
+  var secciones = {
+    fumigacion: document.getElementById('sec-fumigacion'),
+    labores: document.getElementById('sec-labores'),
+    monitoreo: document.getElementById('sec-monitoreo'),
+    ingreso: document.getElementById('sec-ingreso')
+  };
 
   document.querySelectorAll('.nav-btn').forEach(function(b){ b.classList.remove('on'); });
   btn.classList.add('on');
 
-  if (tab === 'fumigacion') {
+  Object.keys(secciones).forEach(function(key) {
+    if (secciones[key]) secciones[key].style.display = 'none';
+  });
+
+  if (secciones[tab]) {
     if (mainDiv) mainDiv.style.display = 'none';
     if (fabBtn) fabBtn.style.display = 'none';
-    secFum.style.display = 'block';
-    secLab.style.display = 'none';
-    secMon.style.display = 'none';
-  } else if (tab === 'labores') {
-    if (mainDiv) mainDiv.style.display = 'none';
-    if (fabBtn) fabBtn.style.display = 'none';
-    secFum.style.display = 'none';
-    secLab.style.display = 'block';
-    secMon.style.display = 'none';
-  } else if (tab === 'monitoreo') {
-    if (mainDiv) mainDiv.style.display = 'none';
-    if (fabBtn) fabBtn.style.display = 'none';
-    secFum.style.display = 'none';
-    secLab.style.display = 'none';
-    secMon.style.display = 'block';
+    secciones[tab].style.display = 'block';
   } else {
     if (mainDiv) mainDiv.style.display = '';
     if (fabBtn) fabBtn.style.display = '';
-    secFum.style.display = 'none';
-    secLab.style.display = 'none';
-    secMon.style.display = 'none';
   }
 }
 
@@ -1562,6 +1607,196 @@ function monLimpiar() {
   monActualizarInfoLote();
   monRenderCuadrantes();
   monRenderPlagasList();
+})();
+
+// ===== INGRESO A SALA MODULE =====
+var ING_TIPOS = ['Mini green', 'Select', 'Premium', 'Jumbo'];
+var ingSelTipo = [];
+var ingresoSala = [];
+
+function poblarIngLoteSelect() {
+  var sel = document.getElementById('ing-lote-select');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Selecciona un lote</option>';
+  for (var i = 1; i <= 33; i++) {
+    var opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = 'Lote ' + i;
+    sel.appendChild(opt);
+  }
+}
+
+function ingActualizarFechaSemana() {
+  var fecha = document.getElementById('ing-fecha').value;
+  var el = document.getElementById('ing-fecha-semana');
+  if (!el) return;
+  if (!fecha) { el.textContent = ''; return; }
+  var sa = calcSemanaAnio(fecha);
+  var yearNum = new Date(fecha + 'T12:00:00').getFullYear();
+  el.textContent = sa ? 'Semana ' + sa + ' / ' + yearNum : '';
+}
+
+function fetchIngresoSala() {
+  fetch(WS + '?action=getIngresoSala').then(function(r) { return r.json(); }).then(function(data) {
+    ingresoSala = Array.isArray(data) ? data : [];
+    ingActualizarAcumulado();
+  }).catch(function() { ingresoSala = []; });
+}
+
+function ingActualizarInfoLote() {
+  var finca = document.getElementById('ing-finca') ? document.getElementById('ing-finca').value : '';
+  var info = document.getElementById('ing-lote-info');
+  if (!info) return;
+  var loteNum = document.getElementById('ing-lote-select') ? document.getElementById('ing-lote-select').value : '';
+  if (!loteNum) { info.innerHTML = ''; return; }
+  var l = lotes.find(function(x) {
+    return String(x.Finca || x.finca || '') === String(finca) &&
+           String(x.Lote || x.lote || '') === String(loteNum) &&
+           String(x.Estado || x.estado || '').toLowerCase() === 'activo';
+  });
+  if (!l) {
+    info.innerHTML = '<div style="background:#f9fafb; border-radius:8px; padding:0.75rem 1rem; font-size:13px; color:var(--ink-soft); text-align:center; border:1px solid var(--border); margin-top:10px;">No hay un ciclo activo registrado para este lote en Fincas Montova</div>';
+    return;
+  }
+  var fechaISO = getISO(l.Fecha_Inicio || l.fecha_inicio || '');
+  var semana = calcSemanaCiclo(fechaISO);
+  info.innerHTML = '<div style="background:var(--verde-light); border:1px solid var(--verde-mid); border-radius:8px; padding:10px 12px; margin-top:10px; font-size:13px; color:var(--verde-dark); line-height:1.6;">' +
+    '<div><strong>Fecha de programacion:</strong> ' + fmtDate(fechaISO) + '</div>' +
+    '<div><strong>Semana del ciclo:</strong> ' + (semana !== null ? semana : '-') + ' de 34</div>' +
+  '</div>';
+}
+
+function ingRenderTipos() {
+  var c = document.getElementById('ing-tipo-lista');
+  if (!c) return;
+  c.innerHTML = '';
+  ING_TIPOS.forEach(function(tipo) {
+    var btn = document.createElement('button');
+    var sel = ingSelTipo[0] === tipo;
+    btn.style.cssText = 'padding:12px; font-size:14px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; background:'+(sel?'var(--verde-light)':'#fff')+'; border:1px solid '+(sel?'var(--verde-mid)':'var(--border)')+'; color:'+(sel?'var(--verde-dark)':'var(--ink-mid)')+'; font-weight:'+(sel?'600':'400')+'; width:100%; text-align:left;';
+    var chk = document.createElement('div');
+    chk.style.cssText = 'width:20px; height:20px; border-radius:50%; border:1.5px solid '+(sel?'var(--verde-dark)':'var(--border)')+'; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:11px; background:'+(sel?'var(--verde-dark)':'transparent')+'; color:#fff;';
+    chk.textContent = sel ? '✓' : '';
+    var sp = document.createElement('span');
+    sp.textContent = tipo;
+    btn.appendChild(chk);
+    btn.appendChild(sp);
+    btn.onclick = function() {
+      ingSelTipo.length = 0;
+      ingSelTipo.push(tipo);
+      ingRenderTipos();
+      ingActualizarAcumulado();
+    };
+    c.appendChild(btn);
+  });
+}
+
+function ingActualizarAcumulado() {
+  var info = document.getElementById('ing-acumulado-info');
+  if (!info) return;
+  var finca = document.getElementById('ing-finca') ? document.getElementById('ing-finca').value : '';
+  var loteNum = document.getElementById('ing-lote-select') ? document.getElementById('ing-lote-select').value : '';
+  var tipo = ingSelTipo[0];
+  var cantidadInput = document.getElementById('ing-cantidad') ? document.getElementById('ing-cantidad').value : '';
+  if (!loteNum || !tipo) { info.innerHTML = ''; return; }
+  var loteLabel = 'Lote ' + loteNum;
+  var acumuladoPrevio = 0;
+  ingresoSala.forEach(function(r) {
+    var rFinca = String(r.Finca || r.finca || '');
+    var rLote = String(r.Lote || r.lote || '');
+    var rTipo = String(r.Tipo_Flor || r.tipo_flor || '');
+    var rCantidad = Number(r.Cantidad || r.cantidad || 0) || 0;
+    if (rFinca === String(finca) && rLote === loteLabel && rTipo === tipo) {
+      acumuladoPrevio += rCantidad;
+    }
+  });
+  var cantidadActual = Number(cantidadInput) || 0;
+  var totalConEste = acumuladoPrevio + cantidadActual;
+  info.innerHTML = '<div style="background:var(--verde-light); border:1px solid var(--verde-mid); border-radius:8px; padding:10px 12px; margin-top:10px; font-size:13px; color:var(--verde-dark); line-height:1.6;">' +
+    '<div><strong>Acumulado previo de ' + tipo + ' en ' + loteLabel + ':</strong> ' + acumuladoPrevio + '</div>' +
+    '<div><strong>Total con este registro:</strong> ' + totalConEste + '</div>' +
+  '</div>';
+}
+
+async function ingGuardar() {
+  var fecha = document.getElementById('ing-fecha').value;
+  var finca = document.getElementById('ing-finca').value;
+  var loteNum = document.getElementById('ing-lote-select').value;
+  var tipo = ingSelTipo[0];
+  var cantidad = document.getElementById('ing-cantidad').value.trim();
+  if (!fecha || !finca || !loteNum || !tipo || !cantidad) {
+    alert('Completa todos los pasos antes de guardar.');
+    return;
+  }
+  var btn = document.getElementById('ing-guardar-btn');
+  btn.disabled = true;
+  document.getElementById('ing-loading').style.display = 'block';
+  document.getElementById('ing-ok').style.display = 'none';
+  document.getElementById('ing-error').style.display = 'none';
+  var payload = {
+    action: 'addIngresoSala',
+    fecha: fecha,
+    finca: finca,
+    lote: 'Lote ' + loteNum,
+    tipo_flor: tipo,
+    cantidad: cantidad
+  };
+  try {
+    await fetch(WS, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+    document.getElementById('ing-loading').style.display = 'none';
+    document.getElementById('ing-ok-txt').textContent = finca + ' · Lote ' + loteNum + ' · ' + tipo + ' · ' + cantidad;
+    document.getElementById('ing-ok').style.display = 'block';
+    btn.disabled = false;
+    ingResetCampos();
+    setTimeout(fetchIngresoSala, 3000);
+  } catch(e) {
+    document.getElementById('ing-loading').style.display = 'none';
+    document.getElementById('ing-error').style.display = 'block';
+    btn.disabled = false;
+  }
+}
+
+function ingResetCampos() {
+  ingSelTipo.length = 0;
+  document.getElementById('ing-fecha').value = new Date().toISOString().split('T')[0];
+  document.getElementById('ing-finca').selectedIndex = 0;
+  document.getElementById('ing-cantidad').value = '';
+  ingActualizarFechaSemana();
+  poblarIngLoteSelect();
+  document.getElementById('ing-lote-select').value = '';
+  ingRenderTipos();
+  ingActualizarInfoLote();
+  ingActualizarAcumulado();
+}
+
+function ingLimpiar() {
+  document.getElementById('ing-ok').style.display = 'none';
+  document.getElementById('ing-error').style.display = 'none';
+  ingResetCampos();
+}
+
+// Init ingreso a sala
+(function() {
+  document.getElementById('ing-fecha').value = new Date().toISOString().split('T')[0];
+  document.getElementById('ing-fecha').addEventListener('change', ingActualizarFechaSemana);
+  ingActualizarFechaSemana();
+  document.getElementById('ing-finca').addEventListener('change', function() {
+    ingActualizarInfoLote();
+    ingActualizarAcumulado();
+  });
+  poblarIngLoteSelect();
+  document.getElementById('ing-lote-select').addEventListener('change', function() {
+    ingActualizarInfoLote();
+    ingActualizarAcumulado();
+  });
+  document.getElementById('ing-cantidad').addEventListener('input', function() {
+    this.value = this.value.replace(/[^0-9]/g, '');
+    ingActualizarAcumulado();
+  });
+  fetchIngresoSala();
+  ingRenderTipos();
+  ingActualizarInfoLote();
+  ingActualizarAcumulado();
 })();
 </script>
 
