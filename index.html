@@ -881,6 +881,11 @@ function renderLotes() {
       <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 4</span>
       <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:12px;">Tipo de flor</label>
       <div id="ing-tipo-lista" style="display:flex; flex-direction:column; gap:8px;"></div>
+      <button id="ing-descarte-btn" onclick="ingToggleDescarte()" style="margin-top:14px; width:100%; padding:12px; font-size:14px; font-weight:600; border-radius:8px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; background:#fff; border:1px solid var(--border); color:var(--ink-mid);">Descarte</button>
+      <div id="ing-descarte-motivo-container" style="display:none; margin-top:10px;">
+        <label style="font-size:13px; font-weight:600; color:var(--ink); display:block; margin-bottom:6px;">Motivo de descarte</label>
+        <textarea id="ing-descarte-motivo" rows="3" style="width:100%; padding:10px 12px; font-size:14px; border:1px solid var(--border); border-radius:8px; color:var(--ink); background:#fafafa; resize:vertical; font-family:inherit; line-height:1.5;" placeholder="Escribe o pega el motivo del descarte..."></textarea>
+      </div>
     </div>
 
     <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
@@ -1625,6 +1630,25 @@ function monLimpiar() {
 // ===== INGRESO A SALA MODULE =====
 var ING_TIPOS = ['Mini green', 'Select', 'Premium', 'Jumbo'];
 var ingSelTipo = [];
+var ingDescarteActivo = false;
+
+function ingToggleDescarte() {
+  ingDescarteActivo = !ingDescarteActivo;
+  var btn = document.getElementById('ing-descarte-btn');
+  var container = document.getElementById('ing-descarte-motivo-container');
+  if (ingDescarteActivo) {
+    btn.style.background = 'var(--verde-light)';
+    btn.style.borderColor = 'var(--verde-mid)';
+    btn.style.color = 'var(--verde-dark)';
+    container.style.display = 'block';
+  } else {
+    btn.style.background = '#fff';
+    btn.style.borderColor = 'var(--border)';
+    btn.style.color = 'var(--ink-mid)';
+    container.style.display = 'none';
+    document.getElementById('ing-descarte-motivo').value = '';
+  }
+}
 var ingresoSala = [];
 
 function poblarIngLoteSelect() {
@@ -1739,6 +1763,7 @@ async function ingGuardar() {
   var loteNum = document.getElementById('ing-lote-select').value;
   var tipo = ingSelTipo[0];
   var cantidad = document.getElementById('ing-cantidad').value.trim();
+  var motivoDescarte = ingDescarteActivo ? document.getElementById('ing-descarte-motivo').value.trim() : '';
   if (!fecha || !finca || !loteNum || !tipo || !cantidad) {
     alert('Completa todos los pasos antes de guardar.');
     return;
@@ -1754,7 +1779,9 @@ async function ingGuardar() {
     finca: finca,
     lote: 'Lote ' + loteNum,
     tipo_flor: tipo,
-    cantidad: cantidad
+    cantidad: cantidad,
+    descarte: ingDescarteActivo ? 'Si' : 'No',
+    motivo_descarte: motivoDescarte
   };
   try {
     await postToWS(payload);
@@ -1776,6 +1803,12 @@ function ingResetCampos() {
   document.getElementById('ing-fecha').value = new Date().toISOString().split('T')[0];
   document.getElementById('ing-finca').selectedIndex = 0;
   document.getElementById('ing-cantidad').value = '';
+  ingDescarteActivo = false;
+  document.getElementById('ing-descarte-btn').style.background = '#fff';
+  document.getElementById('ing-descarte-btn').style.borderColor = 'var(--border)';
+  document.getElementById('ing-descarte-btn').style.color = 'var(--ink-mid)';
+  document.getElementById('ing-descarte-motivo-container').style.display = 'none';
+  document.getElementById('ing-descarte-motivo').value = '';
   ingActualizarFechaSemana();
   poblarIngLoteSelect();
   document.getElementById('ing-lote-select').value = '';
