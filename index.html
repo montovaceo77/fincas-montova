@@ -150,6 +150,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
       <div class="field">
         <label>Finca</label>
         <select id="l-finca">
+          <option value="" selected disabled>Selecciona una finca</option>
           <option value="Flor Esperancita">Flor Esperancita</option>
           <option value="Flor de Agua 3">Flor de Agua 3</option>
           <option value="Oasis Garden">Oasis Garden</option>
@@ -745,6 +746,7 @@ function renderLotes() {
       <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 2</span>
       <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:12px;">Finca</label>
       <select id="lab-finca" style="width:100%; padding:10px 12px; font-size:15px; border:1px solid var(--border); border-radius:8px; color:var(--ink); background:#fafafa;">
+        <option value="" selected disabled>Selecciona una finca</option>
         <option value="Flor Esperancita">Flor Esperancita</option>
         <option value="Flor de Agua 3">Flor de Agua 3</option>
         <option value="Oasis Garden">Oasis Garden</option>
@@ -801,6 +803,7 @@ function renderLotes() {
       <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 2</span>
       <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:12px;">Finca</label>
       <select id="mon-finca" style="width:100%; padding:10px 12px; font-size:15px; border:1px solid var(--border); border-radius:8px; color:var(--ink); background:#fafafa;">
+        <option value="" selected disabled>Selecciona una finca</option>
         <option value="Flor Esperancita">Flor Esperancita</option>
         <option value="Flor de Agua 3">Flor de Agua 3</option>
         <option value="Oasis Garden">Oasis Garden</option>
@@ -859,6 +862,7 @@ function renderLotes() {
       <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 2</span>
       <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:12px;">Finca</label>
       <select id="ing-finca" style="width:100%; padding:10px 12px; font-size:15px; border:1px solid var(--border); border-radius:8px; color:var(--ink); background:#fafafa;">
+        <option value="" selected disabled>Selecciona una finca</option>
         <option value="Flor Esperancita">Flor Esperancita</option>
         <option value="Flor de Agua 3">Flor de Agua 3</option>
         <option value="Oasis Garden">Oasis Garden</option>
@@ -1659,8 +1663,10 @@ function ingActualizarInfoLote() {
     return;
   }
   var fechaISO = getISO(l.Fecha_Inicio || l.fecha_inicio || '');
+  var variedad = l.Variedad || l.variedad || '';
   var semana = calcSemanaCiclo(fechaISO);
   info.innerHTML = '<div style="background:var(--verde-light); border:1px solid var(--verde-mid); border-radius:8px; padding:10px 12px; margin-top:10px; font-size:13px; color:var(--verde-dark); line-height:1.6;">' +
+    '<div><strong>Variedad:</strong> ' + variedad + '</div>' +
     '<div><strong>Fecha de programacion:</strong> ' + fmtDate(fechaISO) + '</div>' +
     '<div><strong>Semana del ciclo:</strong> ' + (semana !== null ? semana : '-') + ' de 34</div>' +
   '</div>';
