@@ -250,7 +250,7 @@ window.addEventListener('DOMContentLoaded', function() {
   initFab();
   initModal();
   fetchLotes();
-  fetchPreparaciones();
+  setTimeout(fetchPreparaciones, 250);
 });
 
 function showToast(msg) {
@@ -1114,6 +1114,15 @@ function fumRenderEquipo() {
   });
 }
 
+async function postToWS(payload) {
+  try {
+    await fetch(WS, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+  } catch (e) {
+    await new Promise(function(res) { setTimeout(res, 1200); });
+    await fetch(WS, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+  }
+}
+
 async function fumGuardar() {
   var fecha = document.getElementById('fum-fecha').value;
   if (!fecha || !fumSelFinca.length || !fumSelLotes.length || !fumSelPlagas.length || !fumSelProductos.length || !fumSelEquipo.length) {
@@ -1137,7 +1146,7 @@ async function fumGuardar() {
     novedades: document.getElementById('fum-novedades').value.trim()
   };
   try {
-    await fetch(WS, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+    await postToWS(payload);
     document.getElementById('fum-loading').style.display = 'none';
     document.getElementById('fum-ok-txt').textContent = fumSelFinca[0] + ' · ' + fumSelLotes.join(', ');
     document.getElementById('fum-ok').style.display = 'block';
@@ -1195,7 +1204,7 @@ function fumLimpiar() {
     fumActualizarInfoLote();
   });
   fumActualizarInfoLote();
-  fetchFumigaciones();
+  setTimeout(fetchFumigaciones, 500);
   fumMkItemBtn(FUM_PLAGAS, fumSelPlagas, 'fum-plagas-lista', false);
   fumMkItemBtn(FUM_PRODUCTOS, fumSelProductos, 'fum-productos-lista', false);
   fumMkItemBtn(FUM_FERTILIZANTES, fumSelFertilizantes, 'fum-fertilizantes-lista', false);
@@ -1344,7 +1353,7 @@ async function labGuardar() {
     labor: laborFinal.join(', ')
   };
   try {
-    await fetch(WS, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+    await postToWS(payload);
     document.getElementById('lab-loading').style.display = 'none';
     document.getElementById('lab-ok-txt').textContent = finca + ' · Lote ' + loteNum;
     document.getElementById('lab-ok').style.display = 'block';
@@ -1385,7 +1394,7 @@ function labLimpiar() {
   document.getElementById('lab-finca').addEventListener('change', labActualizarInfoLote);
   poblarLabLoteSelect();
   document.getElementById('lab-lote-select').addEventListener('change', labActualizarInfoLote);
-  fetchLaboresCampo();
+  setTimeout(fetchLaboresCampo, 750);
   labActualizarInfoLote();
   fumMkItemBtn(LAB_LABORES, labSelLabor, 'lab-labor-lista', false);
   labRenderFert();
@@ -1564,7 +1573,7 @@ async function monGuardar() {
     cuadrante_4: monCuadrantes[4].join(', ')
   };
   try {
-    await fetch(WS, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+    await postToWS(payload);
     document.getElementById('mon-loading').style.display = 'none';
     document.getElementById('mon-ok-txt').textContent = finca + ' · Lote ' + loteNum + ' · Cama ' + cama;
     document.getElementById('mon-ok').style.display = 'block';
@@ -1748,7 +1757,7 @@ async function ingGuardar() {
     cantidad: cantidad
   };
   try {
-    await fetch(WS, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+    await postToWS(payload);
     document.getElementById('ing-loading').style.display = 'none';
     document.getElementById('ing-ok-txt').textContent = finca + ' · Lote ' + loteNum + ' · ' + tipo + ' · ' + cantidad;
     document.getElementById('ing-ok').style.display = 'block';
@@ -1799,7 +1808,7 @@ function ingLimpiar() {
     this.value = this.value.replace(/[^0-9]/g, '');
     ingActualizarAcumulado();
   });
-  fetchIngresoSala();
+  setTimeout(fetchIngresoSala, 1000);
   ingRenderTipos();
   ingActualizarInfoLote();
   ingActualizarAcumulado();
