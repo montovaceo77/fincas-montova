@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Fincas Montova · Monitoreo</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 <style>
 :root {
   --verde: #3B6B4A;
@@ -18,33 +18,87 @@
   --cream: #F8FAF8;
   --white: #FFFFFF;
   --border: #D4E4D8;
+  --visited-bg: #DCDCDC;
+  --visited-border: #4F8C61;
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--ink); min-height: 100vh; font-size: 14px; line-height: 1.6; padding-bottom: 40px; }
-.header { background: var(--white); border-bottom: 1px solid var(--border); padding: 0.875rem 1.25rem; position: sticky; top: 0; z-index: 100; }
+
+.header { background: var(--ink); padding: 0.9rem 1.25rem; }
 .header-inner { max-width: 480px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
-.header-title { font-size: 16px; font-weight: 600; color: var(--verde-dark); }
-.header-sub { font-size: 11px; color: var(--ink-soft); }
-.header-date { font-size: 11px; color: var(--ink-soft); }
-.main { max-width: 480px; margin: 0 auto; padding: 1.25rem 1.25rem 1rem; }
-.card { background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 1.25rem; margin-bottom: 1rem; }
-.step-badge { display: inline-block; background: var(--verde-dark); color: #fff; font-size: 10px; font-weight: 600; padding: 3px 10px; border-radius: 6px; margin-bottom: 10px; letter-spacing: 1px; text-transform: uppercase; }
-.field-label { font-size: 15px; font-weight: 600; color: var(--ink); display: block; margin-bottom: 4px; }
-.field-hint-text { font-size: 12px; color: var(--ink-mid); margin-bottom: 12px; }
-input[type="date"], input[type="text"], select {
-  width: 100%; padding: 10px 12px; font-size: 15px; font-family: 'DM Sans', sans-serif;
-  border: 1px solid var(--border); border-radius: 8px; color: var(--ink); background: #fafafa;
+.header-title { font-size: 20px; font-weight: 700; color: #fff; }
+.header-sub { font-size: 11px; color: #B9C7BF; }
+
+.summary-wrap { background: var(--white); border-bottom: 1px solid var(--border); }
+.summary { max-width: 480px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); }
+.summary-cell { padding: 10px 6px; text-align: center; border-bottom: 1px solid var(--border); cursor: pointer; }
+.summary-cell:nth-child(3n+1), .summary-cell:nth-child(3n+2) { border-right: 1px solid var(--border); }
+.summary-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: var(--ink-mid); }
+.summary-value { font-size: 14px; font-weight: 600; color: var(--ink); margin-top: 2px; min-height: 18px; }
+.summary-value.empty { color: var(--ink-soft); font-weight: 400; font-style: italic; }
+.summary-cell.active { background: var(--verde-light); }
+.summary-cell.active .summary-label { color: var(--verde-dark); }
+
+.main { max-width: 480px; margin: 0 auto; padding: 1.5rem 1.25rem 1rem; }
+
+.step-title { font-size: 22px; font-weight: 700; color: var(--ink); text-align: center; margin-bottom: 1.5rem; }
+
+.btn-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+.btn-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+.pick-btn {
+  padding: 16px 14px; font-size: 16px; font-weight: 600; font-family: 'DM Sans', sans-serif;
+  border-radius: 10px; border: 2px solid var(--verde-mid); background: var(--white); color: var(--ink);
+  cursor: pointer; text-align: center; transition: background 0.15s;
 }
-.mon-fecha-semana { font-size: 12px; font-weight: 600; color: var(--verde-dark); margin-top: 8px; }
+.pick-btn:active { background: var(--verde-light); }
+.pick-btn.visited { background: var(--visited-bg); border-color: var(--visited-border); }
+.pick-btn.done { background: var(--verde-dark); border-color: var(--verde-dark); color: #fff; }
+
+.date-row { display: flex; gap: 10px; align-items: center; }
+.date-row input[type="date"] {
+  flex: 1; padding: 14px 12px; font-size: 16px; font-family: 'DM Sans', sans-serif;
+  border: 2px solid var(--verde-mid); border-radius: 10px; color: var(--ink); background: #fff;
+}
+.btn-continuar { padding: 14px 20px; font-size: 15px; font-weight: 600; background: var(--verde-dark); color: #fff; border: none; border-radius: 10px; cursor: pointer; }
+
+.lote-hint { font-size: 12px; color: var(--ink-soft); text-align: center; margin-top: -8px; margin-bottom: 1rem; }
+
+.card { background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 1.1rem; margin-bottom: 1rem; }
+.card-title { font-size: 13px; font-weight: 700; color: var(--verde-dark); text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 10px; }
+
+.cuadrantes-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.cuadrante-btn { border-radius: 10px; cursor: pointer; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start; text-align: left; padding: 10px; gap: 4px; min-height: 78px; border: 1.5px solid var(--border); background: #fff; font-family: 'DM Sans', sans-serif; }
+.cuadrante-btn .cq-title { font-size: 13px; font-weight: 700; color: var(--ink-mid); }
+.cuadrante-btn .cq-list { font-size: 11px; line-height: 1.4; color: var(--verde-dark); }
+.cuadrante-btn.on { background: var(--verde-dark); border-color: var(--verde-dark); }
+.cuadrante-btn.on .cq-title { color: #fff; }
+.cuadrante-btn.on .cq-list { color: #fff; opacity: 0.95; }
+.cuadrante-btn.hasdata:not(.on) { background: var(--verde-light); border-color: var(--verde-mid); }
+.cuadrante-btn.hasdata:not(.on) .cq-title { color: var(--verde-dark); }
+
+.plagas-lista { max-height: 240px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; padding: 6px; display: flex; flex-direction: column; gap: 6px; background: #fafafa; }
+.plaga-item { padding: 10px 12px; font-size: 13px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid var(--border); color: var(--ink-mid); width: 100%; text-align: left; font-family: 'DM Sans', sans-serif; }
+.plaga-item.sel { background: var(--verde-light); border-color: var(--verde-mid); color: var(--verde-dark); font-weight: 600; }
+.plaga-chk { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 11px; color: #fff; }
+.plaga-item.sel .plaga-chk { background: var(--verde-dark); border-color: var(--verde-dark); }
+
+.actions-row { display: flex; gap: 10px; margin-top: 1rem; }
 .btn-guardar { flex: 1; padding: 15px; font-size: 16px; font-weight: 600; background: var(--verde-dark); color: #fff; border: none; border-radius: 12px; cursor: pointer; }
-.btn-nuevo { padding: 15px 18px; font-size: 15px; font-weight: 600; border-radius: 12px; cursor: pointer; background: var(--white); border: 1px solid var(--border); color: var(--ink-mid); white-space: nowrap; }
-.actions-row { display: flex; gap: 10px; margin-top: 0.5rem; }
+.btn-guardar:disabled { opacity: 0.5; }
+.btn-nuevo { padding: 15px 18px; font-size: 15px; font-weight: 600; border-radius: 12px; cursor: pointer; background: var(--white); border: 1px solid var(--border); color: var(--ink-mid); white-space: nowrap; font-family: 'DM Sans', sans-serif; }
+
 .status-box { display: none; margin-top: 1rem; border-radius: 12px; padding: 1rem 1.25rem; font-size: 14px; }
 .status-loading { background: var(--white); border: 1px solid var(--border); color: var(--ink-mid); text-align: center; }
 .status-ok { background: var(--verde-light); border: 1px solid var(--verde-mid); }
 .status-ok-title { font-size: 15px; font-weight: 600; color: var(--verde-dark); margin-bottom: 4px; }
 .status-ok-txt { font-size: 13px; color: var(--verde); }
 .status-error { background: #fff0f0; border: 1px solid #ffcccc; color: #c0392b; }
+
+.info-box { background: var(--verde-light); border: 1px solid var(--verde-mid); border-radius: 8px; padding: 10px 12px; margin-bottom: 1rem; font-size: 13px; color: var(--verde-dark); line-height: 1.6; }
+.legend { display: flex; gap: 14px; justify-content: center; margin-bottom: 1rem; font-size: 11px; color: var(--ink-mid); }
+.legend span { display: inline-flex; align-items: center; gap: 5px; }
+.dot { width: 12px; height: 12px; border-radius: 4px; border: 1.5px solid var(--verde-mid); display: inline-block; }
+.dot.visited { background: var(--visited-bg); border-color: var(--visited-border); }
 </style>
 </head>
 <body>
@@ -52,157 +106,61 @@ input[type="date"], input[type="text"], select {
 <div class="header">
   <div class="header-inner">
     <div>
-      <div class="header-title">Fincas Montova</div>
-      <div class="header-sub">Modulo de Monitoreo</div>
+      <div class="header-title">Monitoreo</div>
+      <div class="header-sub">Fincas Montova</div>
     </div>
-    <div class="header-date" id="hdate"></div>
   </div>
 </div>
 
-<div class="main">
-
-  <div class="card">
-    <span class="step-badge">Paso 1</span>
-    <label class="field-label">Fecha del monitoreo</label>
-    <p class="field-hint-text">Semana del año en curso</p>
-    <input type="date" id="mon-fecha" />
-    <div id="mon-fecha-semana" class="mon-fecha-semana"></div>
-  </div>
-
-  <div class="card">
-    <span class="step-badge">Paso 2</span>
-    <label class="field-label" style="margin-bottom:12px;">Finca</label>
-    <select id="mon-finca">
-      <option value="" selected disabled>Selecciona una finca</option>
-      <option value="Flor Esperancita">Flor Esperancita</option>
-      <option value="Flor de Agua 3">Flor de Agua 3</option>
-      <option value="Oasis Garden">Oasis Garden</option>
-      <option value="Flor Madera">Flor Madera</option>
-    </select>
-  </div>
-
-  <div class="card">
-    <span class="step-badge">Paso 3</span>
-    <label class="field-label" style="margin-bottom:12px;">Numero de lote</label>
-    <select id="mon-lote-select"></select>
-    <div id="mon-lote-info"></div>
-  </div>
-
-  <div class="card">
-    <span class="step-badge">Paso 4</span>
-    <label class="field-label" style="margin-bottom:12px;">Numero de cama</label>
-    <input type="text" inputmode="numeric" pattern="[0-9]*" id="mon-cama" placeholder="Ej: 12" />
-  </div>
-
-  <div class="card">
-    <span class="step-badge">Paso 5</span>
-    <label class="field-label">Plagas y enfermedades por cuadrante</label>
-    <p class="field-hint-text">El lote se divide en 4 cuadrantes. Selecciona uno y marca lo que encuentres en el.</p>
-    <div id="mon-cuadrantes-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px; width:100%;"></div>
-    <div id="mon-cuadrante-activo-label" style="font-size:13px; font-weight:600; color:var(--verde-dark); margin-bottom:8px;"></div>
-    <div id="mon-plagas-lista" style="height:200px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; padding:6px; display:flex; flex-direction:column; gap:6px; background:#fafafa;"></div>
-    <p style="font-size:11px; color:var(--ink-soft); margin-top:6px; text-align:right;">Desliza para ver mas</p>
-  </div>
-
-  <div class="actions-row">
-    <button id="mon-guardar-btn" class="btn-guardar" onclick="monGuardar()">Guardar registro</button>
-    <button class="btn-nuevo" onclick="monLimpiar()">Nuevo registro</button>
-  </div>
-  <div id="mon-loading" class="status-box status-loading">Guardando registro...</div>
-  <div id="mon-ok" class="status-box status-ok">
-    <div class="status-ok-title">Registro guardado con exito</div>
-    <div id="mon-ok-txt" class="status-ok-txt"></div>
-  </div>
-  <div id="mon-error" class="status-box status-error">Hubo un problema al guardar. Intenta de nuevo.</div>
+<div class="summary-wrap">
+  <div class="summary" id="summary"></div>
 </div>
+
+<div class="main" id="main"></div>
 
 <script>
 // ===== Mismo backend (Apps Script Web App) que usa el resto de Fincas Montova =====
 var WS = 'https://script.google.com/macros/s/AKfycbxvOw581dgZvxuuwSCi0RMj_gKkJbcrkTz9vpvQri0WntOxUrT1q35ngnuO5myq60Dx/exec';
 
-// Datos que se traen de los otros modulos (Programacion, Fumigacion, Labores de Campo)
-// para mostrar el contexto del lote seleccionado, sin duplicar el registro.
-var lotes = [];
-var fumigaciones = [];
-var laboresCampo = [];
-
 var FUM_PLAGAS = ['Afido','Alternaria','Babosa','Botritis','Ceniza','Control malezas','Mancha foliar','Secadera','Thirps','Acaro','Acaro blanco'];
+var FINCAS = ['Flor Esperancita','Flor de Agua 3','Oasis Garden','Flor Madera'];
 
-var monCuadrantes = {1:[], 2:[], 3:[], 4:[]};
-var monCuadranteActivo = 1;
+var lotes = [];
+var monitoreos = [];
+
+var st = {
+  fecha: new Date().toISOString().split('T')[0],
+  finca: '',
+  loteNum: '',
+  variedad: '',
+  camasTotal: 0,
+  cama: '',
+  cuadranteActivo: 1
+};
+var cuadrantes = {1:[], 2:[], 3:[], 4:[]};
 
 window.addEventListener('DOMContentLoaded', function() {
-  document.getElementById('hdate').textContent = new Date().toLocaleDateString('es-CO', {weekday:'long', day:'numeric', month:'long'});
-
-  document.getElementById('mon-fecha').value = new Date().toISOString().split('T')[0];
-  document.getElementById('mon-fecha').addEventListener('change', monActualizarFechaSemana);
-  monActualizarFechaSemana();
-
-  document.getElementById('mon-finca').addEventListener('change', monActualizarInfoLote);
-  poblarMonLoteSelect();
-  document.getElementById('mon-lote-select').addEventListener('change', monActualizarInfoLote);
-  document.getElementById('mon-cama').addEventListener('input', function() {
-    this.value = this.value.replace(/[^0-9]/g, '');
-  });
-
-  monRenderCuadrantes();
-  monRenderPlagasList();
-
   fetchLotes();
-  fetchFumigaciones();
-  fetchLaboresCampo();
+  fetchMonitoreos();
+  render();
 });
 
-// ===== Fetch de los datos ya registrados en Programacion / Fumigacion / Labores =====
+// ===== Fetch de datos ya registrados en otros modulos / en Monitoreo mismo =====
 function fetchLotes() {
   fetch(WS + '?action=getLotes').then(function(r) { return r.json(); }).then(function(data) {
     lotes = Array.isArray(data) ? data : [];
-    monActualizarInfoLote();
+    render();
   }).catch(function() { lotes = []; });
 }
 
-function fetchFumigaciones() {
-  fetch(WS + '?action=getFumigaciones').then(function(r) { return r.json(); }).then(function(data) {
-    fumigaciones = Array.isArray(data) ? data : [];
-    monActualizarInfoLote();
-  }).catch(function() { fumigaciones = []; });
+function fetchMonitoreos() {
+  fetch(WS + '?action=getMonitoreo').then(function(r) { return r.json(); }).then(function(data) {
+    monitoreos = Array.isArray(data) ? data : [];
+    render();
+  }).catch(function() { monitoreos = []; });
 }
 
-function fetchLaboresCampo() {
-  fetch(WS + '?action=getLaboresCampo').then(function(r) { return r.json(); }).then(function(data) {
-    laboresCampo = Array.isArray(data) ? data : [];
-    monActualizarInfoLote();
-  }).catch(function() { laboresCampo = []; });
-}
-
-// ===== Utilidades de fecha (iguales a las del app principal) =====
-function calcSemanaAnio(fechaISO) {
-  if (!fechaISO) return null;
-  var d = new Date(fechaISO + 'T12:00:00');
-  if (isNaN(d)) return null;
-  var jan4 = new Date(d.getFullYear(), 0, 4);
-  var monday1 = new Date(jan4);
-  monday1.setDate(jan4.getDate() - (jan4.getDay() || 7) + 1);
-  var diff = d - monday1;
-  return Math.floor(diff / (7 * 24 * 60 * 60 * 1000)) + 1;
-}
-
-function calcSemanaCiclo(fechaISO) {
-  if (!fechaISO) return null;
-  var inicio = new Date(fechaISO + 'T12:00:00');
-  if (isNaN(inicio)) return null;
-  var hoy = new Date();
-  var diff = Math.floor((hoy - inicio) / (7 * 24 * 60 * 60 * 1000));
-  return diff < 0 ? 0 : diff;
-}
-
-function getISO(val) {
-  if (!val) return '';
-  var s = String(val).trim();
-  if (s.length >= 10) return s.substring(0, 10);
-  return '';
-}
-
+// ===== Utilidades =====
 function fmtDate(iso) {
   if (!iso) return '';
   var p = iso.split('-');
@@ -210,130 +168,215 @@ function fmtDate(iso) {
   return p[2] + '/' + p[1] + '/' + p[0];
 }
 
-// ===== Monitoreo =====
-function poblarMonLoteSelect() {
-  var sel = document.getElementById('mon-lote-select');
-  sel.innerHTML = '<option value="">Selecciona un lote</option>';
-  for (var i = 1; i <= 33; i++) {
-    var opt = document.createElement('option');
-    opt.value = i;
-    opt.textContent = 'Lote ' + i;
-    sel.appendChild(opt);
-  }
-}
-
-function monActualizarFechaSemana() {
-  var fecha = document.getElementById('mon-fecha').value;
-  var el = document.getElementById('mon-fecha-semana');
-  if (!fecha) { el.textContent = ''; return; }
-  var sa = calcSemanaAnio(fecha);
-  var yearNum = new Date(fecha + 'T12:00:00').getFullYear();
-  el.textContent = sa ? 'Semana ' + sa + ' / ' + yearNum : '';
-}
-
-function monActualizarInfoLote() {
-  var finca = document.getElementById('mon-finca').value;
-  var info = document.getElementById('mon-lote-info');
-  var loteNum = document.getElementById('mon-lote-select').value;
-  if (!loteNum) { info.innerHTML = ''; return; }
-  var loteLabel = 'Lote ' + loteNum;
-
-  var l = lotes.find(function(x) {
-    return String(x.Finca || x.finca || '') === String(finca) &&
-           String(x.Lote || x.lote || '') === String(loteNum) &&
-           String(x.Estado || x.estado || '').toLowerCase() === 'activo';
-  });
-
-  var ultimaFum = null;
-  fumigaciones.forEach(function(r) {
-    var rFinca = String(r.Finca || r.finca || '');
-    var rLotes = String(r.Lotes || r.lotes || '').split(',').map(function(s){ return s.trim(); });
-    if (rFinca === String(finca) && rLotes.indexOf(loteLabel) !== -1) {
-      var f = getISO(r.Fecha || r.fecha || '');
-      if (f && (!ultimaFum || f > ultimaFum)) ultimaFum = f;
-    }
-  });
-  var ultimaFumLinea = '<div><strong>Ultima fumigacion:</strong> ' + (ultimaFum ? fmtDate(ultimaFum) : 'Sin registros previos') + '</div>';
-
-  var ultimaFert = null;
-  laboresCampo.forEach(function(r) {
+function camasConDatos() {
+  var set = {};
+  monitoreos.forEach(function(r) {
     var rFinca = String(r.Finca || r.finca || '');
     var rLote = String(r.Lote || r.lote || '');
-    var rLabor = String(r.Labor || r.labor || '');
-    if (rFinca === String(finca) && rLote === loteLabel && rLabor.indexOf('Fertilizacion') !== -1) {
-      var f = getISO(r.Fecha || r.fecha || '');
-      if (f && (!ultimaFert || f > ultimaFert)) ultimaFert = f;
+    if (rFinca === st.finca && rLote === 'Lote ' + st.loteNum) {
+      set[String(r.Cama || r.cama || '')] = true;
     }
   });
-  var semanasFert = null;
-  if (ultimaFert) {
-    var hoyFert = new Date(new Date().toISOString().split('T')[0] + 'T12:00:00');
-    var fechaFert = new Date(ultimaFert + 'T12:00:00');
-    semanasFert = Math.floor((hoyFert - fechaFert) / (7 * 24 * 60 * 60 * 1000));
-    if (semanasFert < 0) semanasFert = 0;
-  }
-  var fertLinea = '<div><strong>Semanas desde la ultima fertilizacion:</strong> ' + (semanasFert !== null ? semanasFert : 'Sin fertilizaciones registradas') + '</div>';
+  return set;
+}
 
-  if (!l) {
-    info.innerHTML = '<div style="background:var(--verde-light); border:1px solid var(--verde-mid); border-radius:8px; padding:10px 12px; margin-top:10px; font-size:13px; color:var(--verde-dark); line-height:1.6;">' +
-      '<div style="color:var(--ink-soft);">No hay un ciclo activo registrado para este lote en Fincas Montova</div>' +
-      ultimaFumLinea +
-      fertLinea +
-    '</div>';
+// ===== Render principal =====
+function render() {
+  renderSummary();
+  var main = document.getElementById('main');
+  main.innerHTML = '';
+
+  if (!st.finca) { main.appendChild(buildFincaStep()); return; }
+  if (!st.loteNum) { main.appendChild(buildLoteStep()); return; }
+  if (!st.cama) { main.appendChild(buildCamaStep()); return; }
+  main.appendChild(buildWorkStep());
+}
+
+function renderSummary() {
+  var cells = [
+    {label:'Fecha', value: fmtDate(st.fecha), key:'fecha'},
+    {label:'Finca', value: st.finca, key:'finca'},
+    {label:'Lote', value: st.loteNum ? ('Lote ' + st.loteNum) : '', key:'lote'},
+    {label:'Variedad', value: st.variedad, key:'variedad'},
+    {label:'Cama', value: st.cama, key:'cama'},
+    {label:'Cuadrante', value: st.cama ? ('Cuadrante ' + st.cuadranteActivo) : '', key:'cuadrante'}
+  ];
+  var el = document.getElementById('summary');
+  el.innerHTML = '';
+  cells.forEach(function(c) {
+    var cell = document.createElement('div');
+    cell.className = 'summary-cell';
+    var lbl = document.createElement('div');
+    lbl.className = 'summary-label';
+    lbl.textContent = c.label;
+    var val = document.createElement('div');
+    val.className = 'summary-value' + (c.value ? '' : ' empty');
+    val.textContent = c.value || 'Sin definir';
+    cell.appendChild(lbl);
+    cell.appendChild(val);
+    cell.onclick = function() { onSummaryTap(c.key); };
+    el.appendChild(cell);
+  });
+}
+
+function onSummaryTap(key) {
+  if (key === 'fecha') {
+    var nueva = prompt('Nueva fecha (AAAA-MM-DD):', st.fecha);
+    if (nueva) { st.fecha = nueva; render(); }
     return;
   }
-  var fechaISO = getISO(l.Fecha_Inicio || l.fecha_inicio || '');
-  var variedad = l.Variedad || l.variedad || '';
-  var semana = calcSemanaCiclo(fechaISO);
-  info.innerHTML = '<div style="background:var(--verde-light); border:1px solid var(--verde-mid); border-radius:8px; padding:10px 12px; margin-top:10px; font-size:13px; color:var(--verde-dark); line-height:1.6;">' +
-    '<div><strong>Variedad:</strong> ' + variedad + '</div>' +
-    '<div><strong>Inicio del lote:</strong> ' + fmtDate(fechaISO) + '</div>' +
-    '<div><strong>Semana de programacion:</strong> ' + (semana !== null ? semana : '-') + ' de 34</div>' +
-    ultimaFumLinea +
-    fertLinea +
-  '</div>';
+  if (key === 'finca') { st.finca = ''; st.loteNum = ''; st.cama = ''; render(); return; }
+  if (key === 'lote' || key === 'variedad') { st.loteNum = ''; st.cama = ''; render(); return; }
+  if (key === 'cama' || key === 'cuadrante') { st.cama = ''; render(); return; }
 }
 
-function monRenderCuadrantes() {
-  var c = document.getElementById('mon-cuadrantes-grid');
-  c.innerHTML = '';
-  [1, 2, 3, 4].forEach(function(n) {
+// ===== Paso: Finca =====
+function buildFincaStep() {
+  var wrap = document.createElement('div');
+  var title = document.createElement('div');
+  title.className = 'step-title';
+  title.textContent = 'Finca';
+  wrap.appendChild(title);
+
+  var grid = document.createElement('div');
+  grid.className = 'btn-grid';
+  FINCAS.forEach(function(f) {
     var btn = document.createElement('button');
-    var activo = monCuadranteActivo === n;
-    var items = monCuadrantes[n];
-    btn.style.cssText = 'border-radius:10px; cursor:pointer; display:flex; flex-direction:column; align-items:flex-start; justify-content:flex-start; text-align:left; padding:8px; gap:4px; min-height:90px; background:'+(activo?'var(--verde-dark)':(items.length?'var(--verde-light)':'#fff'))+'; border:1.5px solid '+(activo?'var(--verde-dark)':(items.length?'var(--verde-mid)':'var(--border)'))+';';
-    var titulo = document.createElement('div');
-    titulo.style.cssText = 'font-size:13px; font-weight:700; color:'+(activo?'#fff':(items.length?'var(--verde-dark)':'var(--ink-mid)'))+';';
-    titulo.textContent = 'Cuadrante ' + n;
-    btn.appendChild(titulo);
-    if (items.length) {
-      var lista = document.createElement('div');
-      lista.style.cssText = 'font-size:11px; line-height:1.4; color:'+(activo?'#fff':'var(--verde-dark)')+'; opacity:'+(activo?'0.95':'1')+';';
-      lista.textContent = items.join(', ');
-      btn.appendChild(lista);
-    }
-    btn.onclick = function() {
-      monCuadranteActivo = n;
-      monRenderCuadrantes();
-      monRenderPlagasList();
-    };
-    c.appendChild(btn);
+    btn.className = 'pick-btn';
+    btn.textContent = f;
+    btn.onclick = function() { st.finca = f; render(); };
+    grid.appendChild(btn);
   });
+  wrap.appendChild(grid);
+  return wrap;
 }
 
-function monRenderPlagasList() {
-  var label = document.getElementById('mon-cuadrante-activo-label');
-  label.textContent = 'Plagas/enfermedades en Cuadrante ' + monCuadranteActivo;
-  var c = document.getElementById('mon-plagas-lista');
-  c.innerHTML = '';
-  var selArr = monCuadrantes[monCuadranteActivo];
+// ===== Paso: Lote =====
+function buildLoteStep() {
+  var wrap = document.createElement('div');
+  var title = document.createElement('div');
+  title.className = 'step-title';
+  title.textContent = 'Lote';
+  wrap.appendChild(title);
+
+  var grid = document.createElement('div');
+  grid.className = 'btn-grid cols-2';
+  for (var i = 1; i <= 33; i++) {
+    (function(n) {
+      var btn = document.createElement('button');
+      btn.className = 'pick-btn';
+      btn.textContent = 'Lote ' + n;
+      btn.onclick = function() {
+        st.loteNum = n;
+        var l = lotes.find(function(x) {
+          return String(x.Finca || x.finca || '') === String(st.finca) &&
+                 String(x.Lote || x.lote || '') === String(n) &&
+                 String(x.Estado || x.estado || '').toLowerCase() === 'activo';
+        });
+        st.variedad = l ? (l.Variedad || l.variedad || '') : '';
+        var camasVal = l ? parseInt(l.Camas || l.camas || '0', 10) : 0;
+        st.camasTotal = camasVal > 0 ? camasVal : 20;
+        render();
+      };
+      grid.appendChild(btn);
+    })(i);
+  }
+  wrap.appendChild(grid);
+  return wrap;
+}
+
+// ===== Paso: Cama =====
+function buildCamaStep() {
+  var wrap = document.createElement('div');
+  var title = document.createElement('div');
+  title.className = 'step-title';
+  title.textContent = 'Cama';
+  wrap.appendChild(title);
+
+  if (!st.variedad) {
+    var warn = document.createElement('div');
+    warn.className = 'info-box';
+    warn.textContent = 'No hay un ciclo activo registrado para este lote en Fincas Montova. Puedes continuar, pero revisa si el lote esta bien programado.';
+    wrap.appendChild(warn);
+  }
+
+  var legend = document.createElement('div');
+  legend.className = 'legend';
+  legend.innerHTML = '<span><span class="dot"></span> Sin monitorear</span><span><span class="dot visited"></span> Ya tiene registro</span>';
+  wrap.appendChild(legend);
+
+  var visitadas = camasConDatos();
+
+  var grid = document.createElement('div');
+  grid.className = 'btn-grid cols-2';
+  for (var i = 1; i <= st.camasTotal; i++) {
+    (function(n) {
+      var btn = document.createElement('button');
+      var yaVisitada = !!visitadas[String(n)];
+      btn.className = 'pick-btn' + (yaVisitada ? ' visited' : '');
+      btn.textContent = n;
+      btn.onclick = function() {
+        st.cama = String(n);
+        cuadrantes = {1:[], 2:[], 3:[], 4:[]};
+        st.cuadranteActivo = 1;
+        render();
+      };
+      grid.appendChild(btn);
+    })(i);
+  }
+  wrap.appendChild(grid);
+  return wrap;
+}
+
+// ===== Paso: Cuadrante + Plagas + Guardar =====
+function buildWorkStep() {
+  var wrap = document.createElement('div');
+
+  var card = document.createElement('div');
+  card.className = 'card';
+
+  var ct = document.createElement('div');
+  ct.className = 'card-title';
+  ct.textContent = 'Cuadrantes de la cama';
+  card.appendChild(ct);
+
+  var grid = document.createElement('div');
+  grid.className = 'cuadrantes-grid';
+  [1,2,3,4].forEach(function(n) {
+    var btn = document.createElement('button');
+    var on = st.cuadranteActivo === n;
+    var items = cuadrantes[n];
+    btn.className = 'cuadrante-btn' + (on ? ' on' : '') + (items.length && !on ? ' hasdata' : '');
+    var t = document.createElement('div');
+    t.className = 'cq-title';
+    t.textContent = 'Cuadrante ' + n;
+    btn.appendChild(t);
+    if (items.length) {
+      var l = document.createElement('div');
+      l.className = 'cq-list';
+      l.textContent = items.join(', ');
+      btn.appendChild(l);
+    }
+    btn.onclick = function() { st.cuadranteActivo = n; render(); };
+    grid.appendChild(btn);
+  });
+  card.appendChild(grid);
+
+  var pt = document.createElement('div');
+  pt.className = 'card-title';
+  pt.textContent = 'Plagas / enfermedades - Cuadrante ' + st.cuadranteActivo;
+  card.appendChild(pt);
+
+  var lista = document.createElement('div');
+  lista.className = 'plagas-lista';
+  var selArr = cuadrantes[st.cuadranteActivo];
   FUM_PLAGAS.forEach(function(item) {
     var btn = document.createElement('button');
     var sel = selArr.indexOf(item) !== -1;
-    btn.style.cssText = 'padding:10px 12px; font-size:13px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; background:'+(sel?'var(--verde-light)':'#fff')+'; border:1px solid '+(sel?'var(--verde-mid)':'var(--border)')+'; color:'+(sel?'var(--verde-dark)':'var(--ink-mid)')+'; font-weight:'+(sel?'600':'400')+'; width:100%; text-align:left; flex-shrink:0;';
+    btn.className = 'plaga-item' + (sel ? ' sel' : '');
     var chk = document.createElement('div');
-    chk.style.cssText = 'width:20px; height:20px; border-radius:50%; border:1.5px solid '+(sel?'var(--verde-dark)':'var(--border)')+'; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:11px; background:'+(sel?'var(--verde-dark)':'transparent')+'; color:#fff;';
-    chk.textContent = sel ? '✓' : '';
+    chk.className = 'plaga-chk';
+    chk.textContent = sel ? '\u2713' : '';
     var sp = document.createElement('span');
     sp.textContent = item;
     btn.appendChild(chk);
@@ -341,11 +384,53 @@ function monRenderPlagasList() {
     btn.onclick = function() {
       var idx = selArr.indexOf(item);
       if (idx > -1) selArr.splice(idx, 1); else selArr.push(item);
-      monRenderPlagasList();
-      monRenderCuadrantes();
+      render();
     };
-    c.appendChild(btn);
+    lista.appendChild(btn);
   });
+  card.appendChild(lista);
+  wrap.appendChild(card);
+
+  var actions = document.createElement('div');
+  actions.className = 'actions-row';
+
+  var totalMarcado = cuadrantes[1].length + cuadrantes[2].length + cuadrantes[3].length + cuadrantes[4].length;
+
+  var btnGuardar = document.createElement('button');
+  btnGuardar.className = 'btn-guardar';
+  btnGuardar.textContent = 'Guardar registro';
+  btnGuardar.id = 'btn-guardar-mon';
+  btnGuardar.disabled = totalMarcado === 0;
+  btnGuardar.onclick = monGuardar;
+  actions.appendChild(btnGuardar);
+
+  var btnCambiarCama = document.createElement('button');
+  btnCambiarCama.className = 'btn-nuevo';
+  btnCambiarCama.textContent = 'Cambiar cama';
+  btnCambiarCama.onclick = function() { st.cama = ''; render(); };
+  actions.appendChild(btnCambiarCama);
+
+  wrap.appendChild(actions);
+
+  var loading = document.createElement('div');
+  loading.className = 'status-box status-loading';
+  loading.id = 'mon-loading';
+  loading.textContent = 'Guardando registro...';
+  wrap.appendChild(loading);
+
+  var ok = document.createElement('div');
+  ok.className = 'status-box status-ok';
+  ok.id = 'mon-ok';
+  ok.innerHTML = '<div class="status-ok-title">Registro guardado con exito</div><div class="status-ok-txt" id="mon-ok-txt"></div>';
+  wrap.appendChild(ok);
+
+  var err = document.createElement('div');
+  err.className = 'status-box status-error';
+  err.id = 'mon-error';
+  err.textContent = 'Hubo un problema al guardar. Intenta de nuevo.';
+  wrap.appendChild(err);
+
+  return wrap;
 }
 
 async function postToWS(payload) {
@@ -358,63 +443,39 @@ async function postToWS(payload) {
 }
 
 async function monGuardar() {
-  var fecha = document.getElementById('mon-fecha').value;
-  var finca = document.getElementById('mon-finca').value;
-  var loteNum = document.getElementById('mon-lote-select').value;
-  var cama = document.getElementById('mon-cama').value.trim();
-  var totalMarcado = monCuadrantes[1].length + monCuadrantes[2].length + monCuadrantes[3].length + monCuadrantes[4].length;
-  if (!fecha || !finca || !loteNum || !cama || !totalMarcado) {
-    alert('Completa todos los pasos antes de guardar. Marca al menos una plaga en algun cuadrante.');
-    return;
-  }
-  var btn = document.getElementById('mon-guardar-btn');
+  var btn = document.getElementById('btn-guardar-mon');
   btn.disabled = true;
   document.getElementById('mon-loading').style.display = 'block';
   document.getElementById('mon-ok').style.display = 'none';
   document.getElementById('mon-error').style.display = 'none';
+
   var payload = {
     action: 'addMonitoreo',
-    fecha: fecha,
-    finca: finca,
-    lote: 'Lote ' + loteNum,
-    cama: cama,
-    cuadrante_1: monCuadrantes[1].join(', '),
-    cuadrante_2: monCuadrantes[2].join(', '),
-    cuadrante_3: monCuadrantes[3].join(', '),
-    cuadrante_4: monCuadrantes[4].join(', ')
+    fecha: st.fecha,
+    finca: st.finca,
+    lote: 'Lote ' + st.loteNum,
+    cama: st.cama,
+    cuadrante_1: cuadrantes[1].join(', '),
+    cuadrante_2: cuadrantes[2].join(', '),
+    cuadrante_3: cuadrantes[3].join(', '),
+    cuadrante_4: cuadrantes[4].join(', ')
   };
+
   try {
     await postToWS(payload);
+    monitoreos.push({Finca: st.finca, Lote: 'Lote ' + st.loteNum, Cama: st.cama});
     document.getElementById('mon-loading').style.display = 'none';
-    document.getElementById('mon-ok-txt').textContent = finca + ' · Lote ' + loteNum + ' · Cama ' + cama;
+    document.getElementById('mon-ok-txt').textContent = st.finca + ' \u00b7 Lote ' + st.loteNum + ' \u00b7 Cama ' + st.cama;
     document.getElementById('mon-ok').style.display = 'block';
-    btn.disabled = false;
-    monResetCampos();
-  } catch(e) {
+    st.cama = '';
+    cuadrantes = {1:[], 2:[], 3:[], 4:[]};
+    st.cuadranteActivo = 1;
+    render();
+  } catch (e) {
     document.getElementById('mon-loading').style.display = 'none';
     document.getElementById('mon-error').style.display = 'block';
     btn.disabled = false;
   }
-}
-
-function monResetCampos() {
-  monCuadrantes = {1:[], 2:[], 3:[], 4:[]};
-  monCuadranteActivo = 1;
-  document.getElementById('mon-fecha').value = new Date().toISOString().split('T')[0];
-  document.getElementById('mon-finca').selectedIndex = 0;
-  document.getElementById('mon-cama').value = '';
-  monActualizarFechaSemana();
-  poblarMonLoteSelect();
-  document.getElementById('mon-lote-select').value = '';
-  monActualizarInfoLote();
-  monRenderCuadrantes();
-  monRenderPlagasList();
-}
-
-function monLimpiar() {
-  document.getElementById('mon-ok').style.display = 'none';
-  document.getElementById('mon-error').style.display = 'none';
-  monResetCampos();
 }
 </script>
 
