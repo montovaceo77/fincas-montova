@@ -28,6 +28,27 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
 .header-inner { max-width: 480px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
 .header-title { font-size: 20px; font-weight: 700; color: #fff; }
 .header-sub { font-size: 11px; color: #B9C7BF; }
+.header-btn { background: transparent; border: 1.5px solid #6A9B78; color: #DCEDE2; font-size: 12px; font-weight: 600; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-family: 'DM Sans', sans-serif; white-space: nowrap; }
+.header-btn:active { background: rgba(255,255,255,0.08); }
+
+.resumen-title { font-size: 20px; font-weight: 700; color: var(--ink); margin-bottom: 2px; }
+.resumen-rango { font-size: 12px; color: var(--ink-mid); margin-bottom: 1.25rem; }
+.totales-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1.25rem; }
+.totales-grid.full { grid-template-columns: 1fr; }
+.total-card { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+.total-num { font-size: 26px; font-weight: 700; color: var(--verde-dark); }
+.total-lbl { font-size: 12px; color: var(--ink-mid); margin-top: 2px; }
+.breakdown-row { display: flex; justify-content: space-between; font-size: 13px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+.breakdown-row:last-child { border-bottom: none; }
+.breakdown-row .n { font-weight: 700; color: var(--verde-dark); }
+
+.reg-card { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; }
+.reg-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+.reg-title { font-size: 14px; font-weight: 700; color: var(--ink); }
+.reg-fecha { font-size: 11px; color: var(--ink-soft); }
+.reg-punto { font-size: 12px; color: var(--ink-mid); margin-top: 2px; }
+.reg-punto strong { color: var(--ink); }
+.empty-state { text-align: center; color: var(--ink-soft); font-size: 13px; padding: 2rem 1rem; }
 
 .summary-wrap { background: var(--white); border-bottom: 1px solid var(--border); }
 .summary { max-width: 480px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); }
@@ -119,14 +140,19 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
       <div class="header-title">Monitoreo</div>
       <div class="header-sub">Fincas Montova</div>
     </div>
+    <button class="header-btn" id="btn-toggle-view" onclick="toggleView()">Resumen semanal</button>
   </div>
 </div>
 
-<div class="summary-wrap">
-  <div class="summary" id="summary"></div>
+<div id="view-wizard">
+  <div class="summary-wrap">
+    <div class="summary" id="summary"></div>
+  </div>
+
+  <div class="main" id="main"></div>
 </div>
 
-<div class="main" id="main"></div>
+<div id="view-resumen" style="display:none;"></div>
 
 <script>
 // ===== Mismo backend (Apps Script Web App) que usa el resto de Fincas Montova =====
@@ -208,6 +234,161 @@ function getISO(val) {
   var s = String(val).trim();
   if (s.length >= 10) return s.substring(0, 10);
   return '';
+}
+
+function getWeekRange(hoy) {
+  var d = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+  var dow = d.getDay(); // 0=domingo, 1=lunes...
+  var diffToMonday = dow === 0 ? -6 : 1 - dow;
+  var monday = new Date(d);
+  monday.setDate(d.getDate() + diffToMonday);
+  var sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  function toISO(x) {
+    var m = ('0' + (x.getMonth() + 1)).slice(-2);
+    var day = ('0' + x.getDate()).slice(-2);
+    return x.getFullYear() + '-' + m + '-' + day;
+  }
+  return { start: toISO(monday), end: toISO(sunday) };
+}
+
+var currentView = 'wizard';
+
+function toggleView() {
+  currentView = currentView === 'wizard' ? 'resumen' : 'wizard';
+  document.getElementById('view-wizard').style.display = currentView === 'wizard' ? '' : 'none';
+  document.getElementById('view-resumen').style.display = currentView === 'resumen' ? '' : 'none';
+  document.getElementById('btn-toggle-view').textContent = currentView === 'wizard' ? 'Resumen semanal' : 'Volver a monitorear';
+  if (currentView === 'resumen') renderResumen();
+}
+
+function renderResumen() {
+  var wrap = document.getElementById('view-resumen');
+  wrap.innerHTML = '';
+  var main = document.createElement('div');
+  main.className = 'main';
+
+  var rango = getWeekRange(new Date());
+  var registrosSemana = monitoreos.filter(function(r) {
+    var f = getISO(r.Fecha || r.fecha || '');
+    return f >= rango.start && f <= rango.end;
+  }).sort(function(a, b) {
+    return getISO(a.Fecha || a.fecha || '').localeCompare(getISO(b.Fecha || b.fecha || ''));
+  });
+
+  var title = document.createElement('div');
+  title.className = 'resumen-title';
+  title.textContent = 'Resumen semanal';
+  main.appendChild(title);
+
+  var rangoEl = document.createElement('div');
+  rangoEl.className = 'resumen-rango';
+  rangoEl.textContent = 'Semana del ' + fmtDate(rango.start) + ' al ' + fmtDate(rango.end) + ' (lunes a domingo)';
+  main.appendChild(rangoEl);
+
+  if (registrosSemana.length === 0) {
+    var empty = document.createElement('div');
+    empty.className = 'empty-state';
+    empty.textContent = 'Todavia no hay registros de monitoreo esta semana.';
+    main.appendChild(empty);
+    wrap.appendChild(main);
+    return;
+  }
+
+  // ---- Totales ----
+  var totalesGrid = document.createElement('div');
+  totalesGrid.className = 'totales-grid';
+
+  var camasCard = document.createElement('div');
+  camasCard.className = 'total-card';
+  camasCard.innerHTML = '<div class="total-num">' + registrosSemana.length + '</div><div class="total-lbl">Camas monitoreadas</div>';
+  totalesGrid.appendChild(camasCard);
+
+  var puntosTotal = registrosSemana.length * 3;
+  var puntosSanos = 0;
+  var plagaCount = {};
+  registrosSemana.forEach(function(r) {
+    [1,2,3].forEach(function(n) {
+      var val = String(r['Punto_' + n] || r['punto_' + n] || '').trim();
+      if (!val || val === 'Punto Sano') { puntosSanos++; return; }
+      val.split(',').forEach(function(entry) {
+        var nombre = entry.replace(/\s*\((Leve|Moderado|Severo)\)\s*$/i, '').trim();
+        if (!nombre) return;
+        plagaCount[nombre] = (plagaCount[nombre] || 0) + 1;
+      });
+    });
+  });
+
+  var sanosCard = document.createElement('div');
+  sanosCard.className = 'total-card';
+  sanosCard.innerHTML = '<div class="total-num">' + puntosSanos + ' / ' + puntosTotal + '</div><div class="total-lbl">Puntos sanos</div>';
+  totalesGrid.appendChild(sanosCard);
+  main.appendChild(totalesGrid);
+
+  // ---- Por finca ----
+  var porFinca = {};
+  registrosSemana.forEach(function(r) {
+    var f = r.Finca || r.finca || 'Sin finca';
+    porFinca[f] = (porFinca[f] || 0) + 1;
+  });
+  var fincaCard = document.createElement('div');
+  fincaCard.className = 'total-card';
+  fincaCard.style.marginBottom = '10px';
+  var fincaHtml = '<div class="total-lbl" style="margin-bottom:6px; font-weight:700;">Camas monitoreadas por finca</div>';
+  Object.keys(porFinca).forEach(function(f) {
+    fincaHtml += '<div class="breakdown-row"><span>' + f + '</span><span class="n">' + porFinca[f] + '</span></div>';
+  });
+  fincaCard.innerHTML = fincaHtml;
+  main.appendChild(fincaCard);
+
+  // ---- Plagas mas frecuentes ----
+  var plagasOrdenadas = Object.keys(plagaCount).sort(function(a, b) { return plagaCount[b] - plagaCount[a]; });
+  if (plagasOrdenadas.length) {
+    var plagaCard = document.createElement('div');
+    plagaCard.className = 'total-card';
+    plagaCard.style.marginBottom = '1.25rem';
+    var plagaHtml = '<div class="total-lbl" style="margin-bottom:6px; font-weight:700;">Plagas / enfermedades mas frecuentes</div>';
+    plagasOrdenadas.forEach(function(p) {
+      plagaHtml += '<div class="breakdown-row"><span>' + p + '</span><span class="n">' + plagaCount[p] + '</span></div>';
+    });
+    plagaCard.innerHTML = plagaHtml;
+    main.appendChild(plagaCard);
+  }
+
+  // ---- Detalle de cada registro ----
+  var detTitle = document.createElement('div');
+  detTitle.className = 'card-title';
+  detTitle.style.marginBottom = '10px';
+  detTitle.textContent = 'Detalle de registros';
+  main.appendChild(detTitle);
+
+  registrosSemana.forEach(function(r) {
+    var card = document.createElement('div');
+    card.className = 'reg-card';
+    var head = document.createElement('div');
+    head.className = 'reg-head';
+    var t = document.createElement('div');
+    t.className = 'reg-title';
+    t.textContent = (r.Finca || r.finca || '') + ' \u00b7 ' + (r.Lote || r.lote || '') + ' \u00b7 Cama ' + (r.Cama || r.cama || '');
+    var f = document.createElement('div');
+    f.className = 'reg-fecha';
+    f.textContent = fmtDate(getISO(r.Fecha || r.fecha || ''));
+    head.appendChild(t);
+    head.appendChild(f);
+    card.appendChild(head);
+
+    [1,2,3].forEach(function(n) {
+      var val = String(r['Punto_' + n] || r['punto_' + n] || '').trim() || 'Punto Sano';
+      var p = document.createElement('div');
+      p.className = 'reg-punto';
+      p.innerHTML = '<strong>Punto ' + n + ':</strong> ' + val;
+      card.appendChild(p);
+    });
+
+    main.appendChild(card);
+  });
+
+  wrap.appendChild(main);
 }
 
 function camasConDatos() {
