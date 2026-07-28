@@ -82,6 +82,16 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
 .plaga-chk { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 11px; color: #fff; }
 .plaga-item.sel .plaga-chk { background: var(--verde-dark); border-color: var(--verde-dark); }
 
+.sev-wrap { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+.sev-card { border: 1px solid var(--border); border-radius: 10px; padding: 12px; background: #fff; }
+.sev-title { font-size: 14px; font-weight: 700; color: var(--ink); margin-bottom: 12px; }
+.sev-track { position: relative; height: 10px; border-radius: 5px; background: #EAEAEA; margin: 0 10px; touch-action: none; }
+.sev-track-fill { position: absolute; left: 0; top: 0; height: 100%; border-radius: 5px; background: transparent; transition: width 0.1s; }
+.sev-thumb { position: absolute; top: 50%; width: 24px; height: 24px; border-radius: 50%; transform: translate(-12px, -50%); border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.3); transition: left 0.1s, background 0.1s; }
+.sev-bottom-row { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
+.sev-label { font-size: 13px; font-weight: 700; }
+.sev-clear { font-size: 12px; color: var(--ink-soft); cursor: pointer; text-decoration: underline; }
+
 .actions-row { display: flex; gap: 10px; margin-top: 1rem; }
 .btn-guardar { flex: 1; padding: 15px; font-size: 16px; font-weight: 600; background: var(--verde-dark); color: #fff; border: none; border-radius: 12px; cursor: pointer; }
 .btn-guardar:disabled { opacity: 0.5; }
@@ -122,7 +132,11 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
 // ===== Mismo backend (Apps Script Web App) que usa el resto de Fincas Montova =====
 var WS = 'https://script.google.com/macros/s/AKfycbxvOw581dgZvxuuwSCi0RMj_gKkJbcrkTz9vpvQri0WntOxUrT1q35ngnuO5myq60Dx/exec';
 
-var FUM_PLAGAS = ['Afido','Alternaria','Babosa','Botritis','Ceniza','Control malezas','Mancha foliar','Secadera','Thirps','Acaro','Acaro blanco'];
+var FUM_PLAGAS_SEVERIDAD = ['Acaro blanco', 'Acaro rojo', 'Botrytis', 'Trips'];
+var FUM_PLAGAS_CHECK = ['Afidos', 'Alternaria', 'Babosa', 'Ceniza', 'Chinche', 'Coleopteros', 'Fitoftora', 'Lepidopteros', 'Mancha foliar', 'Secadera'];
+var NIVELES = ['Leve', 'Moderado', 'Severo'];
+var NIVEL_COLORES = ['#F5C518', '#F28C28', '#E53935'];
+
 var FINCAS = ['Flor Esperancita','Flor de Agua 3','Oasis Garden','Flor Madera'];
 
 var lotes = [];
@@ -138,7 +152,18 @@ var st = {
   cama: '',
   puntoActivo: 1
 };
-var puntos = {1:[], 2:[], 3:[]};
+var puntosCheck = {1:[], 2:[], 3:[]};
+var puntosSeveridad = {1:{}, 2:{}, 3:{}};
+
+function itemsPunto(n) {
+  var check = puntosCheck[n].slice();
+  var sev = puntosSeveridad[n];
+  Object.keys(sev).forEach(function(item) {
+    check.push(item + ' (' + NIVELES[sev[item]] + ')');
+  });
+  if (check.length === 0) return ['Punto Sano'];
+  return check;
+}
 
 window.addEventListener('DOMContentLoaded', function() {
   fetchLotes();
@@ -344,7 +369,7 @@ function buildCamaStep() {
       btn.textContent = n;
       btn.onclick = function() {
         st.cama = String(n);
-        puntos = {1:[], 2:[], 3:[]};
+        puntosCheck = {1:[], 2:[], 3:[]}; puntosSeveridad = {1:{}, 2:{}, 3:{}};
         st.puntoActivo = 1;
         render();
       };
@@ -355,7 +380,86 @@ function buildCamaStep() {
   return wrap;
 }
 
-// ===== Paso: Punto + Plagas + Guardar =====
+// ===== Slider de severidad (Leve / Moderado / Severo) =====
+function buildSeverityCard(item, n, sevState) {
+  var wrap = document.createElement('div');
+  wrap.className = 'sev-card';
+
+  var title = document.createElement('div');
+  title.className = 'sev-title';
+  title.textContent = item;
+  wrap.appendChild(title);
+
+  var touched = Object.prototype.hasOwnProperty.call(sevState, item);
+  var nivel = touched ? sevState[item] : null;
+
+  var track = document.createElement('div');
+  track.className = 'sev-track';
+
+  var fill = document.createElement('div');
+  fill.className = 'sev-track-fill';
+  if (touched) {
+    fill.style.width = ((nivel + 1) / 3 * 100) + '%';
+    fill.style.background = NIVEL_COLORES[nivel];
+  } else {
+    fill.style.width = '0%';
+  }
+  track.appendChild(fill);
+
+  var thumb = document.createElement('div');
+  thumb.className = 'sev-thumb';
+  thumb.style.left = touched ? (((nivel * 2 + 1) / 6) * 100) + '%' : '3%';
+  thumb.style.background = touched ? NIVEL_COLORES[nivel] : '#B9C7BF';
+  track.appendChild(thumb);
+
+  function setNivelFromClientX(clientX) {
+    var rect = track.getBoundingClientRect();
+    var pct = (clientX - rect.left) / rect.width;
+    if (pct < 0) pct = 0;
+    if (pct > 1) pct = 1;
+    var lvl = Math.round(pct * 2);
+    sevState[item] = lvl;
+    render();
+  }
+
+  track.addEventListener('click', function(e) {
+    setNivelFromClientX(e.clientX);
+  });
+  track.addEventListener('touchstart', function(e) {
+    e.preventDefault();
+    setNivelFromClientX(e.touches[0].clientX);
+  }, {passive: false});
+  track.addEventListener('touchmove', function(e) {
+    e.preventDefault();
+    setNivelFromClientX(e.touches[0].clientX);
+  }, {passive: false});
+
+  wrap.appendChild(track);
+
+  if (touched) {
+    var lbl = document.createElement('div');
+    lbl.className = 'sev-label';
+    lbl.style.color = NIVEL_COLORES[nivel];
+    lbl.textContent = NIVELES[nivel];
+    var clearBtn = document.createElement('span');
+    clearBtn.className = 'sev-clear';
+    clearBtn.textContent = 'Quitar';
+    clearBtn.onclick = function(e) {
+      e.stopPropagation();
+      delete sevState[item];
+      render();
+    };
+    var row = document.createElement('div');
+    row.className = 'sev-bottom-row';
+    row.appendChild(lbl);
+    row.appendChild(clearBtn);
+    wrap.appendChild(row);
+  }
+
+  return wrap;
+}
+
+
 function buildWorkStep() {
   var wrap = document.createElement('div');
 
@@ -372,7 +476,7 @@ function buildWorkStep() {
   [1,2,3].forEach(function(n) {
     var btn = document.createElement('button');
     var on = st.puntoActivo === n;
-    var items = puntos[n];
+    var items = itemsPunto(n);
     btn.className = 'punto-btn' + (on ? ' on' : '') + (items.length && !on ? ' hasdata' : '');
     var t = document.createElement('div');
     t.className = 'cq-title';
@@ -394,12 +498,22 @@ function buildWorkStep() {
   pt.textContent = 'Plagas / enfermedades - Punto ' + st.puntoActivo;
   card.appendChild(pt);
 
+  var n = st.puntoActivo;
+  var sevState = puntosSeveridad[n];
+  var checkArr = puntosCheck[n];
+
+  var sevWrap = document.createElement('div');
+  sevWrap.className = 'sev-wrap';
+  FUM_PLAGAS_SEVERIDAD.forEach(function(item) {
+    sevWrap.appendChild(buildSeverityCard(item, n, sevState));
+  });
+  card.appendChild(sevWrap);
+
   var lista = document.createElement('div');
   lista.className = 'plagas-lista';
-  var selArr = puntos[st.puntoActivo];
-  FUM_PLAGAS.forEach(function(item) {
+  FUM_PLAGAS_CHECK.forEach(function(item) {
     var btn = document.createElement('button');
-    var sel = selArr.indexOf(item) !== -1;
+    var sel = checkArr.indexOf(item) !== -1;
     btn.className = 'plaga-item' + (sel ? ' sel' : '');
     var chk = document.createElement('div');
     chk.className = 'plaga-chk';
@@ -409,8 +523,8 @@ function buildWorkStep() {
     btn.appendChild(chk);
     btn.appendChild(sp);
     btn.onclick = function() {
-      var idx = selArr.indexOf(item);
-      if (idx > -1) selArr.splice(idx, 1); else selArr.push(item);
+      var idx = checkArr.indexOf(item);
+      if (idx > -1) checkArr.splice(idx, 1); else checkArr.push(item);
       render();
     };
     lista.appendChild(btn);
@@ -421,7 +535,7 @@ function buildWorkStep() {
   var actions = document.createElement('div');
   actions.className = 'actions-row';
 
-  var totalMarcado = puntos[1].length + puntos[2].length + puntos[3].length;
+  var totalMarcado = itemsPunto(1).length + itemsPunto(2).length + itemsPunto(3).length;
 
   var btnGuardar = document.createElement('button');
   btnGuardar.className = 'btn-guardar';
@@ -482,9 +596,9 @@ async function monGuardar() {
     finca: st.finca,
     lote: 'Lote ' + st.loteNum,
     cama: st.cama,
-    punto_1: puntos[1].join(', '),
-    punto_2: puntos[2].join(', '),
-    punto_3: puntos[3].join(', ')
+    punto_1: itemsPunto(1).join(', '),
+    punto_2: itemsPunto(2).join(', '),
+    punto_3: itemsPunto(3).join(', ')
   };
 
   try {
@@ -494,7 +608,7 @@ async function monGuardar() {
     document.getElementById('mon-ok-txt').textContent = st.finca + ' \u00b7 Lote ' + st.loteNum + ' \u00b7 Cama ' + st.cama;
     document.getElementById('mon-ok').style.display = 'block';
     st.cama = '';
-    puntos = {1:[], 2:[], 3:[]};
+    puntosCheck = {1:[], 2:[], 3:[]}; puntosSeveridad = {1:{}, 2:{}, 3:{}};
     st.puntoActivo = 1;
     render();
   } catch (e) {
