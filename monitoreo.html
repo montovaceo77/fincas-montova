@@ -133,6 +133,7 @@ var st = {
   finca: '',
   loteNum: '',
   variedad: '',
+  fechaInicioLote: '',
   camasTotal: 0,
   cama: '',
   cuadranteActivo: 1
@@ -166,6 +167,22 @@ function fmtDate(iso) {
   var p = iso.split('-');
   if (p.length < 3) return iso;
   return p[2] + '/' + p[1] + '/' + p[0];
+}
+
+function calcSemanaCiclo(fechaISO) {
+  if (!fechaISO) return null;
+  var inicio = new Date(fechaISO + 'T12:00:00');
+  if (isNaN(inicio)) return null;
+  var hoy = new Date();
+  var diff = Math.floor((hoy - inicio) / (7 * 24 * 60 * 60 * 1000));
+  return diff < 0 ? 0 : diff;
+}
+
+function getISO(val) {
+  if (!val) return '';
+  var s = String(val).trim();
+  if (s.length >= 10) return s.substring(0, 10);
+  return '';
 }
 
 function camasConDatos() {
@@ -226,7 +243,7 @@ function onSummaryTap(key) {
     return;
   }
   if (key === 'finca') { st.finca = ''; st.loteNum = ''; st.cama = ''; render(); return; }
-  if (key === 'lote' || key === 'variedad') { st.loteNum = ''; st.cama = ''; render(); return; }
+  if (key === 'lote' || key === 'variedad') { st.loteNum = ''; st.variedad = ''; st.fechaInicioLote = ''; st.camasTotal = 0; st.cama = ''; render(); return; }
   if (key === 'cama' || key === 'cuadrante') { st.cama = ''; render(); return; }
 }
 
@@ -274,6 +291,7 @@ function buildLoteStep() {
                  String(x.Estado || x.estado || '').toLowerCase() === 'activo';
         });
         st.variedad = l ? (l.Variedad || l.variedad || '') : '';
+        st.fechaInicioLote = l ? getISO(l.Fecha_Inicio || l.fecha_inicio || '') : '';
         var camasVal = l ? parseInt(l.Camas || l.camas || '0', 10) : 0;
         st.camasTotal = camasVal > 0 ? camasVal : 20;
         render();
@@ -298,7 +316,31 @@ function buildCamaStep() {
     warn.className = 'info-box';
     warn.textContent = 'No hay un ciclo activo registrado para este lote en Fincas Montova. Puedes continuar, pero revisa si el lote esta bien programado.';
     wrap.appendChild(warn);
+  } else {
+    var semana = calcSemanaCiclo(st.fechaInicioLote);
+    var info = document.createElement('div');
+    info.className = 'info-box';
+    info.innerHTML =
+      '<div><strong>Variedad:</strong> ' + st.variedad + '</div>' +
+      '<div><strong>Fecha de inicio del lote:</strong> ' + (st.fechaInicioLote ? fmtDate(st.fechaInicioLote) : 'Sin registrar') + '</div>' +
+      '<div><strong>Semana del ciclo:</strong> ' + (semana !== null ? semana : '-') + '</div>';
+    wrap.appendChild(info);
   }
+
+  var btnCambiarLote = document.createElement('button');
+  btnCambiarLote.className = 'btn-nuevo';
+  btnCambiarLote.style.width = '100%';
+  btnCambiarLote.style.marginBottom = '1rem';
+  btnCambiarLote.textContent = 'Cambiar de finca o lote';
+  btnCambiarLote.onclick = function() {
+    st.loteNum = '';
+    st.variedad = '';
+    st.fechaInicioLote = '';
+    st.camasTotal = 0;
+    st.cama = '';
+    render();
+  };
+  wrap.appendChild(btnCambiarLote);
 
   var legend = document.createElement('div');
   legend.className = 'legend';
@@ -411,6 +453,21 @@ function buildWorkStep() {
   actions.appendChild(btnCambiarCama);
 
   wrap.appendChild(actions);
+
+  var btnCambiarLote2 = document.createElement('button');
+  btnCambiarLote2.className = 'btn-nuevo';
+  btnCambiarLote2.style.width = '100%';
+  btnCambiarLote2.style.marginTop = '10px';
+  btnCambiarLote2.textContent = 'Terminar este lote y elegir otro';
+  btnCambiarLote2.onclick = function() {
+    st.loteNum = '';
+    st.variedad = '';
+    st.fechaInicioLote = '';
+    st.camasTotal = 0;
+    st.cama = '';
+    render();
+  };
+  wrap.appendChild(btnCambiarLote2);
 
   var loading = document.createElement('div');
   loading.className = 'status-box status-loading';
