@@ -66,15 +66,15 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
 .card { background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 1.1rem; margin-bottom: 1rem; }
 .card-title { font-size: 13px; font-weight: 700; color: var(--verde-dark); text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 10px; }
 
-.cuadrantes-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
-.cuadrante-btn { border-radius: 10px; cursor: pointer; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start; text-align: left; padding: 10px; gap: 4px; min-height: 78px; border: 1.5px solid var(--border); background: #fff; font-family: 'DM Sans', sans-serif; }
-.cuadrante-btn .cq-title { font-size: 13px; font-weight: 700; color: var(--ink-mid); }
-.cuadrante-btn .cq-list { font-size: 11px; line-height: 1.4; color: var(--verde-dark); }
-.cuadrante-btn.on { background: var(--verde-dark); border-color: var(--verde-dark); }
-.cuadrante-btn.on .cq-title { color: #fff; }
-.cuadrante-btn.on .cq-list { color: #fff; opacity: 0.95; }
-.cuadrante-btn.hasdata:not(.on) { background: var(--verde-light); border-color: var(--verde-mid); }
-.cuadrante-btn.hasdata:not(.on) .cq-title { color: var(--verde-dark); }
+.puntos-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.punto-btn { border-radius: 10px; cursor: pointer; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start; text-align: left; padding: 10px; gap: 4px; min-height: 78px; border: 1.5px solid var(--border); background: #fff; font-family: 'DM Sans', sans-serif; }
+.punto-btn .cq-title { font-size: 13px; font-weight: 700; color: var(--ink-mid); }
+.punto-btn .cq-list { font-size: 11px; line-height: 1.4; color: var(--verde-dark); }
+.punto-btn.on { background: var(--verde-dark); border-color: var(--verde-dark); }
+.punto-btn.on .cq-title { color: #fff; }
+.punto-btn.on .cq-list { color: #fff; opacity: 0.95; }
+.punto-btn.hasdata:not(.on) { background: var(--verde-light); border-color: var(--verde-mid); }
+.punto-btn.hasdata:not(.on) .cq-title { color: var(--verde-dark); }
 
 .plagas-lista { max-height: 240px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; padding: 6px; display: flex; flex-direction: column; gap: 6px; background: #fafafa; }
 .plaga-item { padding: 10px 12px; font-size: 13px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid var(--border); color: var(--ink-mid); width: 100%; text-align: left; font-family: 'DM Sans', sans-serif; }
@@ -136,9 +136,9 @@ var st = {
   fechaInicioLote: '',
   camasTotal: 0,
   cama: '',
-  cuadranteActivo: 1
+  puntoActivo: 1
 };
-var cuadrantes = {1:[], 2:[], 3:[], 4:[]};
+var puntos = {1:[], 2:[], 3:[]};
 
 window.addEventListener('DOMContentLoaded', function() {
   fetchLotes();
@@ -216,7 +216,7 @@ function renderSummary() {
     {label:'Lote', value: st.loteNum ? ('Lote ' + st.loteNum) : '', key:'lote'},
     {label:'Variedad', value: st.variedad, key:'variedad'},
     {label:'Cama', value: st.cama, key:'cama'},
-    {label:'Cuadrante', value: st.cama ? ('Cuadrante ' + st.cuadranteActivo) : '', key:'cuadrante'}
+    {label:'Punto', value: st.cama ? ('Punto ' + st.puntoActivo) : '', key:'punto'}
   ];
   var el = document.getElementById('summary');
   el.innerHTML = '';
@@ -244,7 +244,7 @@ function onSummaryTap(key) {
   }
   if (key === 'finca') { st.finca = ''; st.loteNum = ''; st.cama = ''; render(); return; }
   if (key === 'lote' || key === 'variedad') { st.loteNum = ''; st.variedad = ''; st.fechaInicioLote = ''; st.camasTotal = 0; st.cama = ''; render(); return; }
-  if (key === 'cama' || key === 'cuadrante') { st.cama = ''; render(); return; }
+  if (key === 'cama' || key === 'punto') { st.cama = ''; render(); return; }
 }
 
 // ===== Paso: Finca =====
@@ -344,8 +344,8 @@ function buildCamaStep() {
       btn.textContent = n;
       btn.onclick = function() {
         st.cama = String(n);
-        cuadrantes = {1:[], 2:[], 3:[], 4:[]};
-        st.cuadranteActivo = 1;
+        puntos = {1:[], 2:[], 3:[]};
+        st.puntoActivo = 1;
         render();
       };
       grid.appendChild(btn);
@@ -355,7 +355,7 @@ function buildCamaStep() {
   return wrap;
 }
 
-// ===== Paso: Cuadrante + Plagas + Guardar =====
+// ===== Paso: Punto + Plagas + Guardar =====
 function buildWorkStep() {
   var wrap = document.createElement('div');
 
@@ -364,19 +364,19 @@ function buildWorkStep() {
 
   var ct = document.createElement('div');
   ct.className = 'card-title';
-  ct.textContent = 'Cuadrantes de la cama';
+  ct.textContent = 'Puntos de la cama';
   card.appendChild(ct);
 
   var grid = document.createElement('div');
-  grid.className = 'cuadrantes-grid';
-  [1,2,3,4].forEach(function(n) {
+  grid.className = 'puntos-grid';
+  [1,2,3].forEach(function(n) {
     var btn = document.createElement('button');
-    var on = st.cuadranteActivo === n;
-    var items = cuadrantes[n];
-    btn.className = 'cuadrante-btn' + (on ? ' on' : '') + (items.length && !on ? ' hasdata' : '');
+    var on = st.puntoActivo === n;
+    var items = puntos[n];
+    btn.className = 'punto-btn' + (on ? ' on' : '') + (items.length && !on ? ' hasdata' : '');
     var t = document.createElement('div');
     t.className = 'cq-title';
-    t.textContent = 'Cuadrante ' + n;
+    t.textContent = 'Punto ' + n;
     btn.appendChild(t);
     if (items.length) {
       var l = document.createElement('div');
@@ -384,19 +384,19 @@ function buildWorkStep() {
       l.textContent = items.join(', ');
       btn.appendChild(l);
     }
-    btn.onclick = function() { st.cuadranteActivo = n; render(); };
+    btn.onclick = function() { st.puntoActivo = n; render(); };
     grid.appendChild(btn);
   });
   card.appendChild(grid);
 
   var pt = document.createElement('div');
   pt.className = 'card-title';
-  pt.textContent = 'Plagas / enfermedades - Cuadrante ' + st.cuadranteActivo;
+  pt.textContent = 'Plagas / enfermedades - Punto ' + st.puntoActivo;
   card.appendChild(pt);
 
   var lista = document.createElement('div');
   lista.className = 'plagas-lista';
-  var selArr = cuadrantes[st.cuadranteActivo];
+  var selArr = puntos[st.puntoActivo];
   FUM_PLAGAS.forEach(function(item) {
     var btn = document.createElement('button');
     var sel = selArr.indexOf(item) !== -1;
@@ -421,7 +421,7 @@ function buildWorkStep() {
   var actions = document.createElement('div');
   actions.className = 'actions-row';
 
-  var totalMarcado = cuadrantes[1].length + cuadrantes[2].length + cuadrantes[3].length + cuadrantes[4].length;
+  var totalMarcado = puntos[1].length + puntos[2].length + puntos[3].length;
 
   var btnGuardar = document.createElement('button');
   btnGuardar.className = 'btn-guardar';
@@ -482,10 +482,9 @@ async function monGuardar() {
     finca: st.finca,
     lote: 'Lote ' + st.loteNum,
     cama: st.cama,
-    cuadrante_1: cuadrantes[1].join(', '),
-    cuadrante_2: cuadrantes[2].join(', '),
-    cuadrante_3: cuadrantes[3].join(', '),
-    cuadrante_4: cuadrantes[4].join(', ')
+    punto_1: puntos[1].join(', '),
+    punto_2: puntos[2].join(', '),
+    punto_3: puntos[3].join(', ')
   };
 
   try {
@@ -495,8 +494,8 @@ async function monGuardar() {
     document.getElementById('mon-ok-txt').textContent = st.finca + ' \u00b7 Lote ' + st.loteNum + ' \u00b7 Cama ' + st.cama;
     document.getElementById('mon-ok').style.display = 'block';
     st.cama = '';
-    cuadrantes = {1:[], 2:[], 3:[], 4:[]};
-    st.cuadranteActivo = 1;
+    puntos = {1:[], 2:[], 3:[]};
+    st.puntoActivo = 1;
     render();
   } catch (e) {
     document.getElementById('mon-loading').style.display = 'none';
