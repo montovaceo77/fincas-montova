@@ -327,21 +327,6 @@ function buildCamaStep() {
     wrap.appendChild(info);
   }
 
-  var btnCambiarLote = document.createElement('button');
-  btnCambiarLote.className = 'btn-nuevo';
-  btnCambiarLote.style.width = '100%';
-  btnCambiarLote.style.marginBottom = '1rem';
-  btnCambiarLote.textContent = 'Cambiar de finca o lote';
-  btnCambiarLote.onclick = function() {
-    st.loteNum = '';
-    st.variedad = '';
-    st.fechaInicioLote = '';
-    st.camasTotal = 0;
-    st.cama = '';
-    render();
-  };
-  wrap.appendChild(btnCambiarLote);
-
   var legend = document.createElement('div');
   legend.className = 'legend';
   legend.innerHTML = '<span><span class="dot"></span> Sin monitorear</span><span><span class="dot visited"></span> Ya tiene registro</span>';
@@ -453,21 +438,6 @@ function buildWorkStep() {
   actions.appendChild(btnCambiarCama);
 
   wrap.appendChild(actions);
-
-  var btnCambiarLote2 = document.createElement('button');
-  btnCambiarLote2.className = 'btn-nuevo';
-  btnCambiarLote2.style.width = '100%';
-  btnCambiarLote2.style.marginTop = '10px';
-  btnCambiarLote2.textContent = 'Terminar este lote y elegir otro';
-  btnCambiarLote2.onclick = function() {
-    st.loteNum = '';
-    st.variedad = '';
-    st.fechaInicioLote = '';
-    st.camasTotal = 0;
-    st.cama = '';
-    render();
-  };
-  wrap.appendChild(btnCambiarLote2);
 
   var loading = document.createElement('div');
   loading.className = 'status-box status-loading';
