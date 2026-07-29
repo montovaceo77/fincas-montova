@@ -50,6 +50,21 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
 .reg-punto strong { color: var(--ink); }
 .empty-state { text-align: center; color: var(--ink-soft); font-size: 13px; padding: 2rem 1rem; }
 
+.filtro-chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 1.25rem; }
+.chip { flex-shrink: 0; padding: 8px 14px; font-size: 12px; font-weight: 600; border-radius: 20px; border: 1.5px solid var(--verde-mid); background: #fff; color: var(--ink-mid); cursor: pointer; font-family: 'DM Sans', sans-serif; white-space: nowrap; }
+.chip.on { background: var(--verde-dark); border-color: var(--verde-dark); color: #fff; }
+
+.grupo-head { font-size: 13px; font-weight: 700; color: var(--verde-dark); text-transform: uppercase; letter-spacing: 0.03em; margin: 1.1rem 0 8px; }
+.dash-list { background: var(--white); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.dash-row { display: flex; align-items: flex-start; gap: 12px; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+.dash-row:last-child { border-bottom: none; }
+.dash-cama { flex-shrink: 0; width: 30px; height: 30px; border-radius: 8px; background: var(--verde-light); color: var(--verde-dark); font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.dash-body { flex: 1; min-width: 0; }
+.dash-top { font-size: 12.5px; line-height: 1.5; display: flex; flex-wrap: wrap; gap: 6px; }
+.dash-sano { color: var(--verde); font-weight: 600; }
+.dash-hallazgo { background: #FFF3E0; color: #B45309; padding: 1px 7px; border-radius: 6px; font-weight: 600; }
+.dash-fecha { font-size: 11px; color: var(--ink-soft); margin-top: 3px; }
+
 .summary-wrap { background: var(--white); border-bottom: 1px solid var(--border); }
 .summary { max-width: 480px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); }
 .summary-cell { padding: 10px 6px; text-align: center; border-bottom: 1px solid var(--border); cursor: pointer; }
@@ -262,6 +277,8 @@ function toggleView() {
   if (currentView === 'resumen') renderResumen();
 }
 
+var resumenFincaFiltro = '';
+
 function renderResumen() {
   var wrap = document.getElementById('view-resumen');
   wrap.innerHTML = '';
@@ -272,8 +289,6 @@ function renderResumen() {
   var registrosSemana = monitoreos.filter(function(r) {
     var f = getISO(r.Fecha || r.fecha || '');
     return f >= rango.start && f <= rango.end;
-  }).sort(function(a, b) {
-    return getISO(a.Fecha || a.fecha || '').localeCompare(getISO(b.Fecha || b.fecha || ''));
   });
 
   var title = document.createElement('div');
@@ -286,6 +301,32 @@ function renderResumen() {
   rangoEl.textContent = 'Semana del ' + fmtDate(rango.start) + ' al ' + fmtDate(rango.end) + ' (lunes a domingo)';
   main.appendChild(rangoEl);
 
+  // ---- Filtro por finca ----
+  var fincasConDatos = FINCAS.filter(function(f) {
+    return registrosSemana.some(function(r) { return String(r.Finca || r.finca || '') === f; });
+  });
+  var chipsWrap = document.createElement('div');
+  chipsWrap.className = 'filtro-chips';
+  var todasBtn = document.createElement('button');
+  todasBtn.className = 'chip' + (resumenFincaFiltro === '' ? ' on' : '');
+  todasBtn.textContent = 'Todas';
+  todasBtn.onclick = function() { resumenFincaFiltro = ''; renderResumen(); };
+  chipsWrap.appendChild(todasBtn);
+  fincasConDatos.forEach(function(f) {
+    var b = document.createElement('button');
+    b.className = 'chip' + (resumenFincaFiltro === f ? ' on' : '');
+    b.textContent = f;
+    b.onclick = function() { resumenFincaFiltro = f; renderResumen(); };
+    chipsWrap.appendChild(b);
+  });
+  main.appendChild(chipsWrap);
+
+  if (resumenFincaFiltro) {
+    registrosSemana = registrosSemana.filter(function(r) {
+      return String(r.Finca || r.finca || '') === resumenFincaFiltro;
+    });
+  }
+
   if (registrosSemana.length === 0) {
     var empty = document.createElement('div');
     empty.className = 'empty-state';
@@ -295,30 +336,73 @@ function renderResumen() {
     return;
   }
 
+  // ---- Agrupar por Lote, ordenar por Lote y luego por Cama ----
+  function loteNum(r) {
+    var s = String(r.Lote || r.lote || '');
+    var m = s.match(/(\d+)/);
+    return m ? parseInt(m[1], 10) : 0;
+  }
+  function camaNum(r) {
+    return parseInt(r.Cama || r.cama || 0, 10) || 0;
+  }
+
+  var grupos = {};
   registrosSemana.forEach(function(r) {
-    var card = document.createElement('div');
-    card.className = 'reg-card';
-    var head = document.createElement('div');
-    head.className = 'reg-head';
-    var t = document.createElement('div');
-    t.className = 'reg-title';
-    t.textContent = (r.Finca || r.finca || '') + ' \u00b7 ' + (r.Lote || r.lote || '') + ' \u00b7 Cama ' + (r.Cama || r.cama || '');
-    var f = document.createElement('div');
-    f.className = 'reg-fecha';
-    f.textContent = fmtDate(getISO(r.Fecha || r.fecha || ''));
-    head.appendChild(t);
-    head.appendChild(f);
-    card.appendChild(head);
+    var key = (r.Finca || r.finca || '') + ' \u00b7 ' + (r.Lote || r.lote || '');
+    if (!grupos[key]) grupos[key] = { finca: r.Finca || r.finca || '', lote: r.Lote || r.lote || '', loteN: loteNum(r), items: [] };
+    grupos[key].items.push(r);
+  });
 
-    [1,2,3].forEach(function(n) {
-      var val = String(r['Punto_' + n] || r['punto_' + n] || '').trim() || 'Punto Sano';
-      var p = document.createElement('div');
-      p.className = 'reg-punto';
-      p.innerHTML = '<strong>Punto ' + n + ':</strong> ' + val;
-      card.appendChild(p);
+  var gruposOrdenados = Object.keys(grupos).map(function(k) { return grupos[k]; });
+  gruposOrdenados.sort(function(a, b) {
+    if (a.finca !== b.finca) return a.finca.localeCompare(b.finca);
+    return a.loteN - b.loteN;
+  });
+
+  gruposOrdenados.forEach(function(g) {
+    g.items.sort(function(a, b) { return camaNum(a) - camaNum(b); });
+
+    var groupHead = document.createElement('div');
+    groupHead.className = 'grupo-head';
+    groupHead.textContent = (resumenFincaFiltro ? '' : (g.finca + ' \u00b7 ')) + g.lote;
+    main.appendChild(groupHead);
+
+    var list = document.createElement('div');
+    list.className = 'dash-list';
+    g.items.forEach(function(r) {
+      var row = document.createElement('div');
+      row.className = 'dash-row';
+
+      var camaBadge = document.createElement('div');
+      camaBadge.className = 'dash-cama';
+      camaBadge.textContent = camaNum(r);
+      row.appendChild(camaBadge);
+
+      var body = document.createElement('div');
+      body.className = 'dash-body';
+
+      var top = document.createElement('div');
+      top.className = 'dash-top';
+      var puntosResumen = [1,2,3].map(function(n) {
+        return String(r['Punto_' + n] || r['punto_' + n] || '').trim() || 'Punto Sano';
+      });
+      var sano = puntosResumen.every(function(p) { return p === 'Punto Sano'; });
+      top.innerHTML = sano
+        ? '<span class="dash-sano">Sana</span>'
+        : puntosResumen.map(function(p, i) {
+            return p === 'Punto Sano' ? '' : '<span class="dash-hallazgo">P' + (i+1) + ': ' + p + '</span>';
+          }).filter(Boolean).join(' ');
+      body.appendChild(top);
+
+      var fechaEl = document.createElement('div');
+      fechaEl.className = 'dash-fecha';
+      fechaEl.textContent = fmtDate(getISO(r.Fecha || r.fecha || ''));
+      body.appendChild(fechaEl);
+
+      row.appendChild(body);
+      list.appendChild(row);
     });
-
-    main.appendChild(card);
+    main.appendChild(list);
   });
 
   wrap.appendChild(main);
