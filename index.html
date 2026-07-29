@@ -248,9 +248,20 @@ var loteFilter = 'todos';
 var expandedPrep = {};
 var reprogramarId = null;
 
+// Lotes especiales: fincas/variedades cuyo listado de "numero de lote"
+// no es el rango normal de 1 a 33. Oasis Garden tiene 11 lotes
+// adicionales, exclusivos de la variedad Esmeralda, identificados
+// como E1 a E11. No se mezclan con los 33 lotes normales y no
+// aparecen si se elige otra finca u otra variedad.
+var LOTES_ESPECIALES = {
+  'Oasis Garden': {
+    'Esmeralda': Array.from({length: 11}, function(_, i) { return 'E' + (i + 1); })
+  }
+};
+
 window.addEventListener('DOMContentLoaded', function() {
   document.getElementById('hdate').textContent = new Date().toLocaleDateString('es-CO', {weekday:'long', day:'numeric', month:'long'});
-  poblarLoteNums();
+  actualizarOpcionesLoteNum();
   initFilters();
   initFab();
   initModal();
@@ -269,14 +280,42 @@ function sendToServer(body) {
   fetch(WS, {method:'POST', body:JSON.stringify(body)}).catch(function() {});
 }
 
-function poblarLoteNums() {
+// Repuebla el select "Numero de lote" segun la finca y variedad
+// seleccionadas. Si la combinacion tiene lotes especiales definidos en
+// LOTES_ESPECIALES, se muestran solo esos; de lo contrario se muestra el
+// rango normal de 33 lotes.
+function actualizarOpcionesLoteNum() {
   var sel = document.getElementById('l-num');
-  for (var i = 1; i <= 33; i++) {
-    var opt = document.createElement('option');
-    opt.value = i;
-    opt.textContent = 'Lote ' + i;
-    sel.appendChild(opt);
+  var finca = document.getElementById('l-finca').value;
+  var variedad = document.getElementById('l-variedad').value;
+  var valorActual = sel.value;
+
+  sel.innerHTML = '<option value="">Selecciona...</option>';
+
+  var especiales = LOTES_ESPECIALES[finca] && LOTES_ESPECIALES[finca][variedad];
+
+  if (especiales) {
+    especiales.forEach(function(codigo) {
+      var opt = document.createElement('option');
+      opt.value = codigo;
+      opt.textContent = 'Lote ' + codigo;
+      sel.appendChild(opt);
+    });
+  } else {
+    for (var i = 1; i <= 33; i++) {
+      var opt = document.createElement('option');
+      opt.value = i;
+      opt.textContent = 'Lote ' + i;
+      sel.appendChild(opt);
+    }
   }
+
+  // Si el valor que estaba seleccionado sigue siendo valido para la
+  // nueva combinacion finca/variedad, lo conservamos.
+  var sigueValido = Array.prototype.some.call(sel.options, function(o) {
+    return o.value === valorActual;
+  });
+  if (sigueValido) sel.value = valorActual;
 }
 
 function calcSemanaAnio(fechaISO) {
@@ -367,6 +406,7 @@ function abrirModalNuevo() {
   document.getElementById('l-num').disabled = false;
   document.getElementById('l-fecha').value = new Date().toISOString().split('T')[0];
   document.getElementById('l-camas').value = '';
+  actualizarOpcionesLoteNum();
   actualizarHints();
   document.getElementById('overlay-lote').classList.add('open');
 }
@@ -379,6 +419,7 @@ function abrirModalReprogramar(id) {
   document.getElementById('btn-save-lote').textContent = 'Reprogramar lote';
   document.getElementById('l-finca').value = l.Finca || l.finca || '';
   document.getElementById('l-variedad').value = l.Variedad || l.variedad || '';
+  actualizarOpcionesLoteNum();
   document.getElementById('l-num').value = l.Lote || l.lote || '';
   document.getElementById('l-finca').disabled = true;
   document.getElementById('l-variedad').disabled = true;
@@ -414,6 +455,8 @@ function resetModal() {
 
 function initModal() {
   document.getElementById('l-fecha').addEventListener('change', actualizarHints);
+  document.getElementById('l-finca').addEventListener('change', actualizarOpcionesLoteNum);
+  document.getElementById('l-variedad').addEventListener('change', actualizarOpcionesLoteNum);
   ['p-picada','p-desinfeccion','p-app1-fecha','p-app2-fecha'].forEach(function(id) {
     document.getElementById(id).addEventListener('change', actualizarHints);
   });
