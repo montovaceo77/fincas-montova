@@ -42,28 +42,24 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
 .breakdown-row:last-child { border-bottom: none; }
 .breakdown-row .n { font-weight: 700; color: var(--verde-dark); }
 
-.reg-card { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; }
-.reg-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
-.reg-title { font-size: 14px; font-weight: 700; color: var(--ink); }
-.reg-fecha { font-size: 11px; color: var(--ink-soft); }
-.reg-punto { font-size: 12px; color: var(--ink-mid); margin-top: 2px; }
-.reg-punto strong { color: var(--ink); }
 .empty-state { text-align: center; color: var(--ink-soft); font-size: 13px; padding: 2rem 1rem; }
 
 .filtro-chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 1.25rem; }
 .chip { flex-shrink: 0; padding: 8px 14px; font-size: 12px; font-weight: 600; border-radius: 20px; border: 1.5px solid var(--verde-mid); background: #fff; color: var(--ink-mid); cursor: pointer; font-family: 'DM Sans', sans-serif; white-space: nowrap; }
 .chip.on { background: var(--verde-dark); border-color: var(--verde-dark); color: #fff; }
 
-.grupo-head { font-size: 13px; font-weight: 700; color: var(--verde-dark); text-transform: uppercase; letter-spacing: 0.03em; margin: 1.1rem 0 8px; }
-.dash-list { background: var(--white); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
-.dash-row { display: flex; align-items: flex-start; gap: 12px; padding: 10px 12px; border-bottom: 1px solid var(--border); }
-.dash-row:last-child { border-bottom: none; }
-.dash-cama { flex-shrink: 0; width: 30px; height: 30px; border-radius: 8px; background: var(--verde-light); color: var(--verde-dark); font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
-.dash-body { flex: 1; min-width: 0; }
-.dash-top { font-size: 12.5px; line-height: 1.5; display: flex; flex-wrap: wrap; gap: 6px; }
-.dash-sano { color: var(--verde); font-weight: 600; }
-.dash-hallazgo { background: #FFF3E0; color: #B45309; padding: 1px 7px; border-radius: 6px; font-weight: 600; }
-.dash-fecha { font-size: 11px; color: var(--ink-soft); margin-top: 3px; }
+.grupo-card { border: 1px solid var(--border); border-radius: 10px; margin-bottom: 12px; overflow: hidden; background: var(--white); }
+.grupo-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; background: #EDEDED; font-size: 13px; font-weight: 700; color: var(--ink); cursor: pointer; }
+.grupo-count { font-weight: 400; color: var(--ink-mid); font-size: 12px; }
+.grupo-chevron { color: var(--ink-mid); font-size: 11px; flex-shrink: 0; }
+
+.plaga-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.plaga-table { width: 100%; min-width: 560px; border-collapse: collapse; font-size: 12px; }
+.plaga-table th { text-align: left; padding: 8px 10px; background: #fff; color: var(--ink-mid); font-weight: 700; border-bottom: 2px solid var(--border); white-space: nowrap; }
+.plaga-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.plaga-table tr:last-child td { border-bottom: none; }
+.plaga-table tr.row-sano td { color: var(--verde-dark); font-weight: 600; }
+.plaga-table tr.row-alt td { background: var(--verde-pale); }
 
 .summary-wrap { background: var(--white); border-bottom: 1px solid var(--border); }
 .summary { max-width: 480px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); }
@@ -277,7 +273,27 @@ function toggleView() {
   if (currentView === 'resumen') renderResumen();
 }
 
-var resumenFincaFiltro = '';
+function calcSemanaAnio(fechaISO) {
+  if (!fechaISO) return null;
+  var d = new Date(fechaISO + 'T12:00:00');
+  if (isNaN(d)) return null;
+  var jan4 = new Date(d.getFullYear(), 0, 4);
+  var monday1 = new Date(jan4);
+  monday1.setDate(jan4.getDate() - (jan4.getDay() || 7) + 1);
+  var diff = d - monday1;
+  return Math.floor(diff / (7 * 24 * 60 * 60 * 1000)) + 1;
+}
+
+function getVariedadLote(finca, loteNumStr) {
+  var l = lotes.find(function(x) {
+    return String(x.Finca || x.finca || '') === String(finca) &&
+           String(x.Lote || x.lote || '') === String(loteNumStr) &&
+           String(x.Estado || x.estado || '').toLowerCase() === 'activo';
+  });
+  return l ? (l.Variedad || l.variedad || '') : '';
+}
+
+var gruposColapsados = {};
 
 function renderResumen() {
   var wrap = document.getElementById('view-resumen');
@@ -286,6 +302,7 @@ function renderResumen() {
   main.className = 'main';
 
   var rango = getWeekRange(new Date());
+  var semanaNum = calcSemanaAnio(rango.start);
   var registrosSemana = monitoreos.filter(function(r) {
     var f = getISO(r.Fecha || r.fecha || '');
     return f >= rango.start && f <= rango.end;
@@ -298,7 +315,7 @@ function renderResumen() {
 
   var rangoEl = document.createElement('div');
   rangoEl.className = 'resumen-rango';
-  rangoEl.textContent = 'Semana del ' + fmtDate(rango.start) + ' al ' + fmtDate(rango.end) + ' (lunes a domingo)';
+  rangoEl.textContent = 'Semana ' + semanaNum + ' \u00b7 ' + fmtDate(rango.start) + ' al ' + fmtDate(rango.end) + ' (lunes a domingo)';
   main.appendChild(rangoEl);
 
   // ---- Filtro por finca ----
@@ -336,73 +353,122 @@ function renderResumen() {
     return;
   }
 
-  // ---- Agrupar por Lote, ordenar por Lote y luego por Cama ----
-  function loteNum(r) {
+  function loteNumOf(r) {
     var s = String(r.Lote || r.lote || '');
     var m = s.match(/(\d+)/);
-    return m ? parseInt(m[1], 10) : 0;
+    return m ? m[1] : '';
   }
-  function camaNum(r) {
+  function camaNumOf(r) {
     return parseInt(r.Cama || r.cama || 0, 10) || 0;
   }
 
+  // ---- Agrupar por Finca + Lote ----
   var grupos = {};
   registrosSemana.forEach(function(r) {
-    var key = (r.Finca || r.finca || '') + ' \u00b7 ' + (r.Lote || r.lote || '');
-    if (!grupos[key]) grupos[key] = { finca: r.Finca || r.finca || '', lote: r.Lote || r.lote || '', loteN: loteNum(r), items: [] };
+    var finca = r.Finca || r.finca || '';
+    var loteN = loteNumOf(r);
+    var key = finca + '|' + loteN;
+    if (!grupos[key]) grupos[key] = { finca: finca, loteN: loteN, loteLabel: r.Lote || r.lote || '', items: [] };
     grupos[key].items.push(r);
   });
 
-  var gruposOrdenados = Object.keys(grupos).map(function(k) { return grupos[k]; });
-  gruposOrdenados.sort(function(a, b) {
+  var gruposArr = Object.keys(grupos).map(function(k) { return grupos[k]; });
+  gruposArr.sort(function(a, b) {
     if (a.finca !== b.finca) return a.finca.localeCompare(b.finca);
-    return a.loteN - b.loteN;
+    return parseInt(a.loteN, 10) - parseInt(b.loteN, 10);
   });
 
-  gruposOrdenados.forEach(function(g) {
-    g.items.sort(function(a, b) { return camaNum(a) - camaNum(b); });
+  gruposArr.forEach(function(g) {
+    // Tomar el registro mas reciente por cama (por si se monitoreo mas de una vez esta semana)
+    var porCama = {};
+    g.items.forEach(function(r) {
+      var cn = camaNumOf(r);
+      var fISO = getISO(r.Fecha || r.fecha || '');
+      if (!porCama[cn] || fISO >= getISO(porCama[cn].Fecha || porCama[cn].fecha || '')) {
+        porCama[cn] = r;
+      }
+    });
+    var camasArr = Object.keys(porCama).map(function(k) { return porCama[k]; });
+    var camasMonitoreadas = camasArr.length;
+
+    var sanas = 0;
+    var plagaCamas = {}; // nombre plaga -> Set de camas afectadas
+    var ordenPlagas = [];
+    camasArr.forEach(function(r) {
+      var cn = camaNumOf(r);
+      var puntos = [1,2,3].map(function(n) {
+        return String(r['Punto_' + n] || r['punto_' + n] || '').trim();
+      });
+      var esSana = puntos.every(function(p) { return !p || p === 'Punto Sano'; });
+      if (esSana) { sanas++; return; }
+      var afectadasEstaCama = {};
+      puntos.forEach(function(p) {
+        if (!p || p === 'Punto Sano') return;
+        p.split(',').forEach(function(entry) {
+          var nombre = entry.replace(/\s*\((Leve|Moderado|Severo)\)\s*$/i, '').trim();
+          if (!nombre) return;
+          afectadasEstaCama[nombre] = true;
+        });
+      });
+      Object.keys(afectadasEstaCama).forEach(function(nombre) {
+        if (!plagaCamas[nombre]) { plagaCamas[nombre] = {}; ordenPlagas.push(nombre); }
+        plagaCamas[nombre][cn] = true;
+      });
+    });
+
+    var rows = [];
+    rows.push({ plaga: 'Punto sano', afectadas: sanas });
+    ordenPlagas.forEach(function(nombre) {
+      rows.push({ plaga: nombre, afectadas: Object.keys(plagaCamas[nombre]).length });
+    });
+
+    var variedad = getVariedadLote(g.finca, g.loteN);
+    var groupKey = g.finca + '|' + g.loteN;
+    var colapsado = !!gruposColapsados[groupKey];
+
+    var groupCard = document.createElement('div');
+    groupCard.className = 'grupo-card';
 
     var groupHead = document.createElement('div');
     groupHead.className = 'grupo-head';
-    groupHead.textContent = (resumenFincaFiltro ? '' : (g.finca + ' \u00b7 ')) + g.lote;
-    main.appendChild(groupHead);
+    var headLbl = (resumenFincaFiltro ? '' : (g.finca + ' \u00b7 ')) + g.loteLabel + (variedad ? (' - ' + variedad) : '');
+    groupHead.innerHTML = '<span>' + headLbl + ' <span class="grupo-count">\u00b7 ' + rows.length + ' items</span></span><span class="grupo-chevron">' + (colapsado ? '\u25b6' : '\u25be') + '</span>';
+    groupHead.onclick = function() {
+      gruposColapsados[groupKey] = !gruposColapsados[groupKey];
+      renderResumen();
+    };
+    groupCard.appendChild(groupHead);
 
-    var list = document.createElement('div');
-    list.className = 'dash-list';
-    g.items.forEach(function(r) {
-      var row = document.createElement('div');
-      row.className = 'dash-row';
+    if (!colapsado) {
+      var tableWrap = document.createElement('div');
+      tableWrap.className = 'plaga-table-wrap';
+      var table = document.createElement('table');
+      table.className = 'plaga-table';
 
-      var camaBadge = document.createElement('div');
-      camaBadge.className = 'dash-cama';
-      camaBadge.textContent = camaNum(r);
-      row.appendChild(camaBadge);
+      var thead = document.createElement('thead');
+      thead.innerHTML = '<tr><th>Plaga</th><th>Sem</th><th>Camas mon.</th><th>Camas afec.</th><th>% Inc.</th></tr>';
+      table.appendChild(thead);
 
-      var body = document.createElement('div');
-      body.className = 'dash-body';
-
-      var top = document.createElement('div');
-      top.className = 'dash-top';
-      var puntosResumen = [1,2,3].map(function(n) {
-        return String(r['Punto_' + n] || r['punto_' + n] || '').trim() || 'Punto Sano';
+      var tbody = document.createElement('tbody');
+      rows.forEach(function(row, idx) {
+        var tr = document.createElement('tr');
+        if (row.plaga === 'Punto sano') tr.className = 'row-sano';
+        else if (idx % 2 === 0) tr.className = 'row-alt';
+        var pct = camasMonitoreadas > 0 ? ((row.afectadas / camasMonitoreadas) * 100).toFixed(2) : '0.00';
+        tr.innerHTML =
+          '<td>' + row.plaga + '</td>' +
+          '<td>' + semanaNum + '</td>' +
+          '<td>' + camasMonitoreadas + '</td>' +
+          '<td>' + row.afectadas + '</td>' +
+          '<td>' + pct + '%</td>';
+        tbody.appendChild(tr);
       });
-      var sano = puntosResumen.every(function(p) { return p === 'Punto Sano'; });
-      top.innerHTML = sano
-        ? '<span class="dash-sano">Sana</span>'
-        : puntosResumen.map(function(p, i) {
-            return p === 'Punto Sano' ? '' : '<span class="dash-hallazgo">P' + (i+1) + ': ' + p + '</span>';
-          }).filter(Boolean).join(' ');
-      body.appendChild(top);
+      table.appendChild(tbody);
+      tableWrap.appendChild(table);
+      groupCard.appendChild(tableWrap);
+    }
 
-      var fechaEl = document.createElement('div');
-      fechaEl.className = 'dash-fecha';
-      fechaEl.textContent = fmtDate(getISO(r.Fecha || r.fecha || ''));
-      body.appendChild(fechaEl);
-
-      row.appendChild(body);
-      list.appendChild(row);
-    });
-    main.appendChild(list);
+    main.appendChild(groupCard);
   });
 
   wrap.appendChild(main);
