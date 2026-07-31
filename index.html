@@ -338,6 +338,13 @@ function calcSemanaCiclo(fechaISO) {
   return diff < 0 ? 0 : diff;
 }
 
+// Duracion total del ciclo, en semanas, segun la variedad. La variedad
+// Shocking tiene un ciclo mas largo (45 semanas); el resto de variedades
+// mantiene el ciclo normal de 34 semanas.
+function cicloMaxSemanas(variedad) {
+  return String(variedad) === 'Shocking' ? 45 : 34;
+}
+
 function calcDiaRelativo(inicioISO, laborISO) {
   if (!inicioISO || !laborISO) return null;
   var inicio = new Date(inicioISO + 'T12:00:00');
@@ -604,8 +611,8 @@ function renderLotes() {
     var semana   = estado === 'activo' ? calcSemanaCiclo(fechaISO) : null;
     var prep     = getPrep(finca, variedad, loteNum, fechaISO);
     var ePrep    = expandedPrep[id];
-    var pct      = semana !== null ? Math.min(100, Math.round((semana / 34) * 100)) : 0;
-    var semColor = semana !== null && semana >= 31 ? 'color:var(--rose)' : '';
+    var pct      = semana !== null ? Math.min(100, Math.round((semana / cicloMaxSemanas(variedad)) * 100)) : 0;
+    var semColor = semana !== null && semana >= (cicloMaxSemanas(variedad) - 3) ? 'color:var(--rose)' : '';
 
     html += '<div class="lote-card' + (estado === 'inactivo' ? ' inactivo' : '') + '">';
     html += '<div class="lote-top">';
@@ -636,7 +643,7 @@ function renderLotes() {
     if (semana !== null) {
       html += '<div class="semana-bar-wrap">';
       html += '<div class="semana-bar-bg"><div class="semana-bar-fill" style="width:' + pct + '%"></div></div>';
-      html += '<div class="semana-bar-label">Semana ' + semana + ' de 34</div>';
+      html += '<div class="semana-bar-label">Semana ' + semana + ' de ' + cicloMaxSemanas(variedad) + '</div>';
       html += '</div>';
     }
 
@@ -1078,7 +1085,7 @@ function fumActualizarInfoLote() {
   info.innerHTML = '<div style="background:var(--verde-light); border:1px solid var(--verde-mid); border-radius:8px; padding:10px 12px; margin-top:10px; font-size:13px; color:var(--verde-dark); line-height:1.6;">' +
     '<div><strong>Variedad:</strong> ' + variedad + '</div>' +
     '<div><strong>Inicio del lote:</strong> ' + fmtDate(fechaISO) + '</div>' +
-    '<div><strong>Semana del ciclo:</strong> ' + (semana !== null ? semana : '-') + ' de 34</div>' +
+    '<div><strong>Semana del ciclo:</strong> ' + (semana !== null ? semana : '-') + ' de ' + cicloMaxSemanas(variedad) + '</div>' +
     ultimaLinea +
   '</div>';
 }
@@ -1320,7 +1327,7 @@ function labActualizarInfoLote() {
   info.innerHTML = '<div style="background:var(--verde-light); border:1px solid var(--verde-mid); border-radius:8px; padding:10px 12px; margin-top:10px; font-size:13px; color:var(--verde-dark); line-height:1.6;">' +
     '<div><strong>Variedad:</strong> ' + variedad + '</div>' +
     '<div><strong>Inicio del lote:</strong> ' + fmtDate(fechaISO) + '</div>' +
-    '<div><strong>Semana del ciclo:</strong> ' + (semana !== null ? semana : '-') + ' de 34</div>' +
+    '<div><strong>Semana del ciclo:</strong> ' + (semana !== null ? semana : '-') + ' de ' + cicloMaxSemanas(variedad) + '</div>' +
     ultimaLinea +
     fertLinea +
   '</div>';
