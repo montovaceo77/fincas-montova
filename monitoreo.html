@@ -54,9 +54,14 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
 .grupo-chevron { color: var(--ink-mid); font-size: 11px; flex-shrink: 0; }
 
 .plaga-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-.plaga-table { width: 100%; min-width: 560px; border-collapse: collapse; font-size: 12px; }
-.plaga-table th { text-align: left; padding: 8px 10px; background: #fff; color: var(--ink-mid); font-weight: 700; border-bottom: 2px solid var(--border); white-space: nowrap; }
-.plaga-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.plaga-table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 11.5px; }
+.plaga-table th { text-align: left; padding: 8px 4px; background: #fff; color: var(--ink-mid); font-weight: 700; border-bottom: 2px solid var(--border); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.plaga-table td { padding: 8px 4px; border-bottom: 1px solid var(--border); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.plaga-table th:first-child, .plaga-table td:first-child { width: 32%; }
+.plaga-table th:nth-child(2), .plaga-table td:nth-child(2) { width: 12%; }
+.plaga-table th:nth-child(3), .plaga-table td:nth-child(3) { width: 19%; }
+.plaga-table th:nth-child(4), .plaga-table td:nth-child(4) { width: 19%; }
+.plaga-table th:nth-child(5), .plaga-table td:nth-child(5) { width: 18%; }
 .plaga-table tr:last-child td { border-bottom: none; }
 .plaga-table tr.row-sano td { color: var(--verde-dark); font-weight: 600; }
 .plaga-table tr.row-alt td { background: var(--verde-pale); }
@@ -320,9 +325,7 @@ function renderResumen() {
   main.appendChild(rangoEl);
 
   // ---- Filtro por finca ----
-  var fincasConDatos = FINCAS.filter(function(f) {
-    return registrosSemana.some(function(r) { return String(r.Finca || r.finca || '') === f; });
-  });
+  var fincasConDatos = FINCAS;
   var chipsWrap = document.createElement('div');
   chipsWrap.className = 'filtro-chips';
   var todasBtn = document.createElement('button');
@@ -447,7 +450,7 @@ function renderResumen() {
       table.className = 'plaga-table';
 
       var thead = document.createElement('thead');
-      thead.innerHTML = '<tr><th>Plaga</th><th>Sem</th><th>Camas mon.</th><th>Camas afec.</th><th>% Inc.</th></tr>';
+      thead.innerHTML = '<tr><th>Plaga</th><th>Sem</th><th>C. Mon.</th><th>C. Afec.</th><th>% Inc.</th></tr>';
       table.appendChild(thead);
 
       var tbody = document.createElement('tbody');
