@@ -224,7 +224,7 @@ function fetchLotes() {
 function fetchMonitoreos() {
   fetch(WS + '?action=getMonitoreo').then(function(r) { return r.json(); }).then(function(data) {
     monitoreos = Array.isArray(data) ? data : [];
-    render();
+    if (currentView === 'resumen') renderResumen(); else render();
   }).catch(function() { monitoreos = []; });
 }
 
@@ -275,7 +275,10 @@ function toggleView() {
   document.getElementById('view-wizard').style.display = currentView === 'wizard' ? '' : 'none';
   document.getElementById('view-resumen').style.display = currentView === 'resumen' ? '' : 'none';
   document.getElementById('btn-toggle-view').textContent = currentView === 'wizard' ? 'Registros de la semana' : 'Volver a monitorear';
-  if (currentView === 'resumen') renderResumen();
+  if (currentView === 'resumen') {
+    renderResumen();
+    fetchMonitoreos();
+  }
 }
 
 function calcSemanaAnio(fechaISO) {
@@ -871,7 +874,15 @@ async function monGuardar() {
 
   try {
     await postToWS(payload);
-    monitoreos.push({Finca: st.finca, Lote: 'Lote ' + st.loteNum, Cama: st.cama});
+    monitoreos.push({
+      Finca: st.finca,
+      Lote: 'Lote ' + st.loteNum,
+      Cama: st.cama,
+      Fecha: st.fecha,
+      Punto_1: payload.punto_1,
+      Punto_2: payload.punto_2,
+      Punto_3: payload.punto_3
+    });
     document.getElementById('mon-loading').style.display = 'none';
     document.getElementById('mon-ok-txt').textContent = st.finca + ' \u00b7 Lote ' + st.loteNum + ' \u00b7 Cama ' + st.cama;
     document.getElementById('mon-ok').style.display = 'block';
