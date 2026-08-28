@@ -92,6 +92,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
 .field { margin-bottom: 1rem; }
 .field label { display: block; font-size: 11px; color: var(--ink-soft); letter-spacing: 0.04em; margin-bottom: 5px; text-transform: uppercase; }
 .field input, .field select { width: 100%; font-size: 14px; font-family: 'DM Sans', sans-serif; color: var(--ink); background: var(--verde-pale); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; outline: none; }
+input[type="date"] { -webkit-appearance: none; appearance: none; box-sizing: border-box; min-width: 0; max-width: 100%; }
 .field input:focus, .field select:focus { border-color: var(--verde-mid); }
 .field input:disabled, .field select:disabled { opacity: 0.6; background: #eee; }
 .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -144,8 +145,8 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
 <nav class="bottom-nav">
   <button class="nav-btn on" onclick="showTab('programacion', this)">Programacion</button>
   <button class="nav-btn" onclick="showTab('fumigacion', this)">Fumigacion</button>
-  <button class="nav-btn" onclick="showTab('labores', this)">Labores de Campo</button>
-  <button class="nav-btn" onclick="showTab('ingreso', this)">Ingreso a Sala</button>
+  <button class="nav-btn" onclick="showTab('labores', this)">Labores Campo</button>
+  <button class="nav-btn" onclick="showTab('ingreso', this)">Ingreso Sala</button>
 </nav>
 
 <!-- Modal lote -->
