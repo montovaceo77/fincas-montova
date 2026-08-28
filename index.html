@@ -4,6 +4,13 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Fincas Montova</title>
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#2A4D36" />
+<link rel="icon" href="icon-192.png" />
+<link rel="apple-touch-icon" href="icon-192.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Montova" />
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
 <style>
 :root {
@@ -1429,5 +1436,17 @@ function labLimpiar() {
 })();
 </script>
 
+<script>
+// Registro del service worker para que la app funcione como PWA
+// (instalable en pantalla de inicio, carga rapida con señal debil).
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('service-worker.js').catch(function () {
+      // Si falla el registro (por ejemplo en un navegador viejo),
+      // la app sigue funcionando normal como pagina web comun.
+    });
+  });
+}
+</script>
 </body>
 </html>
