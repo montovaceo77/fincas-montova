@@ -115,10 +115,35 @@ input[type="date"] { -webkit-appearance: none; appearance: none; box-sizing: bor
 .toast { position: fixed; bottom: 5.5rem; left: 50%; transform: translateX(-50%); background: var(--ink); color: white; font-size: 13px; padding: 8px 18px; border-radius: 20px; opacity: 0; transition: opacity 0.2s; z-index: 500; pointer-events: none; white-space: nowrap; }
 .toast.show { opacity: 1; }
 
+.offline-banner { display: none; position: fixed; top: 0; left: 0; right: 0; z-index: 500; background: #C0392B; color: #fff; font-size: 13px; font-weight: 600; text-align: center; padding: 10px 16px; }
+.offline-banner.show { display: block; }
+body.offline { padding-top: 40px; }
+body.offline .header { position: sticky; top: 40px; }
+
 @media (max-width: 480px) { .field-row { grid-template-columns: 1fr; } .prep-grid { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
+
+<div class="offline-banner" id="offline-banner">Sin conexion a internet. Lo que hagas aqui no se guardara hasta que vuelvas a tener señal.</div>
+<script>
+// Muestra/oculta el aviso de "sin conexion" en cualquier pantalla de la
+// app y marca el body para que el resto del diseño se ajuste (el header
+// es sticky y tiene que bajar mientras el aviso este visible).
+function actualizarEstadoConexion() {
+  var banner = document.getElementById('offline-banner');
+  if (!navigator.onLine) {
+    banner.classList.add('show');
+    document.body.classList.add('offline');
+  } else {
+    banner.classList.remove('show');
+    document.body.classList.remove('offline');
+  }
+}
+window.addEventListener('online', actualizarEstadoConexion);
+window.addEventListener('offline', actualizarEstadoConexion);
+actualizarEstadoConexion();
+</script>
 
 <div class="header">
   <div class="header-inner">
@@ -502,6 +527,7 @@ function initModal() {
     var fecha    = document.getElementById('l-fecha').value;
     var camas    = document.getElementById('l-camas').value.trim();
     if (!loteNum || !fecha || !camas) { showToast('Selecciona el lote, la fecha de inicio y el numero de camas'); return; }
+    if (!navigator.onLine) { showToast('Sin conexion: no se guardo. Verifica tu señal e intenta de nuevo.'); return; }
 
     var getChk = function(id) { return document.getElementById(id).checked ? document.getElementById(id).value : ''; };
     var pd = {
@@ -890,9 +916,15 @@ function renderLotes() {
       <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:12px;">Tipo de flor</label>
       <div id="ing-tipo-lista" style="display:flex; flex-direction:column; gap:8px;"></div>
       <button id="ing-descarte-btn" onclick="ingToggleDescarte()" style="margin-top:14px; width:100%; padding:12px; font-size:14px; font-weight:600; border-radius:8px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; background:#fff; border:1px solid var(--border); color:var(--ink-mid);">Descarte</button>
-      <div id="ing-descarte-motivo-container" style="display:none; margin-top:10px;">
-        <label style="font-size:13px; font-weight:600; color:var(--ink); display:block; margin-bottom:6px;">Motivo de descarte</label>
-        <textarea id="ing-descarte-motivo" rows="3" style="width:100%; padding:10px 12px; font-size:14px; border:1px solid var(--border); border-radius:8px; color:var(--ink); background:#fafafa; resize:vertical; font-family:inherit; line-height:1.5;" placeholder="Escribe o pega el motivo del descarte..."></textarea>
+      <div id="ing-descarte-motivo-container" style="display:none; margin-top:14px;">
+        <label style="font-size:13px; font-weight:600; color:var(--ink); display:block; margin-bottom:6px;">Motivo del descarte</label>
+        <div class="chk-list">
+          <div class="chk-list-title">SELECCIONA UNO O MAS MOTIVOS</div>
+          <label class="chk-item"><input type="checkbox" id="ing-mot-ceniza" value="Ceniza"><span>Ceniza</span></label>
+          <label class="chk-item"><input type="checkbox" id="ing-mot-plaga" value="Plaga"><span>Plaga</span></label>
+          <label class="chk-item"><input type="checkbox" id="ing-mot-tallo" value="Tallo leñoso"><span>Tallo leñoso</span></label>
+          <label class="chk-item"><input type="checkbox" id="ing-mot-pedunculo" value="Pedúnculo largo"><span>Pedúnculo largo</span></label>
+        </div>
       </div>
     </div>
 
@@ -1141,6 +1173,10 @@ async function fumGuardar() {
     alert('Completa los pasos obligatorios (1, 2, 3, 4, 5 y 7) antes de guardar.');
     return;
   }
+  if (!navigator.onLine) {
+    alert('No tienes conexion a internet. Este registro no se guardara hasta que recuperes la señal.');
+    return;
+  }
   var btn = document.getElementById('fum-guardar-btn');
   btn.disabled = true;
   document.getElementById('fum-loading').style.display = 'block';
@@ -1349,6 +1385,10 @@ async function labGuardar() {
     alert('Completa todos los pasos antes de guardar.');
     return;
   }
+  if (!navigator.onLine) {
+    alert('No tienes conexion a internet. Este registro no se guardara hasta que recuperes la señal.');
+    return;
+  }
   var btn = document.getElementById('lab-guardar-btn');
   btn.disabled = true;
   document.getElementById('lab-loading').style.display = 'block';
@@ -1411,6 +1451,221 @@ function labLimpiar() {
   fumMkItemBtn(LAB_LABORES, labSelLabor, 'lab-labor-lista', false);
   labRenderFert();
 })();
+
+// ===== INGRESO A SALA MODULE =====
+var ING_TIPOS = ['Mini', 'Selec', 'Premium', 'Jumbo'];
+var ingSelTipo = [];
+var ingDescarteActivo = false;
+var ingresoSalaRegistros = [];
+
+function fetchIngresoSala() {
+  fetch(WS + '?action=getIngresoSala').then(function(r) { return r.json(); }).then(function(data) {
+    ingresoSalaRegistros = Array.isArray(data) ? data : [];
+    ingActualizarAcumulado();
+  }).catch(function() { ingresoSalaRegistros = []; });
+}
+
+function poblarIngLoteSelect() {
+  var sel = document.getElementById('ing-lote-select');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Selecciona un lote</option>';
+  for (var i = 1; i <= 33; i++) {
+    var opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = 'Lote ' + i;
+    sel.appendChild(opt);
+  }
+}
+
+function ingActualizarFechaSemana() {
+  var fecha = document.getElementById('ing-fecha').value;
+  var el = document.getElementById('ing-fecha-semana');
+  if (!el) return;
+  if (!fecha) { el.textContent = ''; return; }
+  var sa = calcSemanaAnio(fecha);
+  var yearNum = new Date(fecha + 'T12:00:00').getFullYear();
+  el.textContent = sa ? 'Semana ' + sa + ' / ' + yearNum : '';
+}
+
+function ingActualizarInfoLote() {
+  var finca = document.getElementById('ing-finca') ? document.getElementById('ing-finca').value : '';
+  var info = document.getElementById('ing-lote-info');
+  if (!info) return;
+  var loteNum = document.getElementById('ing-lote-select') ? document.getElementById('ing-lote-select').value : '';
+  if (!loteNum) { info.innerHTML = ''; return; }
+  var l = lotes.find(function(x) {
+    return String(x.Finca || x.finca || '') === String(finca) &&
+           String(x.Lote || x.lote || '') === String(loteNum) &&
+           String(x.Estado || x.estado || '').toLowerCase() === 'activo';
+  });
+  if (!l) {
+    info.innerHTML = '<div style="background:var(--verde-light); border:1px solid var(--verde-mid); border-radius:8px; padding:10px 12px; margin-top:10px; font-size:13px; color:var(--ink-soft); line-height:1.6;">No hay un ciclo activo registrado para este lote en Fincas Montova</div>';
+    return;
+  }
+  var fechaISO = getISO(l.Fecha_Inicio || l.fecha_inicio || '');
+  var variedad = l.Variedad || l.variedad || '';
+  var semana = calcSemanaCiclo(fechaISO);
+  info.innerHTML = '<div style="background:var(--verde-light); border:1px solid var(--verde-mid); border-radius:8px; padding:10px 12px; margin-top:10px; font-size:13px; color:var(--verde-dark); line-height:1.6;">' +
+    '<div><strong>Variedad:</strong> ' + variedad + '</div>' +
+    '<div><strong>Inicio del lote:</strong> ' + fmtDate(fechaISO) + '</div>' +
+    '<div><strong>Semana del ciclo:</strong> ' + (semana !== null ? semana : '-') + ' de ' + cicloMaxSemanas(variedad) + '</div>' +
+  '</div>';
+}
+
+function ingActualizarAcumulado() {
+  var finca = document.getElementById('ing-finca') ? document.getElementById('ing-finca').value : '';
+  var loteNum = document.getElementById('ing-lote-select') ? document.getElementById('ing-lote-select').value : '';
+  var info = document.getElementById('ing-acumulado-info');
+  if (!info) return;
+  if (!finca || !loteNum) { info.innerHTML = ''; return; }
+  var loteLabel = 'Lote ' + loteNum;
+  var total = 0;
+  ingresoSalaRegistros.forEach(function(r) {
+    var rFinca = String(r.Finca || r.finca || '');
+    var rLote = String(r.Lote || r.lote || '');
+    var rCantidad = Number(r.Cantidad || r.cantidad || 0) || 0;
+    if (rFinca === String(finca) && rLote === loteLabel) total += rCantidad;
+  });
+  info.innerHTML = '<div style="font-size:12px; color:var(--ink-mid); margin-top:8px;">Acumulado ya ingresado en este lote: <strong>' + total + '</strong></div>';
+}
+
+// Activa o desactiva el interruptor de Descarte. Al activarlo se
+// deselecciona cualquier tipo de flor (son excluyentes) y aparece el
+// bloque de motivos; al desactivarlo se limpian las casillas marcadas.
+function ingToggleDescarte() {
+  ingDescarteActivo = !ingDescarteActivo;
+  if (ingDescarteActivo) {
+    ingSelTipo.length = 0;
+    ingRenderTipos();
+  }
+  ingActualizarDescarteUI();
+}
+
+function ingActualizarDescarteUI() {
+  var btn = document.getElementById('ing-descarte-btn');
+  var cont = document.getElementById('ing-descarte-motivo-container');
+  if (btn) {
+    btn.style.background = ingDescarteActivo ? 'var(--rose-bg)' : '#fff';
+    btn.style.borderColor = ingDescarteActivo ? 'var(--rose)' : 'var(--border)';
+    btn.style.color = ingDescarteActivo ? 'var(--rose)' : 'var(--ink-mid)';
+  }
+  if (cont) cont.style.display = ingDescarteActivo ? 'block' : 'none';
+  if (!ingDescarteActivo) {
+    ['ing-mot-ceniza', 'ing-mot-plaga', 'ing-mot-tallo', 'ing-mot-pedunculo'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.checked = false;
+    });
+  }
+}
+
+function ingRenderTipos() {
+  var c = document.getElementById('ing-tipo-lista');
+  if (!c) return;
+  c.innerHTML = '';
+  ING_TIPOS.forEach(function(item) {
+    var btn = document.createElement('button');
+    var sel = ingSelTipo[0] === item;
+    btn.style.cssText = 'padding:10px 12px; font-size:13px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; background:'+(sel?'var(--verde-light)':'#fff')+'; border:1px solid '+(sel?'var(--verde-mid)':'var(--border)')+'; color:'+(sel?'var(--verde-dark)':'var(--ink-mid)')+'; font-weight:'+(sel?'600':'400')+'; width:100%; text-align:left;';
+    var chk = document.createElement('div');
+    chk.style.cssText = 'width:20px; height:20px; border-radius:50%; border:1.5px solid '+(sel?'var(--verde-dark)':'var(--border)')+'; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:11px; background:'+(sel?'var(--verde-dark)':'transparent')+'; color:#fff;';
+    chk.textContent = sel ? '✓' : '';
+    var sp = document.createElement('span');
+    sp.textContent = item;
+    btn.appendChild(chk);
+    btn.appendChild(sp);
+    btn.onclick = function() {
+      ingSelTipo.length = 0;
+      ingSelTipo.push(item);
+      ingDescarteActivo = false;
+      ingRenderTipos();
+      ingActualizarDescarteUI();
+    };
+    c.appendChild(btn);
+  });
+}
+
+async function ingGuardar() {
+  var fecha = document.getElementById('ing-fecha').value;
+  var finca = document.getElementById('ing-finca').value;
+  var loteNum = document.getElementById('ing-lote-select').value;
+  var cantidad = document.getElementById('ing-cantidad').value.trim();
+  var tipo = ingSelTipo[0] || '';
+
+  if (!fecha || !finca || !loteNum || !cantidad || (!tipo && !ingDescarteActivo)) {
+    alert('Completa todos los pasos antes de guardar (elige un tipo de flor o marca Descarte).');
+    return;
+  }
+
+  var motivos = [];
+  if (ingDescarteActivo) {
+    var motivoMap = { 'ing-mot-ceniza': 'Ceniza', 'ing-mot-plaga': 'Plaga', 'ing-mot-tallo': 'Tallo leñoso', 'ing-mot-pedunculo': 'Pedúnculo largo' };
+    Object.keys(motivoMap).forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el && el.checked) motivos.push(motivoMap[id]);
+    });
+    if (!motivos.length) {
+      alert('Selecciona al menos un motivo del descarte.');
+      return;
+    }
+  }
+
+  if (!navigator.onLine) {
+    alert('No tienes conexion a internet. Este registro no se guardara hasta que recuperes la señal.');
+    return;
+  }
+
+  var btn = document.getElementById('ing-guardar-btn');
+  btn.disabled = true;
+  document.getElementById('ing-loading').style.display = 'block';
+  document.getElementById('ing-ok').style.display = 'none';
+  document.getElementById('ing-error').style.display = 'none';
+
+  var payload = {
+    action: 'addIngresoSala',
+    fecha: fecha,
+    finca: finca,
+    lote: 'Lote ' + loteNum,
+    tipo_flor: tipo,
+    cantidad: cantidad,
+    descarte: ingDescarteActivo ? 'Si' : '',
+    motivo_descarte: motivos.join(', ')
+  };
+
+  try {
+    await postToWS(payload);
+    document.getElementById('ing-loading').style.display = 'none';
+    document.getElementById('ing-ok-txt').textContent = finca + ' · Lote ' + loteNum + ' · ' + (ingDescarteActivo ? 'Descarte' : tipo);
+    document.getElementById('ing-ok').style.display = 'block';
+    btn.disabled = false;
+    ingResetCampos();
+    setTimeout(fetchIngresoSala, 3000);
+  } catch (e) {
+    document.getElementById('ing-loading').style.display = 'none';
+    document.getElementById('ing-error').style.display = 'block';
+    btn.disabled = false;
+  }
+}
+
+function ingResetCampos() {
+  ingSelTipo.length = 0;
+  ingDescarteActivo = false;
+  document.getElementById('ing-fecha').value = new Date().toISOString().split('T')[0];
+  document.getElementById('ing-finca').selectedIndex = 0;
+  ingActualizarFechaSemana();
+  poblarIngLoteSelect();
+  document.getElementById('ing-lote-select').value = '';
+  document.getElementById('ing-cantidad').value = '';
+  document.getElementById('ing-lote-info').innerHTML = '';
+  document.getElementById('ing-acumulado-info').innerHTML = '';
+  ingRenderTipos();
+  ingActualizarDescarteUI();
+}
+
+function ingLimpiar() {
+  document.getElementById('ing-ok').style.display = 'none';
+  document.getElementById('ing-error').style.display = 'none';
+  ingResetCampos();
+}
 
 // Init ingreso a sala
 (function() {
