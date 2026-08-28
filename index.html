@@ -1519,14 +1519,36 @@ function ingActualizarAcumulado() {
   if (!info) return;
   if (!finca || !loteNum) { info.innerHTML = ''; return; }
   var loteLabel = 'Lote ' + loteNum;
+
+  var porTipo = {};
+  ING_TIPOS.forEach(function(t) { porTipo[t] = 0; });
+  var totalDescarte = 0;
   var total = 0;
+
   ingresoSalaRegistros.forEach(function(r) {
     var rFinca = String(r.Finca || r.finca || '');
     var rLote = String(r.Lote || r.lote || '');
+    if (rFinca !== String(finca) || rLote !== loteLabel) return;
     var rCantidad = Number(r.Cantidad || r.cantidad || 0) || 0;
-    if (rFinca === String(finca) && rLote === loteLabel) total += rCantidad;
+    var rDescarte = String(r.Descarte || r.descarte || '').trim();
+    var rTipo = String(r.Tipo_Flor || r.tipo_flor || r.TipoFlor || r.tipoFlor || '').trim();
+    total += rCantidad;
+    if (rDescarte) {
+      totalDescarte += rCantidad;
+    } else if (porTipo.hasOwnProperty(rTipo)) {
+      porTipo[rTipo] += rCantidad;
+    }
   });
-  info.innerHTML = '<div style="font-size:12px; color:var(--ink-mid); margin-top:8px;">Acumulado ya ingresado en este lote: <strong>' + total + '</strong></div>';
+
+  var filas = ING_TIPOS.map(function(t) {
+    return '<div style="display:flex; justify-content:space-between;"><span>' + t + '</span><strong>' + porTipo[t] + '</strong></div>';
+  }).join('');
+  filas += '<div style="display:flex; justify-content:space-between; color:var(--rose);"><span>Descarte</span><strong>' + totalDescarte + '</strong></div>';
+
+  info.innerHTML = '<div style="background:var(--verde-pale); border-radius:8px; padding:10px 12px; margin-top:8px; font-size:12px; color:var(--ink-mid); line-height:1.7;">' +
+    '<div style="font-weight:600; color:var(--ink); margin-bottom:4px;">Acumulado en este lote: ' + total + '</div>' +
+    filas +
+  '</div>';
 }
 
 // Activa o desactiva el interruptor de Descarte. Al activarlo se
