@@ -1,0 +1,25 @@
+{
+  "name": "Fincas Montova",
+  "short_name": "Montova",
+  "description": "App de gestion de Programacion, Fumigacion, Labores de Campo e Ingreso a Sala de Fincas Montova",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F8FAF8",
+  "theme_color": "#2A4D36",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
