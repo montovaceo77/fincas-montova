@@ -215,20 +215,24 @@ actualizarEstadoConexion();
         <label>Numero de camas</label>
         <input type="text" inputmode="numeric" pattern="[0-9]*" id="l-camas" placeholder="Ej: 20" />
       </div>
+      <div class="field">
+        <label># de plantas</label>
+        <input type="text" inputmode="numeric" pattern="[0-9]*" id="l-plantas" placeholder="Ej: 500" />
+      </div>
     </div>
 
     <div class="modal-section">Preparacion del suelo</div>
 
     <div class="field-row">
       <div class="field">
-        <label>Picada de camas</label>
-        <input type="date" id="p-picada" />
-        <div class="field-hint" id="dia-picada"></div>
-      </div>
-      <div class="field">
         <label>Desinfeccion del suelo</label>
         <input type="date" id="p-desinfeccion" />
         <div class="field-hint" id="dia-desinfeccion"></div>
+      </div>
+      <div class="field">
+        <label>Picada de camas</label>
+        <input type="date" id="p-picada" />
+        <div class="field-hint" id="dia-picada"></div>
       </div>
     </div>
 
@@ -446,6 +450,7 @@ function abrirModalNuevo() {
   document.getElementById('l-num').disabled = false;
   document.getElementById('l-fecha').value = new Date().toISOString().split('T')[0];
   document.getElementById('l-camas').value = '';
+  document.getElementById('l-plantas').value = '';
   actualizarOpcionesLoteNum();
   actualizarHints();
   document.getElementById('overlay-lote').classList.add('open');
@@ -466,6 +471,7 @@ function abrirModalReprogramar(id) {
   document.getElementById('l-num').disabled = true;
   document.getElementById('l-fecha').value = new Date().toISOString().split('T')[0];
   document.getElementById('l-camas').value = l.Camas || l.camas || '';
+  document.getElementById('l-plantas').value = l.Plantas || l.plantas || '';
   actualizarHints();
   document.getElementById('overlay-lote').classList.add('open');
 }
@@ -477,6 +483,7 @@ function resetModal() {
   document.getElementById('l-num').disabled = false;
   document.getElementById('l-fecha').value = '';
   document.getElementById('l-camas').value = '';
+  document.getElementById('l-plantas').value = '';
   ['p-picada','p-desinfeccion','p-app1-fecha','p-app2-fecha'].forEach(function(id) {
     document.getElementById(id).value = '';
   });
@@ -526,6 +533,7 @@ function initModal() {
     var loteNum  = document.getElementById('l-num').value;
     var fecha    = document.getElementById('l-fecha').value;
     var camas    = document.getElementById('l-camas').value.trim();
+    var plantas  = document.getElementById('l-plantas').value.trim();
     if (!loteNum || !fecha || !camas) { showToast('Selecciona el lote, la fecha de inicio y el numero de camas'); return; }
     if (!navigator.onLine) { showToast('Sin conexion: no se guardo. Verifica tu señal e intenta de nuevo.'); return; }
 
@@ -541,10 +549,10 @@ function initModal() {
 
     if (reprogramarId) {
       var l = lotes.find(function(x) { return String(x.ID) === String(reprogramarId); });
-      if (l) { l.Fecha_Inicio = fecha; l.Estado = 'activo'; l.Camas = camas; }
+      if (l) { l.Fecha_Inicio = fecha; l.Estado = 'activo'; l.Camas = camas; l.Plantas = plantas; }
       renderLotes();
       showToast('Lote reprogramado');
-      sendToServer({action:'reprogramarLote', finca:finca, variedad:variedad, lote:loteNum, fecha_inicio:fecha, camas:camas});
+      sendToServer({action:'reprogramarLote', finca:finca, variedad:variedad, lote:loteNum, fecha_inicio:fecha, camas:camas, plantas:plantas});
       sendToServer({action:'addPreparacion', finca:finca, variedad:variedad, lote:loteNum,
         fecha_inicio_ciclo:fecha,
         fecha_picada:pd.picada, fecha_desinfeccion:pd.desinfeccion,
@@ -562,10 +570,10 @@ function initModal() {
       if (existe) { showToast('Este lote ya esta activo. Finaliza el ciclo primero.'); return; }
 
       var tempId = Date.now();
-      lotes.push({ID:tempId, Finca:finca, Variedad:variedad, Lote:loteNum, Fecha_Inicio:fecha, Estado:'activo', Camas:camas});
+      lotes.push({ID:tempId, Finca:finca, Variedad:variedad, Lote:loteNum, Fecha_Inicio:fecha, Estado:'activo', Camas:camas, Plantas:plantas});
       renderLotes();
       showToast('Lote programado');
-      sendToServer({action:'addLote', finca:finca, variedad:variedad, lote:loteNum, fecha_inicio:fecha, camas:camas});
+      sendToServer({action:'addLote', finca:finca, variedad:variedad, lote:loteNum, fecha_inicio:fecha, camas:camas, plantas:plantas});
       sendToServer({action:'addPreparacion', finca:finca, variedad:variedad, lote:loteNum,
         fecha_inicio_ciclo:fecha,
         fecha_picada:pd.picada, fecha_desinfeccion:pd.desinfeccion,
