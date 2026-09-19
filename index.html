@@ -890,8 +890,10 @@ function renderLotes() {
 
     <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
       <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 3</span>
-      <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:12px;">Lote fumigado</label>
-      <select id="fum-lote-select" style="width:100%; padding:10px 12px; font-size:15px; border:1px solid var(--border); border-radius:8px; color:var(--ink); background:#fafafa;"></select>
+      <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:4px;">Lotes fumigados</label>
+      <p style="font-size:12px; color:var(--ink-mid); margin-bottom:8px;">Puedes elegir varios si aplicaste lo mismo en todos</p>
+      <div id="fum-lote-lista" style="height:200px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; padding:6px; display:flex; flex-direction:column; gap:6px; background:#fafafa;"></div>
+      <p style="font-size:11px; color:var(--ink-soft); margin-top:6px; text-align:right;">Desliza para ver mas</p>
       <div id="fum-lote-info"></div>
     </div>
 
@@ -1192,16 +1194,29 @@ function fumRenderFincas() {
   });
 }
 
-function poblarFumLoteSelect() {
-  var sel = document.getElementById('fum-lote-select');
-  if (!sel) return;
-  sel.innerHTML = '<option value="">Selecciona un lote</option>';
-  for (var i = 1; i <= 33; i++) {
-    var opt = document.createElement('option');
-    opt.value = i;
-    opt.textContent = 'Lote ' + i;
-    sel.appendChild(opt);
-  }
+function fumRenderLotes() {
+  var c = document.getElementById('fum-lote-lista');
+  if (!c) return;
+  c.innerHTML = '';
+  FUM_LOTES.forEach(function(item) {
+    var btn = document.createElement('button');
+    var sel = fumSelLotes.indexOf(item) !== -1;
+    btn.style.cssText = 'padding:10px 12px; font-size:13px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; background:'+(sel?'var(--verde-light)':'#fff')+'; border:1px solid '+(sel?'var(--verde-mid)':'var(--border)')+'; color:'+(sel?'var(--verde-dark)':'var(--ink-mid)')+'; font-weight:'+(sel?'600':'400')+'; width:100%; text-align:left; flex-shrink:0;';
+    var chk = document.createElement('div');
+    chk.style.cssText = 'width:20px; height:20px; border-radius:50%; border:1.5px solid '+(sel?'var(--verde-dark)':'var(--border)')+'; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:11px; background:'+(sel?'var(--verde-dark)':'transparent')+'; color:#fff;';
+    chk.textContent = sel ? '✓' : '';
+    var sp = document.createElement('span');
+    sp.textContent = item;
+    btn.appendChild(chk);
+    btn.appendChild(sp);
+    btn.onclick = function() {
+      var idx = fumSelLotes.indexOf(item);
+      if (idx > -1) fumSelLotes.splice(idx, 1); else fumSelLotes.push(item);
+      fumRenderLotes();
+      fumActualizarInfoLote();
+    };
+    c.appendChild(btn);
+  });
 }
 
 function fumUltimaAplicacion(finca, loteNum) {
@@ -1222,35 +1237,31 @@ function fumActualizarInfoLote() {
   var finca = fumSelFinca[0];
   var info = document.getElementById('fum-lote-info');
   if (!info) return;
-  var loteNum = document.getElementById('fum-lote-select') ? document.getElementById('fum-lote-select').value : '';
   if (!finca) {
     info.innerHTML = '<div style="background:#f9fafb; border-radius:8px; padding:0.75rem 1rem; font-size:13px; color:var(--ink-soft); text-align:center; border:1px solid var(--border); margin-top:10px;">Primero selecciona la finca</div>';
     return;
   }
-  if (!loteNum) { info.innerHTML = ''; return; }
-  var l = lotes.find(function(x) {
-    return String(x.Finca || x.finca || '') === String(finca) &&
-           String(x.Lote || x.lote || '') === String(loteNum) &&
-           String(x.Estado || x.estado || '').toLowerCase() === 'activo';
-  });
-  var ultima = fumUltimaAplicacion(finca, loteNum);
-  var ultimaLinea = '<div><strong>Ultima fumigacion/fertilizacion:</strong> ' + (ultima ? fmtDate(ultima) : 'Sin registros previos') + '</div>';
-  if (!l) {
-    info.innerHTML = '<div style="background:var(--verde-light); border:1px solid var(--verde-mid); border-radius:8px; padding:10px 12px; margin-top:10px; font-size:13px; color:var(--verde-dark); line-height:1.6;">' +
-      '<div style="color:var(--ink-soft);">No hay un ciclo activo registrado para este lote en Fincas Montova</div>' +
-      ultimaLinea +
-    '</div>';
-    return;
-  }
-  var fechaISO = getISO(l.Fecha_Inicio || l.fecha_inicio || '');
-  var variedad = l.Variedad || l.variedad || '';
-  var semana = calcSemanaCiclo(fechaISO);
-  info.innerHTML = '<div style="background:var(--verde-light); border:1px solid var(--verde-mid); border-radius:8px; padding:10px 12px; margin-top:10px; font-size:13px; color:var(--verde-dark); line-height:1.6;">' +
-    '<div><strong>Variedad:</strong> ' + variedad + '</div>' +
-    '<div><strong>Inicio del lote:</strong> ' + fmtDate(fechaISO) + '</div>' +
-    '<div><strong>Semana del ciclo:</strong> ' + (semana !== null ? semana : '-') + ' de ' + cicloMaxSemanas(variedad) + '</div>' +
-    ultimaLinea +
-  '</div>';
+  if (!fumSelLotes.length) { info.innerHTML = ''; return; }
+
+  var bloques = fumSelLotes.map(function(loteLabel) {
+    var loteNum = loteLabel.replace('Lote ', '');
+    var l = lotes.find(function(x) {
+      return String(x.Finca || x.finca || '') === String(finca) &&
+             String(x.Lote || x.lote || '') === String(loteNum) &&
+             String(x.Estado || x.estado || '').toLowerCase() === 'activo';
+    });
+    var ultima = fumUltimaAplicacion(finca, loteNum);
+    var ultimaTxt = ultima ? fmtDate(ultima) : 'Sin registros previos';
+    if (!l) {
+      return '<div style="padding:6px 0; border-bottom:1px solid var(--verde-mid);"><strong>' + loteLabel + ':</strong> <span style="color:var(--ink-soft);">sin ciclo activo</span> &middot; Ultima: ' + ultimaTxt + '</div>';
+    }
+    var fechaISO = getISO(l.Fecha_Inicio || l.fecha_inicio || '');
+    var variedad = l.Variedad || l.variedad || '';
+    var semana = calcSemanaCiclo(fechaISO);
+    return '<div style="padding:6px 0; border-bottom:1px solid var(--verde-mid);"><strong>' + loteLabel + '</strong> &middot; ' + variedad + ' &middot; Semana ' + (semana !== null ? semana : '-') + ' de ' + cicloMaxSemanas(variedad) + ' &middot; Ultima: ' + ultimaTxt + '</div>';
+  }).join('');
+
+  info.innerHTML = '<div style="background:var(--verde-light); border-radius:8px; padding:10px 12px; margin-top:10px; font-size:12px; color:var(--verde-dark); line-height:1.5;">' + bloques + '</div>';
 }
 
 function fumRenderEquipo() {
@@ -1305,19 +1316,24 @@ async function fumGuardar() {
   document.getElementById('fum-loading').style.display = 'block';
   document.getElementById('fum-ok').style.display = 'none';
   document.getElementById('fum-error').style.display = 'none';
-  var payload = {
-    action: 'addFumigacion',
-    fecha: fecha,
-    finca: fumSelFinca[0],
-    lotes: fumSelLotes.join(', '),
-    productos: fumSelProductos.join(', '),
-    fertilizantes: fumSelFertilizantes.join(', '),
-    plagas: fumSelPlagas.join(', '),
-    equipo: fumSelEquipo.join(', '),
-    novedades: document.getElementById('fum-novedades').value.trim()
-  };
+  var novedades = document.getElementById('fum-novedades').value.trim();
   try {
-    await postToWS(payload);
+    // Un registro por cada lote marcado, todos con los mismos datos
+    // (misma finca, plagas, productos, fertilizantes, equipo y fecha),
+    // para que en el Sheet quede desglosado lote por lote.
+    for (var i = 0; i < fumSelLotes.length; i++) {
+      await postToWS({
+        action: 'addFumigacion',
+        fecha: fecha,
+        finca: fumSelFinca[0],
+        lotes: fumSelLotes[i],
+        productos: fumSelProductos.join(', '),
+        fertilizantes: fumSelFertilizantes.join(', '),
+        plagas: fumSelPlagas.join(', '),
+        equipo: fumSelEquipo.join(', '),
+        novedades: novedades
+      });
+    }
     document.getElementById('fum-loading').style.display = 'none';
     document.getElementById('fum-ok-txt').textContent = fumSelFinca[0] + ' · ' + fumSelLotes.join(', ');
     document.getElementById('fum-ok').style.display = 'block';
@@ -1347,8 +1363,7 @@ function fumResetCampos() {
   document.getElementById('fum-novedades').value = '';
   fumActualizarFechaSemana();
   fumRenderFincas();
-  poblarFumLoteSelect();
-  document.getElementById('fum-lote-select').value = '';
+  fumRenderLotes();
   fumActualizarInfoLote();
   fumMkItemBtn(FUM_PLAGAS, fumSelPlagas, 'fum-plagas-lista', false);
   fumMkItemBtn(FUM_PRODUCTOS, fumSelProductos, 'fum-productos-lista', false);
@@ -1368,12 +1383,7 @@ function fumLimpiar() {
   document.getElementById('fum-fecha').addEventListener('change', fumActualizarFechaSemana);
   fumActualizarFechaSemana();
   fumRenderFincas();
-  poblarFumLoteSelect();
-  document.getElementById('fum-lote-select').addEventListener('change', function() {
-    fumSelLotes.length = 0;
-    if (this.value) fumSelLotes.push('Lote ' + this.value);
-    fumActualizarInfoLote();
-  });
+  fumRenderLotes();
   fumActualizarInfoLote();
   setTimeout(fetchFumigaciones, 500);
   fumMkItemBtn(FUM_PLAGAS, fumSelPlagas, 'fum-plagas-lista', false);
