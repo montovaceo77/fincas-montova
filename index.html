@@ -296,6 +296,7 @@ var preparaciones = [];
 var loteFilter = 'todos';
 var expandedPrep = {};
 var reprogramarId = null;
+var editarId = null;
 
 // PIN de supervisor para autorizar cambios en Programacion (crear,
 // reprogramar o finalizar un lote). Cambialo aqui cuando quieras, y
@@ -461,11 +462,13 @@ function initFab() {
 
 function abrirModalNuevo() {
   reprogramarId = null;
+  editarId = null;
   document.getElementById('modal-lote-title').textContent = 'Programar lote';
   document.getElementById('btn-save-lote').textContent = 'Programar lote';
   document.getElementById('l-finca').disabled = false;
   document.getElementById('l-variedad').disabled = false;
   document.getElementById('l-num').disabled = false;
+  document.getElementById('l-fecha').disabled = false;
   document.getElementById('l-fecha').value = new Date().toISOString().split('T')[0];
   document.getElementById('l-camas').value = '';
   document.getElementById('l-plantas').value = '';
@@ -478,6 +481,7 @@ function abrirModalReprogramar(id) {
   var l = lotes.find(function(x) { return String(x.ID) === String(id); });
   if (!l) return;
   reprogramarId = id;
+  editarId = null;
   document.getElementById('modal-lote-title').textContent = 'Reprogramar lote';
   document.getElementById('btn-save-lote').textContent = 'Reprogramar lote';
   document.getElementById('l-finca').value = l.Finca || l.finca || '';
@@ -487,6 +491,7 @@ function abrirModalReprogramar(id) {
   document.getElementById('l-finca').disabled = true;
   document.getElementById('l-variedad').disabled = true;
   document.getElementById('l-num').disabled = true;
+  document.getElementById('l-fecha').disabled = false;
   document.getElementById('l-fecha').value = new Date().toISOString().split('T')[0];
   document.getElementById('l-camas').value = l.Camas || l.camas || '';
   document.getElementById('l-plantas').value = l.Plantas || l.plantas || '';
@@ -494,11 +499,74 @@ function abrirModalReprogramar(id) {
   document.getElementById('overlay-lote').classList.add('open');
 }
 
+// Abre el modal en modo "editar": Finca, Variedad, Lote y Fecha de
+// inicio quedan bloqueados (no se pueden tocar); solo se puede corregir
+// Camas, # de plantas, y las fechas/productos de Preparacion del suelo.
+// A diferencia de "Reprogramar", esto NO crea un ciclo nuevo: actualiza
+// el mismo registro que ya esta activo.
+function abrirModalEditar(id) {
+  var l = lotes.find(function(x) { return String(x.ID) === String(id); });
+  if (!l) return;
+  reprogramarId = null;
+  editarId = id;
+  var finca = l.Finca || l.finca || '';
+  var variedad = l.Variedad || l.variedad || '';
+  var loteNum = l.Lote || l.lote || '';
+  var fechaISO = getISO(l.Fecha_Inicio || l.fecha_inicio || '');
+
+  document.getElementById('modal-lote-title').textContent = 'Editar lote';
+  document.getElementById('btn-save-lote').textContent = 'Guardar cambios';
+  document.getElementById('l-finca').value = finca;
+  document.getElementById('l-variedad').value = variedad;
+  actualizarOpcionesLoteNum();
+  document.getElementById('l-num').value = loteNum;
+  document.getElementById('l-finca').disabled = true;
+  document.getElementById('l-variedad').disabled = true;
+  document.getElementById('l-num').disabled = true;
+  document.getElementById('l-fecha').value = fechaISO;
+  document.getElementById('l-fecha').disabled = true;
+  document.getElementById('l-camas').value = l.Camas || l.camas || '';
+  document.getElementById('l-plantas').value = l.Plantas || l.plantas || '';
+
+  // Precarga los datos de Preparacion del suelo del ciclo activo.
+  var prep = getPrep(finca, variedad, loteNum, fechaISO);
+  var setFecha = function(id, val) { document.getElementById(id).value = getISO(val || ''); };
+  var marcarChecks = function(prefix, texto) {
+    var partes = String(texto || '').split(',').map(function(s) { return s.trim(); }).filter(Boolean);
+    ['1','2','3','4'].forEach(function(n) {
+      var el = document.getElementById(prefix + 'p' + n);
+      if (el) el.checked = partes.indexOf(el.value) !== -1;
+    });
+  };
+  if (prep) {
+    setFecha('p-picada', prep.Fecha_Picada || prep.fecha_picada);
+    setFecha('p-desinfeccion', prep.Fecha_Desinfeccion || prep.fecha_desinfeccion);
+    setFecha('p-app1-fecha', prep.Fecha_App1 || prep.fecha_app1);
+    setFecha('p-app2-fecha', prep.Fecha_App2 || prep.fecha_app2);
+    marcarChecks('a1', prep.App1_Productos || prep.app1_productos);
+    marcarChecks('a2', prep.App2_Productos || prep.app2_productos);
+    // Muestra las listas de productos abiertas si ya hay alguno marcado.
+    if (document.getElementById('a1p1').checked || document.getElementById('a1p2').checked || document.getElementById('a1p3').checked || document.getElementById('a1p4').checked) {
+      document.getElementById('app1-prods').style.display = 'block';
+      document.getElementById('toggle-app1').textContent = '- Ocultar productos aplicacion 1';
+    }
+    if (document.getElementById('a2p1').checked || document.getElementById('a2p2').checked || document.getElementById('a2p3').checked || document.getElementById('a2p4').checked) {
+      document.getElementById('app2-prods').style.display = 'block';
+      document.getElementById('toggle-app2').textContent = '- Ocultar productos aplicacion 2';
+    }
+  }
+
+  actualizarHints();
+  document.getElementById('overlay-lote').classList.add('open');
+}
+
 function resetModal() {
   reprogramarId = null;
+  editarId = null;
   document.getElementById('l-finca').disabled = false;
   document.getElementById('l-variedad').disabled = false;
   document.getElementById('l-num').disabled = false;
+  document.getElementById('l-fecha').disabled = false;
   document.getElementById('l-fecha').value = '';
   document.getElementById('l-camas').value = '';
   document.getElementById('l-plantas').value = '';
@@ -571,7 +639,20 @@ function initModal() {
       app2p1: getChk('a2p1'), app2p2: getChk('a2p2'), app2p3: getChk('a2p3'), app2p4: getChk('a2p4')
     };
 
-    if (reprogramarId) {
+    if (editarId) {
+      var le = lotes.find(function(x) { return String(x.ID) === String(editarId); });
+      if (le) { le.Camas = camas; le.Plantas = plantas; }
+      renderLotes();
+      showToast('Cambios guardados');
+      sendToServer({action:'editarLote', id:editarId, camas:camas, plantas:plantas, usuario:usuario, pin:pin});
+      sendToServer({action:'editarPreparacion', finca:finca, variedad:variedad, lote:loteNum,
+        fecha_picada:pd.picada, fecha_desinfeccion:pd.desinfeccion,
+        fecha_app1:pd.app1fecha, app1_p1:pd.app1p1, app1_p2:pd.app1p2, app1_p3:pd.app1p3, app1_p4:pd.app1p4,
+        fecha_app2:pd.app2fecha, app2_p1:pd.app2p1, app2_p2:pd.app2p2, app2_p3:pd.app2p3, app2_p4:pd.app2p4,
+        usuario:usuario, pin:pin
+      });
+      setTimeout(function() { fetchLotes(); fetchPreparaciones(); }, 5000);
+    } else if (reprogramarId) {
       var l = lotes.find(function(x) { return String(x.ID) === String(reprogramarId); });
       if (l) { l.Fecha_Inicio = fecha; l.Estado = 'activo'; l.Camas = camas; l.Plantas = plantas; }
       renderLotes();
@@ -724,6 +805,7 @@ function renderLotes() {
 
     html += '<div class="lote-actions">';
     if (estado === 'activo') {
+      html += '<button class="btn-icon" data-editar="' + id + '">Editar</button>';
       html += '<button class="btn-icon danger" data-finalizar="' + id + '">Finalizar</button>';
     } else {
       html += '<button class="btn-icon" data-reprogramar="' + id + '">Reprogramar</button>';
@@ -781,6 +863,9 @@ function renderLotes() {
   });
   container.querySelectorAll('[data-reprogramar]').forEach(function(el) {
     el.addEventListener('click', function() { abrirModalReprogramar(el.dataset.reprogramar); });
+  });
+  container.querySelectorAll('[data-editar]').forEach(function(el) {
+    el.addEventListener('click', function() { abrirModalEditar(el.dataset.editar); });
   });
 }
 </script>
