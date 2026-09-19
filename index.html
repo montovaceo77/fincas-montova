@@ -268,6 +268,18 @@ actualizarEstadoConexion();
       </div>
     </div>
 
+    <div class="modal-section">Autorizacion</div>
+    <div class="field-row">
+      <div class="field">
+        <label>Autoriza (nombre)</label>
+        <input type="text" id="l-usuario" placeholder="Nombre de quien autoriza" />
+      </div>
+      <div class="field">
+        <label>PIN de supervisor</label>
+        <input type="password" inputmode="numeric" id="l-pin" placeholder="PIN" />
+      </div>
+    </div>
+
     <div class="modal-actions">
       <button class="btn-secondary" id="btn-cancel-lote">Cancelar</button>
       <button class="btn-primary" id="btn-save-lote">Programar lote</button>
@@ -284,6 +296,12 @@ var preparaciones = [];
 var loteFilter = 'todos';
 var expandedPrep = {};
 var reprogramarId = null;
+
+// PIN de supervisor para autorizar cambios en Programacion (crear,
+// reprogramar o finalizar un lote). Cambialo aqui cuando quieras, y
+// recuerda actualizar el mismo valor en el Apps Script (SUPERVISOR_PIN)
+// para que la validacion real del lado del servidor quede sincronizada.
+var SUPERVISOR_PIN = '7798';
 
 // Lotes especiales: fincas/variedades cuyo listado de "numero de lote"
 // no es el rango normal de 1 a 33. Oasis Garden tiene 11 lotes
@@ -484,6 +502,8 @@ function resetModal() {
   document.getElementById('l-fecha').value = '';
   document.getElementById('l-camas').value = '';
   document.getElementById('l-plantas').value = '';
+  document.getElementById('l-usuario').value = '';
+  document.getElementById('l-pin').value = '';
   ['p-picada','p-desinfeccion','p-app1-fecha','p-app2-fecha'].forEach(function(id) {
     document.getElementById(id).value = '';
   });
@@ -534,7 +554,11 @@ function initModal() {
     var fecha    = document.getElementById('l-fecha').value;
     var camas    = document.getElementById('l-camas').value.trim();
     var plantas  = document.getElementById('l-plantas').value.trim();
+    var usuario  = document.getElementById('l-usuario').value.trim();
+    var pin      = document.getElementById('l-pin').value.trim();
     if (!loteNum || !fecha || !camas) { showToast('Selecciona el lote, la fecha de inicio y el numero de camas'); return; }
+    if (!usuario || !pin) { showToast('Escribe quien autoriza y el PIN de supervisor'); return; }
+    if (pin !== SUPERVISOR_PIN) { showToast('PIN incorrecto: no se guardo el lote'); return; }
     if (!navigator.onLine) { showToast('Sin conexion: no se guardo. Verifica tu señal e intenta de nuevo.'); return; }
 
     var getChk = function(id) { return document.getElementById(id).checked ? document.getElementById(id).value : ''; };
@@ -552,12 +576,13 @@ function initModal() {
       if (l) { l.Fecha_Inicio = fecha; l.Estado = 'activo'; l.Camas = camas; l.Plantas = plantas; }
       renderLotes();
       showToast('Lote reprogramado');
-      sendToServer({action:'reprogramarLote', finca:finca, variedad:variedad, lote:loteNum, fecha_inicio:fecha, camas:camas, plantas:plantas});
+      sendToServer({action:'reprogramarLote', finca:finca, variedad:variedad, lote:loteNum, fecha_inicio:fecha, camas:camas, plantas:plantas, usuario:usuario, pin:pin});
       sendToServer({action:'addPreparacion', finca:finca, variedad:variedad, lote:loteNum,
         fecha_inicio_ciclo:fecha,
         fecha_picada:pd.picada, fecha_desinfeccion:pd.desinfeccion,
         fecha_app1:pd.app1fecha, app1_p1:pd.app1p1, app1_p2:pd.app1p2, app1_p3:pd.app1p3, app1_p4:pd.app1p4,
-        fecha_app2:pd.app2fecha, app2_p1:pd.app2p1, app2_p2:pd.app2p2, app2_p3:pd.app2p3, app2_p4:pd.app2p4
+        fecha_app2:pd.app2fecha, app2_p1:pd.app2p1, app2_p2:pd.app2p2, app2_p3:pd.app2p3, app2_p4:pd.app2p4,
+        usuario:usuario, pin:pin
       });
       setTimeout(function() { fetchLotes(); fetchPreparaciones(); }, 5000);
     } else {
@@ -573,12 +598,13 @@ function initModal() {
       lotes.push({ID:tempId, Finca:finca, Variedad:variedad, Lote:loteNum, Fecha_Inicio:fecha, Estado:'activo', Camas:camas, Plantas:plantas});
       renderLotes();
       showToast('Lote programado');
-      sendToServer({action:'addLote', finca:finca, variedad:variedad, lote:loteNum, fecha_inicio:fecha, camas:camas, plantas:plantas});
+      sendToServer({action:'addLote', finca:finca, variedad:variedad, lote:loteNum, fecha_inicio:fecha, camas:camas, plantas:plantas, usuario:usuario, pin:pin});
       sendToServer({action:'addPreparacion', finca:finca, variedad:variedad, lote:loteNum,
         fecha_inicio_ciclo:fecha,
         fecha_picada:pd.picada, fecha_desinfeccion:pd.desinfeccion,
         fecha_app1:pd.app1fecha, app1_p1:pd.app1p1, app1_p2:pd.app1p2, app1_p3:pd.app1p3, app1_p4:pd.app1p4,
-        fecha_app2:pd.app2fecha, app2_p1:pd.app2p1, app2_p2:pd.app2p2, app2_p3:pd.app2p3, app2_p4:pd.app2p4
+        fecha_app2:pd.app2fecha, app2_p1:pd.app2p1, app2_p2:pd.app2p2, app2_p3:pd.app2p3, app2_p4:pd.app2p4,
+        usuario:usuario, pin:pin
       });
       setTimeout(function() { fetchLotes(); fetchPreparaciones(); }, 5000);
     }
@@ -602,11 +628,15 @@ function fetchPreparaciones() {
 
 function finalizarLote(id) {
   if (!confirm('Finalizar el ciclo de este lote? Volvera a semana 0.')) return;
+  var usuario = prompt('Tu nombre (queda registrado como quien finaliza):');
+  if (!usuario || !usuario.trim()) { showToast('Se necesita el nombre de quien autoriza'); return; }
+  var pin = prompt('PIN de supervisor:');
+  if (pin !== SUPERVISOR_PIN) { showToast('PIN incorrecto: no se finalizo el lote'); return; }
   var l = lotes.find(function(x) { return String(x.ID) === String(id); });
   if (l) { l.Estado = 'inactivo'; }
   renderLotes();
   showToast('Ciclo finalizado');
-  sendToServer({action:'finalizarLote', id:id, finca: l.Finca||l.finca||'', variedad: l.Variedad||l.variedad||'', lote: l.Lote||l.lote||''});
+  sendToServer({action:'finalizarLote', id:id, finca: l.Finca||l.finca||'', variedad: l.Variedad||l.variedad||'', lote: l.Lote||l.lote||'', usuario:usuario.trim(), pin:pin});
 }
 
 function getPrep(finca, variedad, lote, fechaInicioCiclo) {
