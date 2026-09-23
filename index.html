@@ -1188,17 +1188,37 @@ function fumRenderFincas() {
     btn.onclick = function() {
       fumSelFinca.length = 0; fumSelFinca.push(f);
       fumSelEquipo.length = 0;
-      fumRenderFincas(); fumRenderEquipo(); fumActualizarInfoLote();
+      // Si habia lotes marcados que no existen en la nueva finca (por
+      // ejemplo lotes E de Oasis Garden), se quitan de la seleccion.
+      var disponibles = fumLotesDisponibles();
+      for (var i = fumSelLotes.length - 1; i >= 0; i--) {
+        if (disponibles.indexOf(fumSelLotes[i]) === -1) fumSelLotes.splice(i, 1);
+      }
+      fumRenderFincas(); fumRenderLotes(); fumRenderEquipo(); fumActualizarInfoLote();
     };
     c.appendChild(btn);
   });
+}
+
+// Devuelve la lista de lotes que se pueden marcar en Fumigacion segun
+// la finca elegida. Reutiliza LOTES_ESPECIALES (la misma fuente que usa
+// Programacion) para agregar los 11 lotes especiales de Oasis Garden
+// (E1 a E11) al final de la lista normal 1-33, solo para esa finca.
+function fumLotesDisponibles() {
+  var lista = FUM_LOTES.slice();
+  var finca = fumSelFinca[0];
+  if (finca === 'Oasis Garden') {
+    var especiales = (LOTES_ESPECIALES['Oasis Garden'] && LOTES_ESPECIALES['Oasis Garden']['Esmeralda']) || [];
+    especiales.forEach(function(codigo) { lista.push('Lote ' + codigo); });
+  }
+  return lista;
 }
 
 function fumRenderLotes() {
   var c = document.getElementById('fum-lote-lista');
   if (!c) return;
   c.innerHTML = '';
-  FUM_LOTES.forEach(function(item) {
+  fumLotesDisponibles().forEach(function(item) {
     var btn = document.createElement('button');
     var sel = fumSelLotes.indexOf(item) !== -1;
     btn.style.cssText = 'padding:10px 12px; font-size:13px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; background:'+(sel?'var(--verde-light)':'#fff')+'; border:1px solid '+(sel?'var(--verde-mid)':'var(--border)')+'; color:'+(sel?'var(--verde-dark)':'var(--ink-mid)')+'; font-weight:'+(sel?'600':'400')+'; width:100%; text-align:left; flex-shrink:0;';
