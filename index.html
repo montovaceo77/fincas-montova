@@ -1312,7 +1312,7 @@ async function postToWS(payload) {
   }
 }
 
-async function fumGuardar() {
+function fumGuardar() {
   var fecha = document.getElementById('fum-fecha').value;
   if (!fecha || !fumSelFinca.length || !fumSelLotes.length || !fumSelPlagas.length || !fumSelProductos.length || !fumSelEquipo.length) {
     alert('Completa los pasos obligatorios (1, 2, 3, 4, 5 y 7) antes de guardar.');
@@ -1322,40 +1322,69 @@ async function fumGuardar() {
     alert('No tienes conexion a internet. Este registro no se guardara hasta que recuperes la señal.');
     return;
   }
+
   var btn = document.getElementById('fum-guardar-btn');
   btn.disabled = true;
-  document.getElementById('fum-loading').style.display = 'block';
-  document.getElementById('fum-ok').style.display = 'none';
+  setTimeout(function() { btn.disabled = false; }, 1200);
   document.getElementById('fum-error').style.display = 'none';
+
+  var finca = fumSelFinca[0];
+  var lotesEsperados = fumSelLotes.slice();
   var novedades = document.getElementById('fum-novedades').value.trim();
-  try {
-    // Un registro por cada lote marcado, todos con los mismos datos
-    // (misma finca, plagas, productos, fertilizantes, equipo y fecha),
-    // para que en el Sheet quede desglosado lote por lote.
-    for (var i = 0; i < fumSelLotes.length; i++) {
-      await postToWS({
-        action: 'addFumigacion',
-        fecha: fecha,
-        finca: fumSelFinca[0],
-        lotes: fumSelLotes[i],
-        productos: fumSelProductos.join(', '),
-        fertilizantes: fumSelFertilizantes.join(', '),
-        plagas: fumSelPlagas.join(', '),
-        equipo: fumSelEquipo.join(', '),
-        novedades: novedades
+  var productos = fumSelProductos.join(', ');
+  var fertilizantes = fumSelFertilizantes.join(', ');
+  var plagas = fumSelPlagas.join(', ');
+  var equipo = fumSelEquipo.join(', ');
+
+  // Un registro por cada lote marcado, todos con los mismos datos
+  // (misma finca, plagas, productos, fertilizantes, equipo y fecha).
+  // Se disparan sin esperar la respuesta de Apps Script (es lenta) para
+  // que la app se sienta instantanea; la confirmacion real llega
+  // despues, en segundo plano, via verificarGuardadoFumigacion.
+  lotesEsperados.forEach(function(lote) {
+    postToWS({
+      action: 'addFumigacion',
+      fecha: fecha,
+      finca: finca,
+      lotes: lote,
+      productos: productos,
+      fertilizantes: fertilizantes,
+      plagas: plagas,
+      equipo: equipo,
+      novedades: novedades
+    });
+  });
+
+  document.getElementById('fum-ok-txt').textContent = finca + ' · ' + lotesEsperados.join(', ');
+  document.getElementById('fum-ok').style.display = 'block';
+  fumResetCampos();
+
+  verificarGuardadoFumigacion(fecha, finca, lotesEsperados);
+}
+
+// Revisa en segundo plano, unos segundos despues, si los registros que
+// se acaban de mandar ya aparecen en Fumigacion. Si alguno falta,
+// avisa para que se vuelva a intentar (en vez de que se pierda sin que
+// nadie se de cuenta).
+function verificarGuardadoFumigacion(fecha, finca, lotesEsperados) {
+  setTimeout(function() {
+    fetch(WS + '?action=getFumigaciones').then(function(r) { return r.json(); }).then(function(data) {
+      var registros = Array.isArray(data) ? data : [];
+      fumigaciones = registros;
+      var faltantes = lotesEsperados.filter(function(lote) {
+        return !registros.some(function(r) {
+          return String(r.Finca || r.finca || '') === String(finca) &&
+                 getISO(r.Fecha || r.fecha || '') === fecha &&
+                 String(r.Lotes || r.lotes || '') === lote;
+        });
       });
-    }
-    document.getElementById('fum-loading').style.display = 'none';
-    document.getElementById('fum-ok-txt').textContent = fumSelFinca[0] + ' · ' + fumSelLotes.join(', ');
-    document.getElementById('fum-ok').style.display = 'block';
-    btn.disabled = false;
-    fumResetCampos();
-    setTimeout(fetchFumigaciones, 3000);
-  } catch(e) {
-    document.getElementById('fum-loading').style.display = 'none';
-    document.getElementById('fum-error').style.display = 'block';
-    btn.disabled = false;
-  }
+      if (faltantes.length) {
+        alert('No pudimos confirmar que se guardo la fumigacion de ' + finca + ' (' + faltantes.join(', ') + '). Revisa tu conexion y vuelve a intentarlo.');
+      }
+    }).catch(function() {
+      alert('No pudimos confirmar que se guardo la fumigacion de ' + finca + ' (' + lotesEsperados.join(', ') + '). Revisa tu conexion y vuelve a intentarlo.');
+    });
+  }, 4000);
 }
 
 function fumActualizarFechaSemana() {
@@ -1521,7 +1550,7 @@ function labActualizarInfoLote() {
   '</div>';
 }
 
-async function labGuardar() {
+function labGuardar() {
   var fecha = document.getElementById('lab-fecha').value;
   var finca = document.getElementById('lab-finca').value;
   var loteNum = document.getElementById('lab-lote-select').value;
@@ -1533,34 +1562,55 @@ async function labGuardar() {
     alert('No tienes conexion a internet. Este registro no se guardara hasta que recuperes la señal.');
     return;
   }
+
   var btn = document.getElementById('lab-guardar-btn');
   btn.disabled = true;
-  document.getElementById('lab-loading').style.display = 'block';
-  document.getElementById('lab-ok').style.display = 'none';
+  setTimeout(function() { btn.disabled = false; }, 1200);
   document.getElementById('lab-error').style.display = 'none';
+
+  var loteLabel = 'Lote ' + loteNum;
   var laborFinal = labSelLabor.slice();
   if (labSelFert[0] === 'Si') laborFinal.push('Fertilizacion');
-  var payload = {
+  var laborTxt = laborFinal.join(', ');
+
+  // Se dispara sin esperar la respuesta de Apps Script (es lenta); la
+  // confirmacion real llega despues, en segundo plano.
+  postToWS({
     action: 'addLaborCampo',
     fecha: fecha,
     finca: finca,
     variedad: labVariedadActual,
-    lote: 'Lote ' + loteNum,
-    labor: laborFinal.join(', ')
-  };
-  try {
-    await postToWS(payload);
-    document.getElementById('lab-loading').style.display = 'none';
-    document.getElementById('lab-ok-txt').textContent = finca + ' · Lote ' + loteNum;
-    document.getElementById('lab-ok').style.display = 'block';
-    btn.disabled = false;
-    labResetCampos();
-    setTimeout(fetchLaboresCampo, 3000);
-  } catch(e) {
-    document.getElementById('lab-loading').style.display = 'none';
-    document.getElementById('lab-error').style.display = 'block';
-    btn.disabled = false;
-  }
+    lote: loteLabel,
+    labor: laborTxt
+  });
+
+  document.getElementById('lab-ok-txt').textContent = finca + ' · ' + loteLabel;
+  document.getElementById('lab-ok').style.display = 'block';
+  labResetCampos();
+
+  verificarGuardadoLabor(fecha, finca, loteLabel);
+}
+
+// Revisa en segundo plano, unos segundos despues, si el registro que
+// se acaba de mandar ya aparece en Labores_Campo. Si no, avisa para
+// que se vuelva a intentar.
+function verificarGuardadoLabor(fecha, finca, loteLabel) {
+  setTimeout(function() {
+    fetch(WS + '?action=getLaboresCampo').then(function(r) { return r.json(); }).then(function(data) {
+      var registros = Array.isArray(data) ? data : [];
+      laboresCampo = registros;
+      var existe = registros.some(function(r) {
+        return String(r.Finca || r.finca || '') === String(finca) &&
+               getISO(r.Fecha || r.fecha || '') === fecha &&
+               String(r.Lote || r.lote || '') === loteLabel;
+      });
+      if (!existe) {
+        alert('No pudimos confirmar que se guardo la labor de ' + finca + ' - ' + loteLabel + '. Revisa tu conexion y vuelve a intentarlo.');
+      }
+    }).catch(function() {
+      alert('No pudimos confirmar que se guardo la labor de ' + finca + ' - ' + loteLabel + '. Revisa tu conexion y vuelve a intentarlo.');
+    });
+  }, 4000);
 }
 
 function labResetCampos() {
@@ -1750,7 +1800,7 @@ function ingRenderTipos() {
   });
 }
 
-async function ingGuardar() {
+function ingGuardar() {
   var fecha = document.getElementById('ing-fecha').value;
   var finca = document.getElementById('ing-finca').value;
   var loteNum = document.getElementById('ing-lote-select').value;
@@ -1782,34 +1832,52 @@ async function ingGuardar() {
 
   var btn = document.getElementById('ing-guardar-btn');
   btn.disabled = true;
-  document.getElementById('ing-loading').style.display = 'block';
-  document.getElementById('ing-ok').style.display = 'none';
+  setTimeout(function() { btn.disabled = false; }, 1200);
   document.getElementById('ing-error').style.display = 'none';
 
-  var payload = {
+  var loteLabel = 'Lote ' + loteNum;
+
+  // Se dispara sin esperar la respuesta de Apps Script (es lenta); la
+  // confirmacion real llega despues, en segundo plano.
+  postToWS({
     action: 'addIngresoSala',
     fecha: fecha,
     finca: finca,
-    lote: 'Lote ' + loteNum,
+    lote: loteLabel,
     tipo_flor: tipo,
     cantidad: cantidad,
     descarte: ingDescarteActivo ? 'Si' : '',
     motivo_descarte: motivos.join(', ')
-  };
+  });
 
-  try {
-    await postToWS(payload);
-    document.getElementById('ing-loading').style.display = 'none';
-    document.getElementById('ing-ok-txt').textContent = finca + ' · Lote ' + loteNum + ' · ' + (ingDescarteActivo ? 'Descarte' : tipo);
-    document.getElementById('ing-ok').style.display = 'block';
-    btn.disabled = false;
-    ingResetCampos();
-    setTimeout(fetchIngresoSala, 3000);
-  } catch (e) {
-    document.getElementById('ing-loading').style.display = 'none';
-    document.getElementById('ing-error').style.display = 'block';
-    btn.disabled = false;
-  }
+  document.getElementById('ing-ok-txt').textContent = finca + ' · ' + loteLabel + ' · ' + (ingDescarteActivo ? 'Descarte' : tipo);
+  document.getElementById('ing-ok').style.display = 'block';
+  ingResetCampos();
+
+  verificarGuardadoIngreso(fecha, finca, loteLabel, cantidad);
+}
+
+// Revisa en segundo plano, unos segundos despues, si el registro que
+// se acaba de mandar ya aparece en Ingreso_Sala. Si no, avisa para
+// que se vuelva a intentar.
+function verificarGuardadoIngreso(fecha, finca, loteLabel, cantidad) {
+  setTimeout(function() {
+    fetch(WS + '?action=getIngresoSala').then(function(r) { return r.json(); }).then(function(data) {
+      var registros = Array.isArray(data) ? data : [];
+      ingresoSalaRegistros = registros;
+      var existe = registros.some(function(r) {
+        return String(r.Finca || r.finca || '') === String(finca) &&
+               getISO(r.Fecha || r.fecha || '') === fecha &&
+               String(r.Lote || r.lote || '') === loteLabel &&
+               String(r.Cantidad || r.cantidad || '') === String(cantidad);
+      });
+      if (!existe) {
+        alert('No pudimos confirmar que se guardo el ingreso de ' + finca + ' - ' + loteLabel + '. Revisa tu conexion y vuelve a intentarlo.');
+      }
+    }).catch(function() {
+      alert('No pudimos confirmar que se guardo el ingreso de ' + finca + ' - ' + loteLabel + '. Revisa tu conexion y vuelve a intentarlo.');
+    });
+  }, 4000);
 }
 
 function ingResetCampos() {
