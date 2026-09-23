@@ -698,29 +698,59 @@ function buildLoteStep() {
   title.textContent = 'Lote';
   wrap.appendChild(title);
 
+  // Toma los lotes con ciclo activo para esta finca directamente de los
+  // datos de Programacion (getLotes), en vez de una lista fija del 1 al 33.
+  // Asi aparecen tanto los lotes numericos normales como los codigos
+  // especiales (ej: E1 a E11 en Oasis Garden + Esmeralda).
+  var activos = lotes.filter(function(l) {
+    return String(l.Finca || l.finca || '') === String(st.finca) &&
+           String(l.Estado || l.estado || '').toLowerCase() === 'activo';
+  });
+
+  var codigos = [];
+  activos.forEach(function(l) {
+    var c = String(l.Lote || l.lote || '');
+    if (c && codigos.indexOf(c) === -1) codigos.push(c);
+  });
+
+  codigos.sort(function(a, b) {
+    var esEspecialA = /[a-zA-Z]/.test(a);
+    var esEspecialB = /[a-zA-Z]/.test(b);
+    if (esEspecialA !== esEspecialB) return esEspecialA ? 1 : -1;
+    var na = parseInt(a.replace(/[^0-9]/g, ''), 10) || 0;
+    var nb = parseInt(b.replace(/[^0-9]/g, ''), 10) || 0;
+    return na - nb;
+  });
+
+  if (codigos.length === 0) {
+    var empty = document.createElement('div');
+    empty.className = 'empty-state';
+    empty.textContent = 'No hay lotes con ciclo activo programado para esta finca todavia.';
+    wrap.appendChild(empty);
+    return wrap;
+  }
+
   var grid = document.createElement('div');
   grid.className = 'btn-grid cols-2';
-  for (var i = 1; i <= 33; i++) {
-    (function(n) {
-      var btn = document.createElement('button');
-      btn.className = 'pick-btn';
-      btn.textContent = 'Lote ' + n;
-      btn.onclick = function() {
-        st.loteNum = n;
-        var l = lotes.find(function(x) {
-          return String(x.Finca || x.finca || '') === String(st.finca) &&
-                 String(x.Lote || x.lote || '') === String(n) &&
-                 String(x.Estado || x.estado || '').toLowerCase() === 'activo';
-        });
-        st.variedad = l ? (l.Variedad || l.variedad || '') : '';
-        st.fechaInicioLote = l ? getISO(l.Fecha_Inicio || l.fecha_inicio || '') : '';
-        var camasVal = l ? parseInt(l.Camas || l.camas || '0', 10) : 0;
-        st.camasTotal = camasVal > 0 ? camasVal : 20;
-        render();
-      };
-      grid.appendChild(btn);
-    })(i);
-  }
+  codigos.forEach(function(codigo) {
+    var btn = document.createElement('button');
+    btn.className = 'pick-btn';
+    btn.textContent = 'Lote ' + codigo;
+    btn.onclick = function() {
+      st.loteNum = codigo;
+      var l = lotes.find(function(x) {
+        return String(x.Finca || x.finca || '') === String(st.finca) &&
+               String(x.Lote || x.lote || '') === String(codigo) &&
+               String(x.Estado || x.estado || '').toLowerCase() === 'activo';
+      });
+      st.variedad = l ? (l.Variedad || l.variedad || '') : '';
+      st.fechaInicioLote = l ? getISO(l.Fecha_Inicio || l.fecha_inicio || '') : '';
+      var camasVal = l ? parseInt(l.Camas || l.camas || '0', 10) : 0;
+      st.camasTotal = camasVal > 0 ? camasVal : 20;
+      render();
+    };
+    grid.appendChild(btn);
+  });
   wrap.appendChild(grid);
   return wrap;
 }
