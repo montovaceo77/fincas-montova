@@ -31,6 +31,11 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
 .header-btn { background: transparent; border: 1.5px solid #6A9B78; color: #DCEDE2; font-size: 12px; font-weight: 600; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-family: 'DM Sans', sans-serif; white-space: nowrap; }
 .header-btn:active { background: rgba(255,255,255,0.08); }
 
+.sync-bar { background: #EFEFEF; border-bottom: 1px solid var(--border); padding: 9px 1.25rem; text-align: center; font-size: 12.5px; font-weight: 600; color: var(--ink-mid); cursor: pointer; }
+.sync-bar.pendiente { background: #FFF3E0; color: #B45309; }
+.sync-bar.sincronizando { background: var(--verde-light); color: var(--verde-dark); }
+.sync-bar.error { background: #FFECEC; color: #C0392B; }
+
 .resumen-title { font-size: 20px; font-weight: 700; color: var(--ink); margin-bottom: 2px; }
 .resumen-rango { font-size: 12px; color: var(--ink-mid); margin-bottom: 1.25rem; }
 .totales-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1.25rem; }
@@ -118,6 +123,8 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
 .plaga-item.sel { background: var(--verde-light); border-color: var(--verde-mid); color: var(--verde-dark); font-weight: 600; }
 .plaga-chk { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 11px; color: #fff; }
 .plaga-item.sel .plaga-chk { background: var(--verde-dark); border-color: var(--verde-dark); }
+.btn-siguiente-punto { width: 100%; margin-top: 12px; padding: 13px; font-size: 14px; font-weight: 600; background: var(--verde-light); color: var(--verde-dark); border: 1.5px solid var(--verde-mid); border-radius: 10px; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+.btn-siguiente-punto:active { background: var(--verde-mid); color: #fff; }
 
 .sev-wrap { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
 .sev-card { border: 1px solid var(--border); border-radius: 10px; padding: 12px; background: #fff; }
@@ -160,6 +167,10 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
   </div>
 </div>
 
+<div class="sync-bar" id="sync-bar" onclick="sincronizarPendientes()">
+  <span id="sync-bar-text">Todo sincronizado</span>
+</div>
+
 <div id="view-wizard">
   <div class="summary-wrap">
     <div class="summary" id="summary"></div>
@@ -183,6 +194,27 @@ var FINCAS = ['Flor Esperancita','Flor de Agua 3','Oasis Garden','Flor Madera'];
 
 var lotes = [];
 var monitoreos = [];
+var pendientes = [];
+var PENDIENTES_KEY = 'montova_monitoreo_pendientes';
+
+function cargarPendientesLocal() {
+  try {
+    var raw = localStorage.getItem(PENDIENTES_KEY);
+    pendientes = raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    pendientes = [];
+  }
+}
+
+function guardarPendientesLocal() {
+  try {
+    localStorage.setItem(PENDIENTES_KEY, JSON.stringify(pendientes));
+  } catch (e) {}
+}
+
+function todosMonitoreos() {
+  return monitoreos.concat(pendientes);
+}
 
 var st = {
   fecha: new Date().toISOString().split('T')[0],
@@ -208,6 +240,8 @@ function itemsPunto(n) {
 }
 
 window.addEventListener('DOMContentLoaded', function() {
+  cargarPendientesLocal();
+  actualizarSyncBar();
   fetchLotes();
   fetchMonitoreos();
   render();
@@ -312,7 +346,7 @@ function renderResumen() {
 
   var rango = getWeekRange(new Date());
   var semanaNum = calcSemanaAnio(rango.start);
-  var registrosSemana = monitoreos.filter(function(r) {
+  var registrosSemana = todosMonitoreos().filter(function(r) {
     var f = getISO(r.Fecha || r.fecha || '');
     return f >= rango.start && f <= rango.end;
   });
@@ -483,7 +517,7 @@ function renderResumen() {
 
 function camasConDatos() {
   var set = {};
-  monitoreos.forEach(function(r) {
+  todosMonitoreos().forEach(function(r) {
     var rFinca = String(r.Finca || r.finca || '');
     var rLote = String(r.Lote || r.lote || '');
     if (rFinca === st.finca && rLote === 'Lote ' + st.loteNum) {
@@ -801,6 +835,18 @@ function buildWorkStep() {
     lista.appendChild(btn);
   });
   card.appendChild(lista);
+
+  if (st.puntoActivo < 3) {
+    var btnSiguientePunto = document.createElement('button');
+    btnSiguientePunto.className = 'btn-siguiente-punto';
+    btnSiguientePunto.textContent = 'Siguiente punto \u2192';
+    btnSiguientePunto.onclick = function() {
+      st.puntoActivo = st.puntoActivo + 1;
+      render();
+    };
+    card.appendChild(btnSiguientePunto);
+  }
+
   wrap.appendChild(card);
 
   var actions = document.createElement('div');
@@ -833,7 +879,7 @@ function buildWorkStep() {
   var ok = document.createElement('div');
   ok.className = 'status-box status-ok';
   ok.id = 'mon-ok';
-  ok.innerHTML = '<div class="status-ok-title">Registro guardado con exito</div><div class="status-ok-txt" id="mon-ok-txt"></div>';
+  ok.innerHTML = '<div class="status-ok-title">Guardado en el celular</div><div class="status-ok-txt" id="mon-ok-txt"></div>';
   wrap.appendChild(ok);
 
   var err = document.createElement('div');
@@ -854,13 +900,7 @@ async function postToWS(payload) {
   }
 }
 
-async function monGuardar() {
-  var btn = document.getElementById('btn-guardar-mon');
-  btn.disabled = true;
-  document.getElementById('mon-loading').style.display = 'block';
-  document.getElementById('mon-ok').style.display = 'none';
-  document.getElementById('mon-error').style.display = 'none';
-
+function monGuardar() {
   var payload = {
     action: 'addMonitoreo',
     fecha: st.fecha,
@@ -872,29 +912,69 @@ async function monGuardar() {
     punto_3: itemsPunto(3).join(', ')
   };
 
-  try {
-    await postToWS(payload);
-    monitoreos.push({
-      Finca: st.finca,
-      Lote: 'Lote ' + st.loteNum,
-      Cama: st.cama,
-      Fecha: st.fecha,
-      Punto_1: payload.punto_1,
-      Punto_2: payload.punto_2,
-      Punto_3: payload.punto_3
-    });
-    document.getElementById('mon-loading').style.display = 'none';
-    document.getElementById('mon-ok-txt').textContent = st.finca + ' \u00b7 Lote ' + st.loteNum + ' \u00b7 Cama ' + st.cama;
-    document.getElementById('mon-ok').style.display = 'block';
-    st.cama = '';
-    puntosCheck = {1:[], 2:[], 3:[]}; puntosSeveridad = {1:{}, 2:{}, 3:{}};
-    st.puntoActivo = 1;
-    render();
-  } catch (e) {
-    document.getElementById('mon-loading').style.display = 'none';
-    document.getElementById('mon-error').style.display = 'block';
-    btn.disabled = false;
+  pendientes.push(payload);
+  guardarPendientesLocal();
+  actualizarSyncBar();
+
+  document.getElementById('mon-loading').style.display = 'none';
+  document.getElementById('mon-ok-txt').textContent = st.finca + ' \u00b7 Lote ' + st.loteNum + ' \u00b7 Cama ' + st.cama + ' \u2014 falta sincronizar';
+  document.getElementById('mon-ok').style.display = 'block';
+  st.cama = '';
+  puntosCheck = {1:[], 2:[], 3:[]}; puntosSeveridad = {1:{}, 2:{}, 3:{}};
+  st.puntoActivo = 1;
+  render();
+}
+
+function actualizarSyncBar() {
+  var bar = document.getElementById('sync-bar');
+  var txt = document.getElementById('sync-bar-text');
+  if (!bar) return;
+  bar.className = 'sync-bar';
+  if (pendientes.length === 0) {
+    txt.textContent = 'Todo sincronizado';
+  } else {
+    bar.classList.add('pendiente');
+    txt.textContent = pendientes.length + (pendientes.length === 1 ? ' registro sin sincronizar \u2014 toca para subir' : ' registros sin sincronizar \u2014 toca para subir');
   }
+}
+
+async function sincronizarPendientes() {
+  if (pendientes.length === 0) return;
+  var bar = document.getElementById('sync-bar');
+  var txt = document.getElementById('sync-bar-text');
+  bar.className = 'sync-bar sincronizando';
+  txt.textContent = 'Sincronizando ' + pendientes.length + '...';
+
+  var pendientesCopia = pendientes.slice();
+  var restantes = [];
+  for (var i = 0; i < pendientesCopia.length; i++) {
+    var registro = pendientesCopia[i];
+    try {
+      await postToWS(registro);
+      monitoreos.push({
+        Finca: registro.finca,
+        Lote: registro.lote,
+        Cama: registro.cama,
+        Fecha: registro.fecha,
+        Punto_1: registro.punto_1,
+        Punto_2: registro.punto_2,
+        Punto_3: registro.punto_3
+      });
+    } catch (e) {
+      restantes.push(registro);
+    }
+  }
+  pendientes = restantes;
+  guardarPendientesLocal();
+
+  if (restantes.length > 0) {
+    bar.className = 'sync-bar error';
+    txt.textContent = 'No se pudo sincronizar todo (' + restantes.length + ' pendiente' + (restantes.length === 1 ? '' : 's') + '). Revisa tu conexion y toca para reintentar.';
+  } else {
+    actualizarSyncBar();
+  }
+
+  if (currentView === 'resumen') renderResumen(); else render();
 }
 </script>
 
