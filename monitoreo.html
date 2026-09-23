@@ -25,11 +25,22 @@
 body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--ink); min-height: 100vh; font-size: 14px; line-height: 1.6; padding-bottom: 40px; }
 
 .header { background: var(--ink); padding: 0.9rem 1.25rem; }
-.header-inner { max-width: 480px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+.header-inner { max-width: 480px; margin: 0 auto; display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
 .header-title { font-size: 20px; font-weight: 700; color: #fff; }
 .header-sub { font-size: 11px; color: #B9C7BF; }
-.header-btn { background: transparent; border: 1.5px solid #6A9B78; color: #DCEDE2; font-size: 12px; font-weight: 600; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-family: 'DM Sans', sans-serif; white-space: nowrap; }
+.header-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.header-btn { background: transparent; border: 1.5px solid #6A9B78; color: #DCEDE2; font-size: 11.5px; font-weight: 600; padding: 7px 11px; border-radius: 8px; cursor: pointer; font-family: 'DM Sans', sans-serif; white-space: nowrap; }
+.header-btn.on { background: #6A9B78; color: #fff; }
 .header-btn:active { background: rgba(255,255,255,0.08); }
+.header-inner { position: relative; }
+.hamburger-btn { background: transparent; border: 1.5px solid #6A9B78; color: #fff; font-size: 18px; line-height: 1; width: 38px; height: 38px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.hamburger-btn:active { background: rgba(255,255,255,0.1); }
+.dropdown-menu { display: none; position: absolute; top: 46px; right: 0; background: var(--white); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 6px 18px rgba(0,0,0,0.18); overflow: hidden; z-index: 50; min-width: 220px; }
+.dropdown-menu.open { display: block; }
+.menu-item { display: block; width: 100%; text-align: left; padding: 13px 16px; font-size: 14px; font-weight: 600; color: var(--ink); background: #fff; border: none; border-bottom: 1px solid var(--border); cursor: pointer; font-family: 'DM Sans', sans-serif; }
+.menu-item:last-child { border-bottom: none; }
+.menu-item:active { background: var(--verde-pale); }
+.menu-item.on { background: var(--verde-light); color: var(--verde-dark); }
 
 .sync-bar { background: #EFEFEF; border-bottom: 1px solid var(--border); padding: 9px 1.25rem; text-align: center; font-size: 12.5px; font-weight: 600; color: var(--ink-mid); cursor: pointer; }
 .sync-bar.pendiente { background: #FFF3E0; color: #B45309; }
@@ -70,6 +81,16 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
 .plaga-table tr:last-child td { border-bottom: none; }
 .plaga-table tr.row-sano td { color: var(--verde-dark); font-weight: 600; }
 .plaga-table tr.row-alt td { background: var(--verde-pale); }
+
+.dia-toggle { display: flex; gap: 8px; margin-bottom: 4px; }
+.dia-btn { flex: 1; padding: 12px; font-size: 14px; font-weight: 600; border-radius: 10px; border: 1.5px solid var(--verde-mid); background: #fff; color: var(--ink-mid); cursor: pointer; font-family: 'DM Sans', sans-serif; }
+.dia-btn.on { background: var(--verde-dark); border-color: var(--verde-dark); color: #fff; }
+.trampa-inputs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+.trampa-input-col label { display: block; font-size: 12px; font-weight: 600; color: var(--ink-mid); margin-bottom: 5px; }
+.trampa-input-col input { width: 100%; padding: 12px; font-size: 16px; text-align: center; font-family: 'DM Sans', sans-serif; border: 1.5px solid var(--border); border-radius: 8px; color: var(--ink); background: #fafafa; }
+.trampa-table th:first-child, .trampa-table td:first-child { width: 40%; }
+.trampa-table th:nth-child(2), .trampa-table td:nth-child(2),
+.trampa-table th:nth-child(3), .trampa-table td:nth-child(3) { width: 30%; }
 
 .summary-wrap { background: var(--white); border-bottom: 1px solid var(--border); }
 .summary { max-width: 480px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); }
@@ -163,7 +184,13 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
       <div class="header-title">Monitoreo</div>
       <div class="header-sub">Fincas Montova</div>
     </div>
-    <button class="header-btn" id="btn-toggle-view" onclick="toggleView()">Registros de la semana</button>
+    <div class="header-right">
+      <button class="header-btn" id="btn-view-resumen" onclick="setView(currentView === 'resumen' ? 'wizard' : 'resumen')">Registros de la semana</button>
+      <button class="hamburger-btn" id="btn-menu" onclick="toggleMenu()">☰</button>
+    </div>
+  </div>
+  <div class="dropdown-menu" id="dropdown-menu">
+    <button class="menu-item" id="menu-trampas" onclick="setView(currentView === 'trampas' ? 'wizard' : 'trampas'); closeMenu();">Tramperas</button>
   </div>
 </div>
 
@@ -180,6 +207,8 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
 </div>
 
 <div id="view-resumen" style="display:none;"></div>
+
+<div id="view-trampas" style="display:none;"></div>
 
 <script>
 // ===== Mismo backend (Apps Script Web App) que usa el resto de Fincas Montova =====
@@ -216,6 +245,33 @@ function todosMonitoreos() {
   return monitoreos.concat(pendientes);
 }
 
+var trampas = [];
+var pendientesTrampas = [];
+var PENDIENTES_TRAMPAS_KEY = 'montova_trampas_pendientes';
+
+function cargarPendientesTrampasLocal() {
+  try {
+    var raw = localStorage.getItem(PENDIENTES_TRAMPAS_KEY);
+    pendientesTrampas = raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    pendientesTrampas = [];
+  }
+}
+
+function guardarPendientesTrampasLocal() {
+  try {
+    localStorage.setItem(PENDIENTES_TRAMPAS_KEY, JSON.stringify(pendientesTrampas));
+  } catch (e) {}
+}
+
+function todasTrampas() {
+  return trampas.concat(pendientesTrampas);
+}
+
+function totalPendientes() {
+  return pendientes.length + pendientesTrampas.length;
+}
+
 var st = {
   fecha: new Date().toISOString().split('T')[0],
   finca: '',
@@ -241,6 +297,7 @@ function itemsPunto(n) {
 
 window.addEventListener('DOMContentLoaded', function() {
   cargarPendientesLocal();
+  cargarPendientesTrampasLocal();
   actualizarSyncBar();
   fetchLotes();
   fetchMonitoreos();
@@ -258,8 +315,16 @@ function fetchLotes() {
 function fetchMonitoreos() {
   fetch(WS + '?action=getMonitoreo').then(function(r) { return r.json(); }).then(function(data) {
     monitoreos = Array.isArray(data) ? data : [];
-    if (currentView === 'resumen') renderResumen(); else render();
+    if (currentView === 'resumen') renderResumen();
+    else if (currentView === 'wizard') render();
   }).catch(function() { monitoreos = []; });
+}
+
+function fetchTrampas() {
+  fetch(WS + '?action=getTrampas').then(function(r) { return r.json(); }).then(function(data) {
+    trampas = Array.isArray(data) ? data : [];
+    if (currentView === 'trampas') renderTrampas();
+  }).catch(function() { trampas = []; });
 }
 
 // ===== Utilidades =====
@@ -304,16 +369,43 @@ function getWeekRange(hoy) {
 
 var currentView = 'wizard';
 
-function toggleView() {
-  currentView = currentView === 'wizard' ? 'resumen' : 'wizard';
+function setView(view) {
+  currentView = view;
   document.getElementById('view-wizard').style.display = currentView === 'wizard' ? '' : 'none';
   document.getElementById('view-resumen').style.display = currentView === 'resumen' ? '' : 'none';
-  document.getElementById('btn-toggle-view').textContent = currentView === 'wizard' ? 'Registros de la semana' : 'Volver a monitorear';
+  document.getElementById('view-trampas').style.display = currentView === 'trampas' ? '' : 'none';
+
+  var btnResumen = document.getElementById('btn-view-resumen');
+  btnResumen.textContent = currentView === 'resumen' ? 'Volver a monitorear' : 'Registros de la semana';
+  btnResumen.className = 'header-btn' + (currentView === 'resumen' ? ' on' : '');
+
+  document.getElementById('menu-trampas').className = 'menu-item' + (currentView === 'trampas' ? ' on' : '');
+
   if (currentView === 'resumen') {
     renderResumen();
     fetchMonitoreos();
+  } else if (currentView === 'trampas') {
+    renderTrampas();
+    fetchTrampas();
   }
 }
+
+function toggleMenu() {
+  document.getElementById('dropdown-menu').classList.toggle('open');
+}
+
+function closeMenu() {
+  document.getElementById('dropdown-menu').classList.remove('open');
+}
+
+document.addEventListener('click', function(e) {
+  var menu = document.getElementById('dropdown-menu');
+  var btn = document.getElementById('btn-menu');
+  if (!menu || !btn) return;
+  if (menu.classList.contains('open') && !menu.contains(e.target) && !btn.contains(e.target)) {
+    menu.classList.remove('open');
+  }
+});
 
 function calcSemanaAnio(fechaISO) {
   if (!fechaISO) return null;
@@ -930,20 +1022,22 @@ function actualizarSyncBar() {
   var txt = document.getElementById('sync-bar-text');
   if (!bar) return;
   bar.className = 'sync-bar';
-  if (pendientes.length === 0) {
+  var n = totalPendientes();
+  if (n === 0) {
     txt.textContent = 'Todo sincronizado';
   } else {
     bar.classList.add('pendiente');
-    txt.textContent = pendientes.length + (pendientes.length === 1 ? ' registro sin sincronizar \u2014 toca para subir' : ' registros sin sincronizar \u2014 toca para subir');
+    txt.textContent = n + (n === 1 ? ' registro sin sincronizar \u2014 toca para subir' : ' registros sin sincronizar \u2014 toca para subir');
   }
 }
 
 async function sincronizarPendientes() {
-  if (pendientes.length === 0) return;
+  var totalInicial = totalPendientes();
+  if (totalInicial === 0) return;
   var bar = document.getElementById('sync-bar');
   var txt = document.getElementById('sync-bar-text');
   bar.className = 'sync-bar sincronizando';
-  txt.textContent = 'Sincronizando ' + pendientes.length + '...';
+  txt.textContent = 'Sincronizando ' + totalInicial + '...';
 
   var pendientesCopia = pendientes.slice();
   var restantes = [];
@@ -967,15 +1061,254 @@ async function sincronizarPendientes() {
   pendientes = restantes;
   guardarPendientesLocal();
 
-  if (restantes.length > 0) {
+  var pendientesTrampasCopia = pendientesTrampas.slice();
+  var restantesTrampas = [];
+  for (var j = 0; j < pendientesTrampasCopia.length; j++) {
+    var regT = pendientesTrampasCopia[j];
+    try {
+      await postToWS(regT);
+      trampas.push({
+        Finca: regT.finca,
+        Fecha: regT.fecha,
+        Anio: regT.anio,
+        Semana: regT.semana,
+        Dia: regT.dia,
+        Trampa_1: regT.trampa_1,
+        Trampa_2: regT.trampa_2,
+        Trampa_3: regT.trampa_3,
+        Trampa_4: regT.trampa_4
+      });
+    } catch (e) {
+      restantesTrampas.push(regT);
+    }
+  }
+  pendientesTrampas = restantesTrampas;
+  guardarPendientesTrampasLocal();
+
+  var totalRestante = restantes.length + restantesTrampas.length;
+  if (totalRestante > 0) {
     bar.className = 'sync-bar error';
-    txt.textContent = 'No se pudo sincronizar todo (' + restantes.length + ' pendiente' + (restantes.length === 1 ? '' : 's') + '). Revisa tu conexion y toca para reintentar.';
+    txt.textContent = 'No se pudo sincronizar todo (' + totalRestante + ' pendiente' + (totalRestante === 1 ? '' : 's') + '). Revisa tu conexion y toca para reintentar.';
   } else {
     actualizarSyncBar();
   }
 
-  if (currentView === 'resumen') renderResumen(); else render();
+  if (currentView === 'resumen') renderResumen();
+  else if (currentView === 'trampas') renderTrampas();
+  else render();
 }
+
+// ===================== TRAMPERAS =====================
+var trampasFincaSel = '';
+var trampasDiaSel = '';
+var trampasInputs = {1:'', 2:'', 3:'', 4:''};
+
+var DIAS_TRAMPA = ['Lunes', 'Miercoles'];
+
+function ultimoRegistroTrampa(finca, anio, semana, dia) {
+  var candidatos = todasTrampas().filter(function(r) {
+    return String(r.Finca || r.finca || '') === finca &&
+           String(r.Anio || r.anio || '') === String(anio) &&
+           String(r.Semana || r.semana || '') === String(semana) &&
+           String(r.Dia || r.dia || '') === dia;
+  });
+  if (candidatos.length === 0) return null;
+  candidatos.sort(function(a, b) {
+    return String(a.Fecha || a.fecha || '').localeCompare(String(b.Fecha || b.fecha || ''));
+  });
+  return candidatos[candidatos.length - 1];
+}
+
+function renderTrampas() {
+  var wrap = document.getElementById('view-trampas');
+  wrap.innerHTML = '';
+  var main = document.createElement('div');
+  main.className = 'main';
+
+  var title = document.createElement('div');
+  title.className = 'resumen-title';
+  title.textContent = 'Tramperas';
+  main.appendChild(title);
+
+  var semanaActual = calcSemanaAnio(new Date().toISOString().split('T')[0]);
+  var anioActual = new Date().getFullYear();
+
+  var sub = document.createElement('div');
+  sub.className = 'resumen-rango';
+  sub.textContent = 'Semana ' + semanaActual;
+  main.appendChild(sub);
+
+  // ---- Chips de finca ----
+  var chipsWrap = document.createElement('div');
+  chipsWrap.className = 'filtro-chips';
+  FINCAS.forEach(function(f) {
+    var b = document.createElement('button');
+    b.className = 'chip' + (trampasFincaSel === f ? ' on' : '');
+    b.textContent = f;
+    b.onclick = function() {
+      trampasFincaSel = f;
+      trampasDiaSel = '';
+      renderTrampas();
+    };
+    chipsWrap.appendChild(b);
+  });
+  main.appendChild(chipsWrap);
+
+  if (!trampasFincaSel) {
+    var empty = document.createElement('div');
+    empty.className = 'empty-state';
+    empty.textContent = 'Elige una finca para registrar o ver el conteo de tramperas.';
+    main.appendChild(empty);
+    wrap.appendChild(main);
+    return;
+  }
+
+  // ---- Toggle de dia ----
+  var diaCard = document.createElement('div');
+  diaCard.className = 'card';
+  var diaTitle = document.createElement('div');
+  diaTitle.className = 'card-title';
+  diaTitle.textContent = 'Dia a registrar';
+  diaCard.appendChild(diaTitle);
+
+  var diaToggle = document.createElement('div');
+  diaToggle.className = 'dia-toggle';
+  DIAS_TRAMPA.forEach(function(d) {
+    var b = document.createElement('button');
+    b.className = 'dia-btn' + (trampasDiaSel === d ? ' on' : '');
+    b.textContent = d;
+    b.onclick = function() {
+      trampasDiaSel = d;
+      var existente = ultimoRegistroTrampa(trampasFincaSel, anioActual, semanaActual, d);
+      trampasInputs = {
+        1: existente ? String(existente.Trampa_1 || existente.trampa_1 || '') : '',
+        2: existente ? String(existente.Trampa_2 || existente.trampa_2 || '') : '',
+        3: existente ? String(existente.Trampa_3 || existente.trampa_3 || '') : '',
+        4: existente ? String(existente.Trampa_4 || existente.trampa_4 || '') : ''
+      };
+      renderTrampas();
+    };
+    diaToggle.appendChild(b);
+  });
+  diaCard.appendChild(diaToggle);
+
+  if (trampasDiaSel) {
+    var inputsGrid = document.createElement('div');
+    inputsGrid.className = 'trampa-inputs-grid';
+    [1,2,3,4].forEach(function(n) {
+      var col = document.createElement('div');
+      col.className = 'trampa-input-col';
+      var lbl = document.createElement('label');
+      lbl.textContent = 'Trampa ' + n;
+      var inp = document.createElement('input');
+      inp.type = 'text';
+      inp.inputMode = 'numeric';
+      inp.pattern = '[0-9]*';
+      inp.value = trampasInputs[n];
+      inp.placeholder = '0';
+      inp.oninput = function() {
+        trampasInputs[n] = this.value.replace(/[^0-9]/g, '');
+        this.value = trampasInputs[n];
+      };
+      col.appendChild(lbl);
+      col.appendChild(inp);
+      inputsGrid.appendChild(col);
+    });
+    diaCard.appendChild(inputsGrid);
+
+    var btnGuardarTrampa = document.createElement('button');
+    btnGuardarTrampa.className = 'btn-guardar';
+    btnGuardarTrampa.style.width = '100%';
+    btnGuardarTrampa.style.marginTop = '14px';
+    btnGuardarTrampa.textContent = 'Guardar conteo de ' + trampasDiaSel;
+    btnGuardarTrampa.onclick = function() { guardarTrampa(anioActual, semanaActual); };
+    diaCard.appendChild(btnGuardarTrampa);
+
+    var okTrampa = document.createElement('div');
+    okTrampa.className = 'status-box status-ok';
+    okTrampa.id = 'trampa-ok';
+    okTrampa.innerHTML = '<div class="status-ok-title">Guardado en el celular</div><div class="status-ok-txt" id="trampa-ok-txt"></div>';
+    diaCard.appendChild(okTrampa);
+  }
+
+  main.appendChild(diaCard);
+
+  // ---- Tabla resumen de la semana (como el formato en papel) ----
+  var lunesReg = ultimoRegistroTrampa(trampasFincaSel, anioActual, semanaActual, 'Lunes');
+  var miercolesReg = ultimoRegistroTrampa(trampasFincaSel, anioActual, semanaActual, 'Miercoles');
+
+  function valTrampa(reg, n) {
+    if (!reg) return null;
+    var v = reg['Trampa_' + n] !== undefined ? reg['Trampa_' + n] : reg['trampa_' + n];
+    return v === undefined || v === '' ? null : parseInt(v, 10) || 0;
+  }
+
+  var tableWrap = document.createElement('div');
+  tableWrap.className = 'plaga-table-wrap';
+  var table = document.createElement('table');
+  table.className = 'plaga-table trampa-table';
+  var thead = document.createElement('thead');
+  thead.innerHTML = '<tr><th>N. Trampa</th><th>Lunes</th><th>Miercoles</th></tr>';
+  table.appendChild(thead);
+  var tbody = document.createElement('tbody');
+
+  var totalLunes = 0, totalMiercoles = 0;
+  [1,2,3,4].forEach(function(n, idx) {
+    var vL = valTrampa(lunesReg, n);
+    var vM = valTrampa(miercolesReg, n);
+    if (vL !== null) totalLunes += vL;
+    if (vM !== null) totalMiercoles += vM;
+    var tr = document.createElement('tr');
+    if (idx % 2 === 0) tr.className = 'row-alt';
+    tr.innerHTML = '<td>' + n + '</td><td>' + (vL !== null ? vL : '\u2013') + '</td><td>' + (vM !== null ? vM : '\u2013') + '</td>';
+    tbody.appendChild(tr);
+  });
+
+  var trTotalDia = document.createElement('tr');
+  trTotalDia.className = 'row-sano';
+  trTotalDia.innerHTML = '<td>Total dia</td><td>' + (lunesReg ? totalLunes : '\u2013') + '</td><td>' + (miercolesReg ? totalMiercoles : '\u2013') + '</td>';
+  tbody.appendChild(trTotalDia);
+
+  var trTotalSem = document.createElement('tr');
+  trTotalSem.className = 'row-sano';
+  var totalSemana = (lunesReg ? totalLunes : 0) + (miercolesReg ? totalMiercoles : 0);
+  trTotalSem.innerHTML = '<td>Total semana</td><td colspan="2">' + ((lunesReg || miercolesReg) ? totalSemana : '\u2013') + '</td>';
+  tbody.appendChild(trTotalSem);
+
+  table.appendChild(tbody);
+  tableWrap.appendChild(table);
+  main.appendChild(tableWrap);
+
+  wrap.appendChild(main);
+}
+
+function guardarTrampa(anio, semana) {
+  var payload = {
+    action: 'addTrampa',
+    fecha: new Date().toISOString().split('T')[0],
+    finca: trampasFincaSel,
+    anio: anio,
+    semana: semana,
+    dia: trampasDiaSel,
+    trampa_1: trampasInputs[1] || '0',
+    trampa_2: trampasInputs[2] || '0',
+    trampa_3: trampasInputs[3] || '0',
+    trampa_4: trampasInputs[4] || '0'
+  };
+
+  pendientesTrampas.push(payload);
+  guardarPendientesTrampasLocal();
+  actualizarSyncBar();
+  renderTrampas();
+
+  var okBox = document.getElementById('trampa-ok');
+  var okTxt = document.getElementById('trampa-ok-txt');
+  if (okBox && okTxt) {
+    okTxt.textContent = trampasFincaSel + ' \u00b7 ' + payload.dia + ' \u2014 falta sincronizar';
+    okBox.style.display = 'block';
+  }
+}
+// ===================== FIN TRAMPERAS =====================
 </script>
 
 </body>
