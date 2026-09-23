@@ -1337,10 +1337,9 @@ function fumGuardar() {
   var equipo = fumSelEquipo.join(', ');
 
   // Un registro por cada lote marcado, todos con los mismos datos
-  // (misma finca, plagas, productos, fertilizantes, equipo y fecha).
-  // Se disparan sin esperar la respuesta de Apps Script (es lenta) para
-  // que la app se sienta instantanea; la confirmacion real llega
-  // despues, en segundo plano, via verificarGuardadoFumigacion.
+  // (misma finca, plagas, productos, fertilizantes, equipo y fecha),
+  // para que en el Sheet quede desglosado lote por lote. Se disparan
+  // sin esperar la respuesta de Apps Script, igual que Programacion.
   lotesEsperados.forEach(function(lote) {
     postToWS({
       action: 'addFumigacion',
@@ -1358,33 +1357,7 @@ function fumGuardar() {
   document.getElementById('fum-ok-txt').textContent = finca + ' · ' + lotesEsperados.join(', ');
   document.getElementById('fum-ok').style.display = 'block';
   fumResetCampos();
-
-  verificarGuardadoFumigacion(fecha, finca, lotesEsperados);
-}
-
-// Revisa en segundo plano, unos segundos despues, si los registros que
-// se acaban de mandar ya aparecen en Fumigacion. Si alguno falta,
-// avisa para que se vuelva a intentar (en vez de que se pierda sin que
-// nadie se de cuenta).
-function verificarGuardadoFumigacion(fecha, finca, lotesEsperados) {
-  setTimeout(function() {
-    fetch(WS + '?action=getFumigaciones').then(function(r) { return r.json(); }).then(function(data) {
-      var registros = Array.isArray(data) ? data : [];
-      fumigaciones = registros;
-      var faltantes = lotesEsperados.filter(function(lote) {
-        return !registros.some(function(r) {
-          return String(r.Finca || r.finca || '') === String(finca) &&
-                 getISO(r.Fecha || r.fecha || '') === fecha &&
-                 String(r.Lotes || r.lotes || '') === lote;
-        });
-      });
-      if (faltantes.length) {
-        alert('No pudimos confirmar que se guardo la fumigacion de ' + finca + ' (' + faltantes.join(', ') + '). Revisa tu conexion y vuelve a intentarlo.');
-      }
-    }).catch(function() {
-      alert('No pudimos confirmar que se guardo la fumigacion de ' + finca + ' (' + lotesEsperados.join(', ') + '). Revisa tu conexion y vuelve a intentarlo.');
-    });
-  }, 4000);
+  setTimeout(fetchFumigaciones, 3000);
 }
 
 function fumActualizarFechaSemana() {
@@ -1587,30 +1560,7 @@ function labGuardar() {
   document.getElementById('lab-ok-txt').textContent = finca + ' · ' + loteLabel;
   document.getElementById('lab-ok').style.display = 'block';
   labResetCampos();
-
-  verificarGuardadoLabor(fecha, finca, loteLabel);
-}
-
-// Revisa en segundo plano, unos segundos despues, si el registro que
-// se acaba de mandar ya aparece en Labores_Campo. Si no, avisa para
-// que se vuelva a intentar.
-function verificarGuardadoLabor(fecha, finca, loteLabel) {
-  setTimeout(function() {
-    fetch(WS + '?action=getLaboresCampo').then(function(r) { return r.json(); }).then(function(data) {
-      var registros = Array.isArray(data) ? data : [];
-      laboresCampo = registros;
-      var existe = registros.some(function(r) {
-        return String(r.Finca || r.finca || '') === String(finca) &&
-               getISO(r.Fecha || r.fecha || '') === fecha &&
-               String(r.Lote || r.lote || '') === loteLabel;
-      });
-      if (!existe) {
-        alert('No pudimos confirmar que se guardo la labor de ' + finca + ' - ' + loteLabel + '. Revisa tu conexion y vuelve a intentarlo.');
-      }
-    }).catch(function() {
-      alert('No pudimos confirmar que se guardo la labor de ' + finca + ' - ' + loteLabel + '. Revisa tu conexion y vuelve a intentarlo.');
-    });
-  }, 4000);
+  setTimeout(fetchLaboresCampo, 3000);
 }
 
 function labResetCampos() {
@@ -1853,31 +1803,7 @@ function ingGuardar() {
   document.getElementById('ing-ok-txt').textContent = finca + ' · ' + loteLabel + ' · ' + (ingDescarteActivo ? 'Descarte' : tipo);
   document.getElementById('ing-ok').style.display = 'block';
   ingResetCampos();
-
-  verificarGuardadoIngreso(fecha, finca, loteLabel, cantidad);
-}
-
-// Revisa en segundo plano, unos segundos despues, si el registro que
-// se acaba de mandar ya aparece en Ingreso_Sala. Si no, avisa para
-// que se vuelva a intentar.
-function verificarGuardadoIngreso(fecha, finca, loteLabel, cantidad) {
-  setTimeout(function() {
-    fetch(WS + '?action=getIngresoSala').then(function(r) { return r.json(); }).then(function(data) {
-      var registros = Array.isArray(data) ? data : [];
-      ingresoSalaRegistros = registros;
-      var existe = registros.some(function(r) {
-        return String(r.Finca || r.finca || '') === String(finca) &&
-               getISO(r.Fecha || r.fecha || '') === fecha &&
-               String(r.Lote || r.lote || '') === loteLabel &&
-               String(r.Cantidad || r.cantidad || '') === String(cantidad);
-      });
-      if (!existe) {
-        alert('No pudimos confirmar que se guardo el ingreso de ' + finca + ' - ' + loteLabel + '. Revisa tu conexion y vuelve a intentarlo.');
-      }
-    }).catch(function() {
-      alert('No pudimos confirmar que se guardo el ingreso de ' + finca + ' - ' + loteLabel + '. Revisa tu conexion y vuelve a intentarlo.');
-    });
-  }, 4000);
+  setTimeout(fetchIngresoSala, 3000);
 }
 
 function ingResetCampos() {
