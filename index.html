@@ -1338,21 +1338,25 @@ function fumGuardar() {
 
   // Un registro por cada lote marcado, todos con los mismos datos
   // (misma finca, plagas, productos, fertilizantes, equipo y fecha),
-  // para que en el Sheet quede desglosado lote por lote. Se disparan
-  // sin esperar la respuesta de Apps Script, igual que Programacion.
-  lotesEsperados.forEach(function(lote) {
-    postToWS({
-      action: 'addFumigacion',
-      fecha: fecha,
-      finca: finca,
-      lotes: lote,
-      productos: productos,
-      fertilizantes: fertilizantes,
-      plagas: plagas,
-      equipo: equipo,
-      novedades: novedades
-    });
-  });
+  // para que en el Sheet quede desglosado lote por lote. Se mandan uno
+  // detras de otro (no todos a la vez) porque Google Sheets puede
+  // perder filas si le llegan varias escrituras al mismo tiempo. Esto
+  // no se espera aqui, asi que la pantalla sigue sintiendose instantanea.
+  (async function() {
+    for (var i = 0; i < lotesEsperados.length; i++) {
+      await postToWS({
+        action: 'addFumigacion',
+        fecha: fecha,
+        finca: finca,
+        lotes: lotesEsperados[i],
+        productos: productos,
+        fertilizantes: fertilizantes,
+        plagas: plagas,
+        equipo: equipo,
+        novedades: novedades
+      });
+    }
+  })();
 
   document.getElementById('fum-ok-txt').textContent = finca + ' · ' + lotesEsperados.join(', ');
   document.getElementById('fum-ok').style.display = 'block';
