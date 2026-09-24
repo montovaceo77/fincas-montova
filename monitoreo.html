@@ -185,11 +185,12 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
       <div class="header-sub">Fincas Montova</div>
     </div>
     <div class="header-right">
-      <button class="header-btn" id="btn-view-resumen" onclick="setView(currentView === 'resumen' ? 'wizard' : 'resumen')">Registros de la semana</button>
       <button class="hamburger-btn" id="btn-menu" onclick="toggleMenu()">☰</button>
     </div>
   </div>
   <div class="dropdown-menu" id="dropdown-menu">
+    <button class="menu-item on" id="menu-wizard" onclick="setView('wizard'); closeMenu();">Monitoreo</button>
+    <button class="menu-item" id="menu-resumen" onclick="setView(currentView === 'resumen' ? 'wizard' : 'resumen'); closeMenu();">Registros de la semana</button>
     <button class="menu-item" id="menu-trampas" onclick="setView(currentView === 'trampas' ? 'wizard' : 'trampas'); closeMenu();">Tramperas</button>
   </div>
 </div>
@@ -375,10 +376,8 @@ function setView(view) {
   document.getElementById('view-resumen').style.display = currentView === 'resumen' ? '' : 'none';
   document.getElementById('view-trampas').style.display = currentView === 'trampas' ? '' : 'none';
 
-  var btnResumen = document.getElementById('btn-view-resumen');
-  btnResumen.textContent = currentView === 'resumen' ? 'Volver a monitorear' : 'Registros de la semana';
-  btnResumen.className = 'header-btn' + (currentView === 'resumen' ? ' on' : '');
-
+  document.getElementById('menu-wizard').className = 'menu-item' + (currentView === 'wizard' ? ' on' : '');
+  document.getElementById('menu-resumen').className = 'menu-item' + (currentView === 'resumen' ? ' on' : '');
   document.getElementById('menu-trampas').className = 'menu-item' + (currentView === 'trampas' ? ' on' : '');
 
   if (currentView === 'resumen') {
