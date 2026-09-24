@@ -1,11 +1,14 @@
 // Service worker de Fincas Montova.
-// Objetivo: que la app cargue rapido y tolere señal debil de finca.
+// Objetivo: que la app cargue rapido y tolere señal debil de finca,
+// pero SIEMPRE mostrando la version mas nueva cuando si hay internet
+// (la app cambia seguido). Solo usa la copia guardada como respaldo
+// cuando de verdad no hay conexion.
 // Solo controla el "cascaron" de la app (HTML, manifest, iconos) que
 // vive en este mismo dominio. Las llamadas al backend en Google Apps
 // Script (fincas-montova WS) siempre van directo a la red, nunca se
 // cachean ni se interceptan aqui, para no servir datos viejos.
 
-var CACHE_NAME = 'montova-cache-v1';
+var CACHE_NAME = 'montova-cache-v2';
 
 var CORE_ASSETS = [
   './',
@@ -50,24 +53,22 @@ self.addEventListener('fetch', function (event) {
   }
 
   event.respondWith(
-    caches.match(req).then(function (cached) {
-      var networkFetch = fetch(req)
-        .then(function (response) {
-          if (response && response.status === 200) {
-            var copy = response.clone();
-            caches.open(CACHE_NAME).then(function (cache) {
-              cache.put(req, copy);
-            });
-          }
-          return response;
-        })
-        .catch(function () {
-          return cached;
-        });
-
-      // Si ya tenemos una copia en cache, la mostramos de inmediato
-      // (carga instantanea) y de fondo actualizamos con la red.
-      return cached || networkFetch;
-    })
+    fetch(req)
+      .then(function (response) {
+        // Hay internet: usamos la respuesta fresca y de paso
+        // actualizamos la copia guardada para el proximo momento
+        // sin señal.
+        if (response && response.status === 200) {
+          var copy = response.clone();
+          caches.open(CACHE_NAME).then(function (cache) {
+            cache.put(req, copy);
+          });
+        }
+        return response;
+      })
+      .catch(function () {
+        // No hay internet: usamos la ultima copia guardada.
+        return caches.match(req);
+      })
   );
 });
