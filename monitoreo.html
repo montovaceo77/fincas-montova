@@ -212,7 +212,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
 
 <script>
 // ===== Mismo backend (Apps Script Web App) que usa el resto de Fincas Montova =====
-var WS = 'https://script.google.com/macros/s/AKfycbwOaernLHGUZQOOymVFCFPyAEB6RgM4HqGm6WB2E5YDpuHmkwxNCAWmMkAGgf7fRiHR/exec';
+var WS = 'https://script.google.com/macros/s/AKfycbxvOw581dgZvxuuwSCi0RMj_gKkJbcrkTz9vpvQri0WntOxUrT1q35ngnuO5myq60Dx/exec';
 
 var FUM_PLAGAS_SEVERIDAD = ['Acaro blanco', 'Acaro rojo', 'Botrytis', 'Trips'];
 var FUM_PLAGAS_CHECK = ['Afidos', 'Alternaria', 'Babosa', 'Ceniza', 'Chinche', 'Coleopteros', 'Fitoftora', 'Lepidopteros', 'Mancha foliar', 'Secadera'];
@@ -487,9 +487,8 @@ function renderResumen() {
   }
 
   function loteNumOf(r) {
-    var s = String(r.Lote || r.lote || '');
-    var m = s.match(/(\d+)/);
-    return m ? m[1] : '';
+    var s = String(r.Lote || r.lote || '').trim();
+    return s.replace(/^Lote\s*/i, '');
   }
   function camaNumOf(r) {
     return parseInt(r.Cama || r.cama || 0, 10) || 0;
@@ -508,7 +507,12 @@ function renderResumen() {
   var gruposArr = Object.keys(grupos).map(function(k) { return grupos[k]; });
   gruposArr.sort(function(a, b) {
     if (a.finca !== b.finca) return a.finca.localeCompare(b.finca);
-    return parseInt(a.loteN, 10) - parseInt(b.loteN, 10);
+    var esEspecialA = /[a-zA-Z]/.test(a.loteN);
+    var esEspecialB = /[a-zA-Z]/.test(b.loteN);
+    if (esEspecialA !== esEspecialB) return esEspecialA ? 1 : -1;
+    var na = parseInt(a.loteN.replace(/[^0-9]/g, ''), 10) || 0;
+    var nb = parseInt(b.loteN.replace(/[^0-9]/g, ''), 10) || 0;
+    return na - nb;
   });
 
   gruposArr.forEach(function(g) {
