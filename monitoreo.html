@@ -156,6 +156,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
 .plaga-item.sel .plaga-chk { background: var(--verde-dark); border-color: var(--verde-dark); }
 .btn-siguiente-punto { width: 100%; margin-top: 12px; padding: 13px; font-size: 14px; font-weight: 600; background: var(--verde-light); color: var(--verde-dark); border: 1.5px solid var(--verde-mid); border-radius: 10px; cursor: pointer; font-family: 'DM Sans', sans-serif; }
 .btn-siguiente-punto:active { background: var(--verde-mid); color: #fff; }
+.aviso-guardar { font-size: 11.5px; color: var(--ink-soft); text-align: center; margin-top: 8px; line-height: 1.4; }
 
 .sev-wrap { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
 .sev-card { border: 1px solid var(--border); border-radius: 10px; padding: 12px; background: #fff; }
@@ -980,6 +981,11 @@ function buildWorkStep() {
       render();
     };
     card.appendChild(btnSiguientePunto);
+
+    var avisoPunto = document.createElement('div');
+    avisoPunto.className = 'aviso-guardar';
+    avisoPunto.textContent = 'Revisa los 3 puntos antes de guardar. El bot\u00f3n "Guardar registro" solo aparece en el Punto 3.';
+    card.appendChild(avisoPunto);
   }
 
   wrap.appendChild(card);
@@ -989,13 +995,15 @@ function buildWorkStep() {
 
   var totalMarcado = itemsPunto(1).length + itemsPunto(2).length + itemsPunto(3).length;
 
-  var btnGuardar = document.createElement('button');
-  btnGuardar.className = 'btn-guardar';
-  btnGuardar.textContent = 'Guardar registro';
-  btnGuardar.id = 'btn-guardar-mon';
-  btnGuardar.disabled = totalMarcado === 0;
-  btnGuardar.onclick = monGuardar;
-  actions.appendChild(btnGuardar);
+  if (st.puntoActivo === 3) {
+    var btnGuardar = document.createElement('button');
+    btnGuardar.className = 'btn-guardar';
+    btnGuardar.textContent = 'Guardar registro';
+    btnGuardar.id = 'btn-guardar-mon';
+    btnGuardar.disabled = totalMarcado === 0;
+    btnGuardar.onclick = monGuardar;
+    actions.appendChild(btnGuardar);
+  }
 
   var btnCambiarCama = document.createElement('button');
   btnCambiarCama.className = 'btn-nuevo';
