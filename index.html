@@ -340,6 +340,14 @@ function sendToServer(body) {
 // seleccionadas. Si la combinacion tiene lotes especiales definidos en
 // LOTES_ESPECIALES, se muestran solo esos; de lo contrario se muestra el
 // rango normal de 33 lotes.
+// Fincas cuyo rango de lotes normales (1 a N) es mas chico que el
+// habitual 1-33, porque apenas estan empezando. La Reserva por ahora
+// solo tiene el Lote 1; se puede ir subiendo este numero a medida que
+// se construyan mas lotes.
+var LOTES_MAX_POR_FINCA = {
+  'La Reserva': 1
+};
+
 function actualizarOpcionesLoteNum() {
   var sel = document.getElementById('l-num');
   var finca = document.getElementById('l-finca').value;
@@ -358,7 +366,8 @@ function actualizarOpcionesLoteNum() {
       sel.appendChild(opt);
     });
   } else {
-    for (var i = 1; i <= 33; i++) {
+    var maxLote = LOTES_MAX_POR_FINCA[finca] || 33;
+    for (var i = 1; i <= maxLote; i++) {
       var opt = document.createElement('option');
       opt.value = i;
       opt.textContent = 'Lote ' + i;
@@ -1216,8 +1225,10 @@ function fumRenderFincas() {
 // Programacion) para agregar los 11 lotes especiales de Oasis Garden
 // (E1 a E11) al final de la lista normal 1-33, solo para esa finca.
 function fumLotesDisponibles() {
-  var lista = FUM_LOTES.slice();
   var finca = fumSelFinca[0];
+  var maxLote = LOTES_MAX_POR_FINCA[finca] || 33;
+  var lista = [];
+  for (var i = 1; i <= maxLote; i++) { lista.push('Lote ' + i); }
   if (finca === 'Oasis Garden') {
     var especiales = (LOTES_ESPECIALES['Oasis Garden'] && LOTES_ESPECIALES['Oasis Garden']['Esmeralda']) || [];
     especiales.forEach(function(codigo) { lista.push('Lote ' + codigo); });
@@ -1611,8 +1622,9 @@ function poblarLabLoteSelect() {
   var sel = document.getElementById('lab-lote-select');
   if (!sel) return;
   var finca = document.getElementById('lab-finca') ? document.getElementById('lab-finca').value : '';
+  var maxLote = LOTES_MAX_POR_FINCA[finca] || 33;
   sel.innerHTML = '<option value="">Selecciona un lote</option>';
-  for (var i = 1; i <= 33; i++) {
+  for (var i = 1; i <= maxLote; i++) {
     var opt = document.createElement('option');
     opt.value = i;
     opt.textContent = 'Lote ' + i;
@@ -1793,8 +1805,10 @@ function fetchIngresoSala() {
 function poblarIngLoteSelect() {
   var sel = document.getElementById('ing-lote-select');
   if (!sel) return;
+  var finca = document.getElementById('ing-finca') ? document.getElementById('ing-finca').value : '';
+  var maxLote = LOTES_MAX_POR_FINCA[finca] || 33;
   sel.innerHTML = '<option value="">Selecciona un lote</option>';
-  for (var i = 1; i <= 33; i++) {
+  for (var i = 1; i <= maxLote; i++) {
     var opt = document.createElement('option');
     opt.value = i;
     opt.textContent = 'Lote ' + i;
@@ -2014,6 +2028,8 @@ function ingLimpiar() {
   document.getElementById('ing-fecha').addEventListener('change', ingActualizarFechaSemana);
   ingActualizarFechaSemana();
   document.getElementById('ing-finca').addEventListener('change', function() {
+    poblarIngLoteSelect();
+    document.getElementById('ing-lote-select').value = '';
     ingActualizarInfoLote();
     ingActualizarAcumulado();
   });
