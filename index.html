@@ -161,6 +161,7 @@ actualizarEstadoConexion();
     <button class="fb" data-f="Flor de Agua 3">Flor de Agua 3</button>
     <button class="fb" data-f="Oasis Garden">Oasis Garden</button>
     <button class="fb" data-f="Flor Madera">Flor Madera</button>
+    <button class="fb" data-f="La Reserva">La Reserva</button>
   </div>
   <div id="lotes-list"></div>
 </div>
@@ -187,6 +188,7 @@ actualizarEstadoConexion();
           <option value="Flor de Agua 3">Flor de Agua 3</option>
           <option value="Oasis Garden">Oasis Garden</option>
           <option value="Flor Madera">Flor Madera</option>
+          <option value="La Reserva">La Reserva</option>
         </select>
       </div>
       <div class="field">
@@ -315,8 +317,41 @@ var LOTES_ESPECIALES = {
   }
 };
 
+// Variedades disponibles por finca. Si una finca no aparece aqui, se
+// muestran las 4 variedades normales. La Reserva, por ahora, solo
+// maneja Esmeralda.
+var VARIEDADES_TODAS = ['Lemon', 'Esmeralda', 'Shocking', 'Blanca'];
+var VARIEDADES_POR_FINCA = {
+  'La Reserva': ['Esmeralda']
+};
+
+// Repuebla el select de Variedad segun la finca elegida. Si la
+// variedad que estaba seleccionada sigue siendo valida, se conserva;
+// si solo queda una opcion disponible, se preselecciona sola.
+function actualizarOpcionesVariedad() {
+  var sel = document.getElementById('l-variedad');
+  var finca = document.getElementById('l-finca').value;
+  var valorActual = sel.value;
+  var opciones = VARIEDADES_POR_FINCA[finca] || VARIEDADES_TODAS;
+
+  sel.innerHTML = '';
+  opciones.forEach(function(v) {
+    var opt = document.createElement('option');
+    opt.value = v;
+    opt.textContent = v;
+    sel.appendChild(opt);
+  });
+
+  if (opciones.indexOf(valorActual) !== -1) {
+    sel.value = valorActual;
+  } else if (opciones.length === 1) {
+    sel.value = opciones[0];
+  }
+}
+
 window.addEventListener('DOMContentLoaded', function() {
   document.getElementById('hdate').textContent = new Date().toLocaleDateString('es-CO', {weekday:'long', day:'numeric', month:'long'});
+  actualizarOpcionesVariedad();
   actualizarOpcionesLoteNum();
   initFilters();
   initFab();
@@ -481,6 +516,7 @@ function abrirModalNuevo() {
   document.getElementById('l-fecha').value = new Date().toISOString().split('T')[0];
   document.getElementById('l-camas').value = '';
   document.getElementById('l-plantas').value = '';
+  actualizarOpcionesVariedad();
   actualizarOpcionesLoteNum();
   actualizarHints();
   document.getElementById('overlay-lote').classList.add('open');
@@ -494,6 +530,7 @@ function abrirModalReprogramar(id) {
   document.getElementById('modal-lote-title').textContent = 'Reprogramar lote';
   document.getElementById('btn-save-lote').textContent = 'Reprogramar lote';
   document.getElementById('l-finca').value = l.Finca || l.finca || '';
+  actualizarOpcionesVariedad();
   document.getElementById('l-variedad').value = l.Variedad || l.variedad || '';
   actualizarOpcionesLoteNum();
   document.getElementById('l-num').value = l.Lote || l.lote || '';
@@ -526,6 +563,7 @@ function abrirModalEditar(id) {
   document.getElementById('modal-lote-title').textContent = 'Editar lote';
   document.getElementById('btn-save-lote').textContent = 'Guardar cambios';
   document.getElementById('l-finca').value = finca;
+  actualizarOpcionesVariedad();
   document.getElementById('l-variedad').value = variedad;
   actualizarOpcionesLoteNum();
   document.getElementById('l-num').value = loteNum;
@@ -599,7 +637,10 @@ function resetModal() {
 
 function initModal() {
   document.getElementById('l-fecha').addEventListener('change', actualizarHints);
-  document.getElementById('l-finca').addEventListener('change', actualizarOpcionesLoteNum);
+  document.getElementById('l-finca').addEventListener('change', function() {
+    actualizarOpcionesVariedad();
+    actualizarOpcionesLoteNum();
+  });
   document.getElementById('l-variedad').addEventListener('change', actualizarOpcionesLoteNum);
   ['p-picada','p-desinfeccion','p-app1-fecha','p-app2-fecha'].forEach(function(id) {
     document.getElementById(id).addEventListener('change', actualizarHints);
@@ -978,6 +1019,7 @@ function renderLotes() {
         <option value="Flor de Agua 3">Flor de Agua 3</option>
         <option value="Oasis Garden">Oasis Garden</option>
         <option value="Flor Madera">Flor Madera</option>
+        <option value="La Reserva">La Reserva</option>
       </select>
     </div>
 
@@ -1045,6 +1087,7 @@ function renderLotes() {
         <option value="Flor de Agua 3">Flor de Agua 3</option>
         <option value="Oasis Garden">Oasis Garden</option>
         <option value="Flor Madera">Flor Madera</option>
+        <option value="La Reserva">La Reserva</option>
       </select>
     </div>
 
@@ -1094,7 +1137,7 @@ function renderLotes() {
 
 <script>
 // ===== FUMIGACION MODULE =====
-var FUM_FINCAS = ['Oasis Garden','Flor de agua 3','Flor Esperancita','Flor Madera'];
+var FUM_FINCAS = ['Oasis Garden','Flor de agua 3','Flor Esperancita','Flor Madera','La Reserva'];
 var FUM_LOTES = Array.from({length:33}, function(_,i){ return 'Lote '+(i+1); });
 var FUM_PLAGAS = ['Afido','Alternaria','Babosa','Botritis','Ceniza','Control malezas','Mancha foliar','Secadera','Thirps','Acaro','Acaro blanco'];
 var FUM_PRODUCTOS = ['Abafec 100 cc','Agrifos 100 cc','Athirn 50 cc','Cal brava','Carial opti 200 cc','Chakal 100 cc','Divino 100 cc','Elosal 200 cc','Fungitox 200 cc','Gramoxone 100 cm','Incipio 50 cc','LS 60','Mesulfuron 150 cc','Metarez','Panser 100 cm','Propamotal 200 cc','Rally 100 cc','Sencor 5 cm','Zafiro 200 cc','Zorvec 100 cc'];
