@@ -1113,14 +1113,9 @@ function renderLotes() {
           <label class="chk-item"><input type="checkbox" id="ing-mot-tallo" value="Tallo leñoso"><span>Tallo leñoso</span></label>
           <label class="chk-item"><input type="checkbox" id="ing-mot-pedunculo" value="Pedúnculo largo"><span>Pedúnculo largo</span></label>
         </div>
+        <label style="font-size:12px; font-weight:600; color:var(--rose); display:block; margin-top:10px; margin-bottom:4px;">Cantidad de descarte</label>
+        <input type="text" inputmode="numeric" pattern="[0-9]*" id="ing-cant-descarte" placeholder="Ej: 50" style="width:100%; padding:9px 12px; font-size:14px; border:1px solid var(--rose); border-radius:8px; color:var(--ink); background:var(--rose-bg);" />
       </div>
-    </div>
-
-    <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
-      <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 5</span>
-      <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:4px;">Cantidad</label>
-      <p style="font-size:12px; color:var(--ink-mid); margin-bottom:8px;">Una cantidad por cada tipo que marcaste arriba</p>
-      <div id="ing-cantidades-lista" style="display:flex; flex-direction:column; gap:10px;"></div>
       <div id="ing-acumulado-info"></div>
     </div>
 
@@ -1945,12 +1940,12 @@ function ingToggleDescarte() {
     delete ingCantidades['Descarte'];
   }
   ingActualizarDescarteUI();
-  ingRenderCantidades();
 }
 
 function ingActualizarDescarteUI() {
   var btn = document.getElementById('ing-descarte-btn');
   var cont = document.getElementById('ing-descarte-motivo-container');
+  var inputCant = document.getElementById('ing-cant-descarte');
   if (btn) {
     btn.style.background = ingDescarteActivo ? 'var(--rose-bg)' : '#fff';
     btn.style.borderColor = ingDescarteActivo ? 'var(--rose)' : 'var(--border)';
@@ -1963,6 +1958,7 @@ function ingActualizarDescarteUI() {
       if (el) el.checked = false;
     });
   }
+  if (inputCant) inputCant.value = ingCantidades['Descarte'] || '';
 }
 
 function ingRenderTipos() {
@@ -1989,47 +1985,33 @@ function ingRenderTipos() {
         ingSelTipo.push(item);
       }
       ingRenderTipos();
-      ingRenderCantidades();
     };
     c.appendChild(btn);
-  });
-}
 
-// Dibuja un campo de cantidad por cada tipo marcado (y por Descarte, si
-// esta activo). Lee/guarda los valores en ingCantidades para que no se
-// pierdan al volver a dibujar la lista.
-function ingRenderCantidades() {
-  var c = document.getElementById('ing-cantidades-lista');
-  if (!c) return;
-  var items = ingSelTipo.slice();
-  if (ingDescarteActivo) items.push('Descarte');
-
-  if (!items.length) {
-    c.innerHTML = '<div style="font-size:13px; color:var(--ink-soft); font-style:italic;">Elige arriba uno o mas tipos de flor (o marca Descarte) para poner su cantidad</div>';
-    return;
-  }
-
-  c.innerHTML = '';
-  items.forEach(function(item) {
-    var field = document.createElement('div');
-    var label = document.createElement('label');
-    label.style.cssText = 'font-size:12px; font-weight:600; color:' + (item === 'Descarte' ? 'var(--rose)' : 'var(--ink)') + '; display:block; margin-bottom:4px;';
-    label.textContent = item;
-    var input = document.createElement('input');
-    input.type = 'text';
-    input.inputMode = 'numeric';
-    input.pattern = '[0-9]*';
-    input.placeholder = 'Ej: 150';
-    input.value = ingCantidades[item] || '';
-    input.style.cssText = 'width:100%; padding:10px 12px; font-size:15px; border:1px solid var(--border); border-radius:8px; color:var(--ink); background:#fafafa;';
-    input.addEventListener('input', function() {
-      this.value = this.value.replace(/[^0-9]/g, '');
-      ingCantidades[item] = this.value;
-      ingActualizarAcumulado();
-    });
-    field.appendChild(label);
-    field.appendChild(input);
-    c.appendChild(field);
+    // Si este tipo esta marcado, su campo de cantidad aparece de una
+    // vez, justo debajo, en vez de mandarlo a un paso aparte.
+    if (sel) {
+      var field = document.createElement('div');
+      field.style.cssText = 'margin-top:-2px;';
+      var label = document.createElement('label');
+      label.style.cssText = 'font-size:11px; color:var(--verde-dark); font-weight:600; display:block; margin:4px 0 4px 2px;';
+      label.textContent = 'Cantidad de ' + item;
+      var input = document.createElement('input');
+      input.type = 'text';
+      input.inputMode = 'numeric';
+      input.pattern = '[0-9]*';
+      input.placeholder = 'Ej: 150';
+      input.value = ingCantidades[item] || '';
+      input.style.cssText = 'width:100%; padding:9px 12px; font-size:14px; border:1px solid var(--verde-mid); border-radius:8px; color:var(--ink); background:var(--verde-pale);';
+      input.addEventListener('input', function() {
+        this.value = this.value.replace(/[^0-9]/g, '');
+        ingCantidades[item] = this.value;
+        ingActualizarAcumulado();
+      });
+      field.appendChild(label);
+      field.appendChild(input);
+      c.appendChild(field);
+    }
   });
 }
 
@@ -2120,7 +2102,6 @@ function ingResetCampos() {
   document.getElementById('ing-acumulado-info').innerHTML = '';
   ingRenderTipos();
   ingActualizarDescarteUI();
-  ingRenderCantidades();
 }
 
 function ingLimpiar() {
@@ -2145,9 +2126,13 @@ function ingLimpiar() {
     ingActualizarInfoLote();
     ingActualizarAcumulado();
   });
+  document.getElementById('ing-cant-descarte').addEventListener('input', function() {
+    this.value = this.value.replace(/[^0-9]/g, '');
+    ingCantidades['Descarte'] = this.value;
+    ingActualizarAcumulado();
+  });
   setTimeout(fetchIngresoSala, 1000);
   ingRenderTipos();
-  ingRenderCantidades();
   ingActualizarInfoLote();
   ingActualizarAcumulado();
 })();
