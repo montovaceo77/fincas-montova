@@ -1438,12 +1438,16 @@ function fumGuardar() {
         novedades: novedades
       });
     }
+    // El refresco se programa AQUI, despues de que de verdad termino de
+    // mandarse todo. Si se programara justo al apretar Guardar, con
+    // varios lotes el refresco podia llegar antes de que el ultimo
+    // terminara de escribirse, y se veia como si faltara ese lote.
+    setTimeout(fetchFumigaciones, 1500);
   })();
 
   document.getElementById('fum-ok-txt').textContent = finca + ' · ' + lotesEsperados.join(', ');
   document.getElementById('fum-ok').style.display = 'block';
   fumResetCampos();
-  setTimeout(fetchFumigaciones, 3000);
 }
 
 function fumActualizarFechaSemana() {
@@ -1855,6 +1859,15 @@ function poblarIngLoteSelect() {
     opt.textContent = 'Lote ' + i;
     sel.appendChild(opt);
   }
+  if (finca === 'Oasis Garden') {
+    var especiales = (LOTES_ESPECIALES['Oasis Garden'] && LOTES_ESPECIALES['Oasis Garden']['Esmeralda']) || [];
+    especiales.forEach(function(codigo) {
+      var opt = document.createElement('option');
+      opt.value = codigo;
+      opt.textContent = 'Lote ' + codigo;
+      sel.appendChild(opt);
+    });
+  }
 }
 
 function ingActualizarFechaSemana() {
@@ -2089,12 +2102,17 @@ function ingGuardar() {
         motivo_descarte: esDescarte ? motivosTxt : ''
       });
     }
+    // El refresco se programa AQUI, despues de que de verdad termino de
+    // mandarse todo. Si se programara justo al apretar Guardar, con
+    // varios tipos (o con Descarte, que siempre va de ultimo) el
+    // refresco podia llegar antes de que el ultimo terminara de
+    // escribirse, y el acumulado se veia incompleto.
+    setTimeout(fetchIngresoSala, 1500);
   })();
 
   document.getElementById('ing-ok-txt').textContent = finca + ' · ' + loteLabel + ' · ' + items.join(', ');
   document.getElementById('ing-ok').style.display = 'block';
   ingResetCampos();
-  setTimeout(fetchIngresoSala, 3000);
 }
 
 function ingResetCampos() {
