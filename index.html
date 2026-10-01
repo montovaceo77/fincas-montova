@@ -1100,7 +1100,8 @@ function renderLotes() {
 
     <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
       <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 4</span>
-      <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:12px;">Tipo de flor</label>
+      <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:4px;">Tipo de flor</label>
+      <p style="font-size:12px; color:var(--ink-mid); margin-bottom:8px;">Puedes elegir varios si hoy entraron distintos tipos</p>
       <div id="ing-tipo-lista" style="display:flex; flex-direction:column; gap:8px;"></div>
       <button id="ing-descarte-btn" onclick="ingToggleDescarte()" style="margin-top:14px; width:100%; padding:12px; font-size:14px; font-weight:600; border-radius:8px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; background:#fff; border:1px solid var(--border); color:var(--ink-mid);">Descarte</button>
       <div id="ing-descarte-motivo-container" style="display:none; margin-top:14px;">
@@ -1117,8 +1118,9 @@ function renderLotes() {
 
     <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
       <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 5</span>
-      <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:12px;">Cantidad</label>
-      <input type="text" inputmode="numeric" pattern="[0-9]*" id="ing-cantidad" placeholder="Ej: 150" style="width:100%; padding:10px 12px; font-size:15px; border:1px solid var(--border); border-radius:8px; color:var(--ink); background:#fafafa;" />
+      <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:4px;">Cantidad</label>
+      <p style="font-size:12px; color:var(--ink-mid); margin-bottom:8px;">Una cantidad por cada tipo que marcaste arriba</p>
+      <div id="ing-cantidades-lista" style="display:flex; flex-direction:column; gap:10px;"></div>
       <div id="ing-acumulado-info"></div>
     </div>
 
@@ -1836,6 +1838,7 @@ function labLimpiar() {
 var ING_TIPOS = ['Mini', 'Selec', 'Premium', 'Jumbo'];
 var ingSelTipo = [];
 var ingDescarteActivo = false;
+var ingCantidades = {}; // cantidad por cada tipo/"Descarte" marcado
 var ingresoSalaRegistros = [];
 
 function fetchIngresoSala() {
@@ -1933,16 +1936,16 @@ function ingActualizarAcumulado() {
   '</div>';
 }
 
-// Activa o desactiva el interruptor de Descarte. Al activarlo se
-// deselecciona cualquier tipo de flor (son excluyentes) y aparece el
-// bloque de motivos; al desactivarlo se limpian las casillas marcadas.
+// Activa o desactiva el interruptor de Descarte. Ya no excluye los
+// tipos de flor marcados: puedes tener, por ejemplo, Mini + Premium +
+// Descarte en el mismo registro, cada uno con su propia cantidad.
 function ingToggleDescarte() {
   ingDescarteActivo = !ingDescarteActivo;
-  if (ingDescarteActivo) {
-    ingSelTipo.length = 0;
-    ingRenderTipos();
+  if (!ingDescarteActivo) {
+    delete ingCantidades['Descarte'];
   }
   ingActualizarDescarteUI();
+  ingRenderCantidades();
 }
 
 function ingActualizarDescarteUI() {
@@ -1968,7 +1971,7 @@ function ingRenderTipos() {
   c.innerHTML = '';
   ING_TIPOS.forEach(function(item) {
     var btn = document.createElement('button');
-    var sel = ingSelTipo[0] === item;
+    var sel = ingSelTipo.indexOf(item) !== -1;
     btn.style.cssText = 'padding:10px 12px; font-size:13px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; background:'+(sel?'var(--verde-light)':'#fff')+'; border:1px solid '+(sel?'var(--verde-mid)':'var(--border)')+'; color:'+(sel?'var(--verde-dark)':'var(--ink-mid)')+'; font-weight:'+(sel?'600':'400')+'; width:100%; text-align:left;';
     var chk = document.createElement('div');
     chk.style.cssText = 'width:20px; height:20px; border-radius:50%; border:1.5px solid '+(sel?'var(--verde-dark)':'var(--border)')+'; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:11px; background:'+(sel?'var(--verde-dark)':'transparent')+'; color:#fff;';
@@ -1978,13 +1981,55 @@ function ingRenderTipos() {
     btn.appendChild(chk);
     btn.appendChild(sp);
     btn.onclick = function() {
-      ingSelTipo.length = 0;
-      ingSelTipo.push(item);
-      ingDescarteActivo = false;
+      var idx = ingSelTipo.indexOf(item);
+      if (idx > -1) {
+        ingSelTipo.splice(idx, 1);
+        delete ingCantidades[item];
+      } else {
+        ingSelTipo.push(item);
+      }
       ingRenderTipos();
-      ingActualizarDescarteUI();
+      ingRenderCantidades();
     };
     c.appendChild(btn);
+  });
+}
+
+// Dibuja un campo de cantidad por cada tipo marcado (y por Descarte, si
+// esta activo). Lee/guarda los valores en ingCantidades para que no se
+// pierdan al volver a dibujar la lista.
+function ingRenderCantidades() {
+  var c = document.getElementById('ing-cantidades-lista');
+  if (!c) return;
+  var items = ingSelTipo.slice();
+  if (ingDescarteActivo) items.push('Descarte');
+
+  if (!items.length) {
+    c.innerHTML = '<div style="font-size:13px; color:var(--ink-soft); font-style:italic;">Elige arriba uno o mas tipos de flor (o marca Descarte) para poner su cantidad</div>';
+    return;
+  }
+
+  c.innerHTML = '';
+  items.forEach(function(item) {
+    var field = document.createElement('div');
+    var label = document.createElement('label');
+    label.style.cssText = 'font-size:12px; font-weight:600; color:' + (item === 'Descarte' ? 'var(--rose)' : 'var(--ink)') + '; display:block; margin-bottom:4px;';
+    label.textContent = item;
+    var input = document.createElement('input');
+    input.type = 'text';
+    input.inputMode = 'numeric';
+    input.pattern = '[0-9]*';
+    input.placeholder = 'Ej: 150';
+    input.value = ingCantidades[item] || '';
+    input.style.cssText = 'width:100%; padding:10px 12px; font-size:15px; border:1px solid var(--border); border-radius:8px; color:var(--ink); background:#fafafa;';
+    input.addEventListener('input', function() {
+      this.value = this.value.replace(/[^0-9]/g, '');
+      ingCantidades[item] = this.value;
+      ingActualizarAcumulado();
+    });
+    field.appendChild(label);
+    field.appendChild(input);
+    c.appendChild(field);
   });
 }
 
@@ -1992,11 +2037,19 @@ function ingGuardar() {
   var fecha = document.getElementById('ing-fecha').value;
   var finca = document.getElementById('ing-finca').value;
   var loteNum = document.getElementById('ing-lote-select').value;
-  var cantidad = document.getElementById('ing-cantidad').value.trim();
-  var tipo = ingSelTipo[0] || '';
 
-  if (!fecha || !finca || !loteNum || !cantidad || (!tipo && !ingDescarteActivo)) {
-    alert('Completa todos los pasos antes de guardar (elige un tipo de flor o marca Descarte).');
+  if (!fecha || !finca || !loteNum || (!ingSelTipo.length && !ingDescarteActivo)) {
+    alert('Completa todos los pasos antes de guardar (elige al menos un tipo de flor o marca Descarte).');
+    return;
+  }
+
+  // Cada tipo marcado (y Descarte, si esta activo) necesita su propia
+  // cantidad antes de guardar.
+  var items = ingSelTipo.slice();
+  if (ingDescarteActivo) items.push('Descarte');
+  var sinCantidad = items.filter(function(item) { return !ingCantidades[item] || !ingCantidades[item].trim(); });
+  if (sinCantidad.length) {
+    alert('Falta la cantidad de: ' + sinCantidad.join(', '));
     return;
   }
 
@@ -2024,21 +2077,31 @@ function ingGuardar() {
   document.getElementById('ing-error').style.display = 'none';
 
   var loteLabel = 'Lote ' + loteNum;
+  var motivosTxt = motivos.join(', ');
 
-  // Se dispara sin esperar la respuesta de Apps Script (es lenta); la
-  // confirmacion real llega despues, en segundo plano.
-  postToWS({
-    action: 'addIngresoSala',
-    fecha: fecha,
-    finca: finca,
-    lote: loteLabel,
-    tipo_flor: tipo,
-    cantidad: cantidad,
-    descarte: ingDescarteActivo ? 'Si' : '',
-    motivo_descarte: motivos.join(', ')
-  });
+  // Un registro por cada tipo marcado (y uno para Descarte si aplica),
+  // para que en el Sheet quede desglosado por tipo. Se mandan uno
+  // detras de otro (no todos a la vez) porque Google Sheets puede
+  // perder filas si le llegan varias escrituras al mismo tiempo. Esto
+  // no se espera aqui, asi que la pantalla sigue sintiendose instantanea.
+  (async function() {
+    for (var i = 0; i < items.length; i++) {
+      var item = items[i];
+      var esDescarte = item === 'Descarte';
+      await postToWS({
+        action: 'addIngresoSala',
+        fecha: fecha,
+        finca: finca,
+        lote: loteLabel,
+        tipo_flor: esDescarte ? '' : item,
+        cantidad: ingCantidades[item],
+        descarte: esDescarte ? 'Si' : '',
+        motivo_descarte: esDescarte ? motivosTxt : ''
+      });
+    }
+  })();
 
-  document.getElementById('ing-ok-txt').textContent = finca + ' · ' + loteLabel + ' · ' + (ingDescarteActivo ? 'Descarte' : tipo);
+  document.getElementById('ing-ok-txt').textContent = finca + ' · ' + loteLabel + ' · ' + items.join(', ');
   document.getElementById('ing-ok').style.display = 'block';
   ingResetCampos();
   setTimeout(fetchIngresoSala, 3000);
@@ -2047,16 +2110,17 @@ function ingGuardar() {
 function ingResetCampos() {
   ingSelTipo.length = 0;
   ingDescarteActivo = false;
+  ingCantidades = {};
   document.getElementById('ing-fecha').value = new Date().toISOString().split('T')[0];
   document.getElementById('ing-finca').selectedIndex = 0;
   ingActualizarFechaSemana();
   poblarIngLoteSelect();
   document.getElementById('ing-lote-select').value = '';
-  document.getElementById('ing-cantidad').value = '';
   document.getElementById('ing-lote-info').innerHTML = '';
   document.getElementById('ing-acumulado-info').innerHTML = '';
   ingRenderTipos();
   ingActualizarDescarteUI();
+  ingRenderCantidades();
 }
 
 function ingLimpiar() {
@@ -2081,12 +2145,9 @@ function ingLimpiar() {
     ingActualizarInfoLote();
     ingActualizarAcumulado();
   });
-  document.getElementById('ing-cantidad').addEventListener('input', function() {
-    this.value = this.value.replace(/[^0-9]/g, '');
-    ingActualizarAcumulado();
-  });
   setTimeout(fetchIngresoSala, 1000);
   ingRenderTipos();
+  ingRenderCantidades();
   ingActualizarInfoLote();
   ingActualizarAcumulado();
 })();
