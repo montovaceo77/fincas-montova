@@ -2061,6 +2061,14 @@ function ingGuardar() {
   var loteLabel = 'Lote ' + loteNum;
   var motivosTxt = motivos.join(', ');
 
+  // Guardamos una copia de las cantidades ANTES de limpiar el
+  // formulario (ingResetCampos borra ingCantidades casi de inmediato,
+  // y el envio de abajo sigue corriendo en segundo plano despues de
+  // eso) para que cada registro mande la cantidad correcta y no una ya
+  // borrada.
+  var cantidadesEnvio = {};
+  items.forEach(function(item) { cantidadesEnvio[item] = ingCantidades[item]; });
+
   // Un registro por cada tipo marcado (y uno para Descarte si aplica),
   // para que en el Sheet quede desglosado por tipo. Se mandan uno
   // detras de otro (no todos a la vez) porque Google Sheets puede
@@ -2076,7 +2084,7 @@ function ingGuardar() {
         finca: finca,
         lote: loteLabel,
         tipo_flor: esDescarte ? '' : item,
-        cantidad: ingCantidades[item],
+        cantidad: cantidadesEnvio[item],
         descarte: esDescarte ? 'Si' : '',
         motivo_descarte: esDescarte ? motivosTxt : ''
       });
