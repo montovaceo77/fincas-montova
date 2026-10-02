@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Montova - Ingreso a Sala</title>
+
+<!-- Manifest propio: hace que, al "Agregar a pantalla de inicio" desde
+     esta pagina, el icono quede configurado para abrir SIEMPRE directo
+     en index.html?modulo=ingreso, sin pasar por Programacion. -->
+<link rel="manifest" href="manifest-ingreso.json" />
+<meta name="theme-color" content="#2A4D36" />
+<link rel="icon" href="icon-192.png" />
+<link rel="apple-touch-icon" href="icon-192.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Ingreso Sala" />
+
+<style>
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'DM Sans', sans-serif;
+    background: #F8FAF8;
+    color: #5A7060;
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+  Abriendo Ingreso a Sala...
+  <script>
+    // Si alguien abre este link directo en el navegador (sin haberlo
+    // instalado), lo manda de una vez al modulo correcto. Si ya esta
+    // instalado como icono, el telefono ni siquiera carga esta pagina:
+    // abre directo index.html?modulo=ingreso segun el manifest.
+    window.location.replace('index.html?modulo=ingreso');
+  </script>
+</body>
+</html>
