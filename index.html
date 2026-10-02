@@ -358,6 +358,18 @@ window.addEventListener('DOMContentLoaded', function() {
   initModal();
   fetchLotes();
   setTimeout(fetchPreparaciones, 250);
+
+  // Permite abrir la app directo en un modulo especifico con un link
+  // tipo .../?modulo=ingreso (o fumigacion / labores), para compartir
+  // un acceso directo sin pasar por Programacion. El link normal (sin
+  // ese parametro) sigue abriendo en Programacion como siempre.
+  var moduloDirecto = new URLSearchParams(window.location.search).get('modulo');
+  var ordenNav = { fumigacion: 1, labores: 2, ingreso: 3 };
+  if (moduloDirecto && ordenNav.hasOwnProperty(moduloDirecto)) {
+    var btns = document.querySelectorAll('.nav-btn');
+    var btnDestino = btns[ordenNav[moduloDirecto]];
+    if (btnDestino) showTab(moduloDirecto, btnDestino);
+  }
 });
 
 function showToast(msg) {
