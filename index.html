@@ -311,6 +311,19 @@ var SUPERVISOR_PIN = '7798';
 // adicionales, exclusivos de la variedad Esmeralda, identificados
 // como E1 a E11. No se mezclan con los 33 lotes normales y no
 // aparecen si se elige otra finca u otra variedad.
+// Un color propio por finca, para distinguirlas de un vistazo en las
+// tarjetas de lote. Si se agrega una finca nueva que no esta aqui,
+// usa el verde de siempre (FINCA_COLOR_DEFAULT) mientras se le asigna
+// uno propio.
+var FINCA_COLORES = {
+  'Flor Esperancita': { bg: '#E8F0F7', text: '#2C5F7C' },
+  'Flor de Agua 3':   { bg: '#E3F2F0', text: '#1F6B5C' },
+  'Oasis Garden':     { bg: '#F7EDE2', text: '#9C5B2E' },
+  'Flor Madera':      { bg: '#F0E6DC', text: '#6B4A33' },
+  'La Reserva':       { bg: '#F0E8F2', text: '#6B3D7A' }
+};
+var FINCA_COLOR_DEFAULT = { bg: 'var(--verde-light)', text: 'var(--verde-dark)' };
+
 var LOTES_ESPECIALES = {
   'Oasis Garden': {
     'Esmeralda': Array.from({length: 11}, function(_, i) { return 'E' + (i + 1); })
@@ -845,7 +858,8 @@ function renderLotes() {
     html += '<div class="lote-body">';
     html += '<div class="lote-nombre">' + finca + ' &middot; Lote ' + loteNum + '</div>';
     html += '<div class="lote-meta">';
-    html += '<span class="tag tag-finca">' + finca + '</span>';
+    var colorFinca = FINCA_COLORES[finca] || FINCA_COLOR_DEFAULT;
+    html += '<span class="tag" style="background:' + colorFinca.bg + '; color:' + colorFinca.text + ';">' + finca + '</span>';
     html += '<span class="tag tag-variedad">' + variedad + '</span>';
     if (estado === 'inactivo') html += '<span class="tag tag-inactivo">Inactivo</span>';
     html += '</div>';
