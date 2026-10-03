@@ -1051,8 +1051,10 @@ function renderLotes() {
 
     <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
       <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 3</span>
-      <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:12px;">Numero de lote</label>
-      <select id="lab-lote-select" style="width:100%; padding:10px 12px; font-size:15px; border:1px solid var(--border); border-radius:8px; color:var(--ink); background:#fafafa;"></select>
+      <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:4px;">Lotes</label>
+      <p style="font-size:12px; color:var(--ink-mid); margin-bottom:8px;">Puedes elegir varios si hiciste la misma labor en todos</p>
+      <div id="lab-lote-lista" style="height:200px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; padding:6px; display:flex; flex-direction:column; gap:6px; background:#fafafa;"></div>
+      <p style="font-size:11px; color:var(--ink-soft); margin-top:6px; text-align:right;">Desliza para ver mas</p>
       <div id="lab-lote-info"></div>
     </div>
 
@@ -1067,8 +1069,8 @@ function renderLotes() {
     <div id="lab-abonada-numero-card" style="display:none; background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
       <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 5</span>
       <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:4px;">Numero de abonada</label>
-      <p style="font-size:12px; color:var(--ink-mid); margin-bottom:12px;">Es la primera, segunda, tercera o cuarta abonada de este lote?</p>
-      <div id="lab-abonada-numero-lista" style="display:flex; gap:8px;"></div>
+      <p style="font-size:12px; color:var(--ink-mid); margin-bottom:12px;">Es la primera, segunda, tercera o cuarta abonada? Se calcula sola para cada lote.</p>
+      <div id="lab-abonada-numero-lista" style="display:flex; flex-direction:column;"></div>
       <div id="lab-abonada-info"></div>
     </div>
 
@@ -1525,8 +1527,9 @@ function fumLimpiar() {
 var LAB_LABORES = ['Abonada','Bajada de mallas','Seleccion','Subida de mallas'];
 var LAB_PRODUCTOS_ABONO = ['10.20.20','Fosfogran','Kieserita','Menores','Nitrabor','Remital','Sul de potasio'];
 var labSelLabor = [];
-var labVariedadActual = '';
-var labAbonadaNumero = [];
+var labSelLotes = [];          // etiquetas tipo 'Lote 7' o 'Lote E3'
+var labAbonadaNumeros = {};    // 'Lote 7' -> '2da' (numero de abonada de cada lote)
+var labAbonadaManual = {};     // 'Lote 7' -> true si la persona lo eligio a mano
 var labSelProductosAbono = [];
 var laboresCampo = [];
 
@@ -1577,7 +1580,8 @@ function labActualizarVisibilidadAbonada() {
   if (activo) {
     labActualizarInfoAbonada();
   } else {
-    labAbonadaNumero.length = 0;
+    labAbonadaNumeros = {};
+    labAbonadaManual = {};
     labSelProductosAbono.length = 0;
     labRenderAbonadaNumero();
     fumMkItemBtn(LAB_PRODUCTOS_ABONO, labSelProductosAbono, 'lab-abonada-producto-lista', false);
@@ -1586,21 +1590,56 @@ function labActualizarVisibilidadAbonada() {
 
 var LAB_NUMEROS_ABONADA = ['1era', '2da', '3era', '4ta'];
 
+// Dibuja una fila por cada lote marcado, con su propio selector de
+// 1era/2da/3era/4ta y los datos de su ultima abonada.
 function labRenderAbonadaNumero() {
   var c = document.getElementById('lab-abonada-numero-lista');
   if (!c) return;
+  var finca = document.getElementById('lab-finca') ? document.getElementById('lab-finca').value : '';
   c.innerHTML = '';
-  LAB_NUMEROS_ABONADA.forEach(function(opt) {
-    var btn = document.createElement('button');
-    var sel = labAbonadaNumero[0] === opt;
-    btn.style.cssText = 'flex:1; padding:12px; font-size:14px; border-radius:8px; cursor:pointer; text-align:center; background:'+(sel?'var(--verde-light)':'#fff')+'; border:1px solid '+(sel?'var(--verde-mid)':'var(--border)')+'; color:'+(sel?'var(--verde-dark)':'var(--ink-mid)')+'; font-weight:'+(sel?'600':'400')+';';
-    btn.textContent = opt;
-    btn.onclick = function() {
-      labAbonadaNumero.length = 0;
-      labAbonadaNumero.push(opt);
-      labRenderAbonadaNumero();
-    };
-    c.appendChild(btn);
+
+  if (!labSelLotes.length || !finca) {
+    var aviso = document.createElement('div');
+    aviso.style.cssText = 'font-size:13px; color:var(--ink-soft); font-style:italic;';
+    aviso.textContent = !finca ? 'Primero selecciona la finca' : 'Elige arriba los lotes para ver su numero de abonada';
+    c.appendChild(aviso);
+    return;
+  }
+
+  labSelLotes.forEach(function(loteLabel) {
+    var datos = labDatosAbonada(finca, loteLabel);
+    var fila = document.createElement('div');
+    fila.style.cssText = 'padding:8px 0; border-bottom:1px solid var(--border);';
+
+    var titulo = document.createElement('div');
+    titulo.style.cssText = 'font-size:13px; font-weight:600; color:var(--ink);';
+    titulo.textContent = loteLabel;
+
+    var detalle = document.createElement('div');
+    detalle.style.cssText = 'font-size:11px; color:var(--ink-mid); margin-top:1px;';
+    detalle.textContent = datos.ultimaFecha
+      ? 'Ultima abonada: ' + fmtDate(datos.ultimaFecha) + (datos.semana !== null ? ' · semana ' + datos.semana + ' del ciclo' : '') + ' (van ' + datos.count + ' en este ciclo)'
+      : 'Sin abonadas previas en este ciclo';
+
+    var botones = document.createElement('div');
+    botones.style.cssText = 'display:flex; gap:6px; margin-top:6px;';
+    LAB_NUMEROS_ABONADA.forEach(function(opt) {
+      var btn = document.createElement('button');
+      var sel = labAbonadaNumeros[loteLabel] === opt;
+      btn.style.cssText = 'flex:1; padding:9px; font-size:13px; border-radius:8px; cursor:pointer; text-align:center; background:'+(sel?'var(--verde-light)':'#fff')+'; border:1px solid '+(sel?'var(--verde-mid)':'var(--border)')+'; color:'+(sel?'var(--verde-dark)':'var(--ink-mid)')+'; font-weight:'+(sel?'600':'400')+';';
+      btn.textContent = opt;
+      btn.onclick = function() {
+        labAbonadaNumeros[loteLabel] = opt;
+        labAbonadaManual[loteLabel] = true;
+        labRenderAbonadaNumero();
+      };
+      botones.appendChild(btn);
+    });
+
+    fila.appendChild(titulo);
+    fila.appendChild(detalle);
+    fila.appendChild(botones);
+    c.appendChild(fila);
   });
 }
 
@@ -1633,17 +1672,11 @@ function labContarAbonadasCiclo(finca, loteLabel, fechaInicioISO) {
   return count;
 }
 
-// Muestra cuando fue la ultima abonada de este lote (fecha y semana del
-// ciclo en la que ocurrio) y calcula sola cual numero de abonada sigue,
-// preseleccionandolo (el usuario puede cambiarlo si hace falta).
-function labActualizarInfoAbonada() {
-  var info = document.getElementById('lab-abonada-info');
-  if (!info) return;
-  var finca = document.getElementById('lab-finca') ? document.getElementById('lab-finca').value : '';
-  var loteNum = document.getElementById('lab-lote-select') ? document.getElementById('lab-lote-select').value : '';
-  if (!finca || !loteNum) { info.innerHTML = ''; return; }
-  var loteLabel = 'Lote ' + loteNum;
-
+// Datos de abonada de un lote: cuantas lleva en el ciclo activo, cuando
+// fue la ultima (fecha y semana del ciclo) y cual numero seria la que
+// sigue.
+function labDatosAbonada(finca, loteLabel) {
+  var loteNum = loteLabel.replace('Lote ', '');
   var l = lotes.find(function(x) {
     return String(x.Finca || x.finca || '') === String(finca) &&
            String(x.Lote || x.lote || '') === String(loteNum) &&
@@ -1665,50 +1698,98 @@ function labActualizarInfoAbonada() {
   });
 
   var count = labContarAbonadasCiclo(finca, loteLabel, fechaInicioISO);
-  var sugerido = LAB_NUMEROS_ABONADA[Math.min(count, LAB_NUMEROS_ABONADA.length - 1)];
+  return {
+    count: count,
+    ultimaFecha: ultimaFecha,
+    semana: semanasEntreFechas(fechaInicioISO, ultimaFecha),
+    sugerido: LAB_NUMEROS_ABONADA[Math.min(count, LAB_NUMEROS_ABONADA.length - 1)]
+  };
+}
 
-  // Se preselecciona la sugerencia solo si el usuario no ha elegido
-  // nada todavia (para no pisar una eleccion manual).
-  if (!labAbonadaNumero.length) {
-    labAbonadaNumero.push(sugerido);
+// Calcula sola la abonada que sigue para cada lote marcado y la deja
+// preseleccionada. Si la persona ya eligio un numero a mano para un lote,
+// ese no se toca; los demas se recalculan (asi, si los datos llegan
+// despues, la sugerencia se corrige sola).
+function labActualizarInfoAbonada() {
+  var info = document.getElementById('lab-abonada-info');
+  if (labSelLabor.indexOf('Abonada') === -1) {
+    labAbonadaNumeros = {};
+    labAbonadaManual = {};
+    return;
+  }
+  var finca = document.getElementById('lab-finca') ? document.getElementById('lab-finca').value : '';
+
+  Object.keys(labAbonadaNumeros).forEach(function(l) {
+    if (labSelLotes.indexOf(l) === -1) {
+      delete labAbonadaNumeros[l];
+      delete labAbonadaManual[l];
+    }
+  });
+  if (finca) {
+    labSelLotes.forEach(function(loteLabel) {
+      if (!labAbonadaManual[loteLabel]) {
+        labAbonadaNumeros[loteLabel] = labDatosAbonada(finca, loteLabel).sugerido;
+      }
+    });
   }
   labRenderAbonadaNumero();
 
-  if (!ultimaFecha) {
-    info.innerHTML = '<div style="background:var(--verde-light); border-radius:8px; padding:10px 12px; margin-top:10px; font-size:12px; color:var(--verde-dark);">Sin abonadas previas registradas en este ciclo. Se preselecciono <strong>' + sugerido + '</strong>, puedes cambiarla si hace falta.</div>';
-    return;
+  if (info) {
+    info.innerHTML = (finca && labSelLotes.length)
+      ? '<div style="background:var(--verde-light); border-radius:8px; padding:8px 12px; margin-top:10px; font-size:12px; color:var(--verde-dark);">Se preselecciono la abonada que sigue para cada lote; puedes cambiarla si hace falta.</div>'
+      : '';
   }
-
-  var semana = semanasEntreFechas(fechaInicioISO, ultimaFecha);
-  info.innerHTML = '<div style="background:var(--verde-light); border-radius:8px; padding:10px 12px; margin-top:10px; font-size:12px; color:var(--verde-dark);">' +
-    '<div><strong>Ultima abonada:</strong> ' + fmtDate(ultimaFecha) + (semana !== null ? ' &middot; semana ' + semana + ' del ciclo' : '') + '</div>' +
-    '<div style="margin-top:2px;">Se preselecciono <strong>' + sugerido + '</strong> (van ' + count + ' registradas en este ciclo), puedes cambiarla si hace falta.</div>' +
-  '</div>';
 }
 
-// Repuebla el select de lote segun la finca. Oasis Garden suma los
-// lotes especiales E1 a E11 (misma fuente que usa Programacion).
-function poblarLabLoteSelect() {
-  var sel = document.getElementById('lab-lote-select');
-  if (!sel) return;
+// Lotes que se pueden marcar segun la finca elegida. Oasis Garden suma
+// los lotes especiales E1 a E11 (misma fuente que usa Programacion) y
+// La Reserva solo tiene los que indique LOTES_MAX_POR_FINCA.
+function labLotesDisponibles() {
   var finca = document.getElementById('lab-finca') ? document.getElementById('lab-finca').value : '';
   var maxLote = LOTES_MAX_POR_FINCA[finca] || 33;
-  sel.innerHTML = '<option value="">Selecciona un lote</option>';
-  for (var i = 1; i <= maxLote; i++) {
-    var opt = document.createElement('option');
-    opt.value = i;
-    opt.textContent = 'Lote ' + i;
-    sel.appendChild(opt);
-  }
+  var lista = [];
+  for (var i = 1; i <= maxLote; i++) { lista.push('Lote ' + i); }
   if (finca === 'Oasis Garden') {
     var especiales = (LOTES_ESPECIALES['Oasis Garden'] && LOTES_ESPECIALES['Oasis Garden']['Esmeralda']) || [];
-    especiales.forEach(function(codigo) {
-      var opt = document.createElement('option');
-      opt.value = codigo;
-      opt.textContent = 'Lote ' + codigo;
-      sel.appendChild(opt);
-    });
+    especiales.forEach(function(codigo) { lista.push('Lote ' + codigo); });
   }
+  return lista;
+}
+
+// Dibuja la lista de lotes (seleccion multiple). Conserva la posicion del
+// scroll para que, al marcar un lote lejano, la lista no salte al inicio.
+function labRenderLotes() {
+  var c = document.getElementById('lab-lote-lista');
+  if (!c) return;
+  var scrollPrevio = c.scrollTop;
+  c.innerHTML = '';
+  labLotesDisponibles().forEach(function(item) {
+    var btn = document.createElement('button');
+    var sel = labSelLotes.indexOf(item) !== -1;
+    btn.style.cssText = 'padding:10px 12px; font-size:13px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; background:'+(sel?'var(--verde-light)':'#fff')+'; border:1px solid '+(sel?'var(--verde-mid)':'var(--border)')+'; color:'+(sel?'var(--verde-dark)':'var(--ink-mid)')+'; font-weight:'+(sel?'600':'400')+'; width:100%; text-align:left; flex-shrink:0;';
+    var chk = document.createElement('div');
+    chk.style.cssText = 'width:20px; height:20px; border-radius:50%; border:1.5px solid '+(sel?'var(--verde-dark)':'var(--border)')+'; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:11px; background:'+(sel?'var(--verde-dark)':'transparent')+'; color:#fff;';
+    chk.textContent = sel ? '✓' : '';
+    var sp = document.createElement('span');
+    sp.textContent = item;
+    btn.appendChild(chk);
+    btn.appendChild(sp);
+    btn.onclick = function() {
+      var idx = labSelLotes.indexOf(item);
+      if (idx > -1) {
+        labSelLotes.splice(idx, 1);
+        delete labAbonadaNumeros[item];
+        delete labAbonadaManual[item];
+      } else {
+        labSelLotes.push(item);
+      }
+      labRenderLotes();
+      labActualizarInfoLote();
+      labActualizarInfoAbonada();
+    };
+    c.appendChild(btn);
+  });
+  c.scrollTop = scrollPrevio;
 }
 
 function labActualizarFechaSemana() {
@@ -1721,65 +1802,63 @@ function labActualizarFechaSemana() {
   el.textContent = sa ? 'Semana ' + sa + ' / ' + yearNum : '';
 }
 
+// Resumen de cada lote marcado: variedad, semana del ciclo y ultima
+// fumigacion/fertilizacion (2 lineas por lote, con scroll si son muchos).
 function labActualizarInfoLote() {
   var finca = document.getElementById('lab-finca') ? document.getElementById('lab-finca').value : '';
   var info = document.getElementById('lab-lote-info');
   if (!info) return;
-  var loteNum = document.getElementById('lab-lote-select') ? document.getElementById('lab-lote-select').value : '';
-  if (!loteNum) { info.innerHTML = ''; return; }
-  var l = lotes.find(function(x) {
-    return String(x.Finca || x.finca || '') === String(finca) &&
-           String(x.Lote || x.lote || '') === String(loteNum) &&
-           String(x.Estado || x.estado || '').toLowerCase() === 'activo';
-  });
-  var loteLabel = 'Lote ' + loteNum;
-  var ultima = null;
-  fumigaciones.forEach(function(r) {
-    var rFinca = String(r.Finca || r.finca || '');
-    var rLotes = String(r.Lotes || r.lotes || '').split(',').map(function(s){ return s.trim(); });
-    if (rFinca === String(finca) && rLotes.indexOf(loteLabel) !== -1) {
-      var f = getISO(r.Fecha || r.fecha || '');
-      if (f && (!ultima || f > ultima)) ultima = f;
-    }
-  });
-  var ultimaLinea = '<div><strong>Ultima fumigacion/fertilizacion:</strong> ' + (ultima ? fmtDate(ultima) : 'Sin registros previos') + '</div>';
-
-  if (!l) {
-    labVariedadActual = '';
-    info.innerHTML = '<div style="background:var(--verde-light); border:1px solid var(--verde-mid); border-radius:8px; padding:10px 12px; margin-top:10px; font-size:13px; color:var(--verde-dark); line-height:1.6;">' +
-      '<div style="color:var(--ink-soft);">No hay un ciclo activo registrado para este lote en Fincas Montova</div>' +
-      ultimaLinea +
-    '</div>';
+  if (!labSelLotes.length) { info.innerHTML = ''; return; }
+  if (!finca) {
+    info.innerHTML = '<div style="background:#f9fafb; border-radius:8px; padding:0.75rem 1rem; font-size:13px; color:var(--ink-soft); text-align:center; border:1px solid var(--border); margin-top:10px;">Primero selecciona la finca</div>';
     return;
   }
-  var fechaISO = getISO(l.Fecha_Inicio || l.fecha_inicio || '');
-  var variedad = l.Variedad || l.variedad || '';
-  labVariedadActual = variedad;
-  var semana = calcSemanaCiclo(fechaISO);
-  info.innerHTML = '<div style="background:var(--verde-light); border:1px solid var(--verde-mid); border-radius:8px; padding:10px 12px; margin-top:10px; font-size:13px; color:var(--verde-dark); line-height:1.6;">' +
-    '<div><strong>Variedad:</strong> ' + variedad + '</div>' +
-    '<div><strong>Inicio del lote:</strong> ' + fmtDate(fechaISO) + '</div>' +
-    '<div><strong>Semana del ciclo:</strong> ' + (semana !== null ? semana : '-') + ' de ' + cicloMaxSemanas(variedad) + '</div>' +
-    ultimaLinea +
-  '</div>';
+
+  var bloques = labSelLotes.map(function(loteLabel) {
+    var loteNum = loteLabel.replace('Lote ', '');
+    var l = lotes.find(function(x) {
+      return String(x.Finca || x.finca || '') === String(finca) &&
+             String(x.Lote || x.lote || '') === String(loteNum) &&
+             String(x.Estado || x.estado || '').toLowerCase() === 'activo';
+    });
+    var ultima = fumUltimaAplicacion(finca, loteNum);
+    var ultimaTxt = 'Ultima fumigacion/fertilizacion: ' + (ultima.fecha ? fmtDate(ultima.fecha) : 'sin registros previos');
+    var linea1;
+    if (!l) {
+      linea1 = '<strong>' + loteLabel + ':</strong> <span style="color:var(--ink-soft);">sin ciclo activo</span>';
+    } else {
+      var fechaISO = getISO(l.Fecha_Inicio || l.fecha_inicio || '');
+      var variedad = l.Variedad || l.variedad || '';
+      var semana = calcSemanaCiclo(fechaISO);
+      linea1 = '<strong>' + loteLabel + '</strong> &middot; ' + variedad + ' &middot; Semana ' + (semana !== null ? semana : '-') + ' de ' + cicloMaxSemanas(variedad);
+    }
+    return '<div style="padding:6px 0; border-bottom:1px solid var(--verde-mid);">' +
+      '<div>' + linea1 + '</div>' +
+      '<div style="color:var(--ink-mid); font-size:11px; margin-top:2px;">' + ultimaTxt + '</div>' +
+    '</div>';
+  }).join('');
+
+  info.innerHTML = '<div style="background:var(--verde-light); border-radius:8px; padding:10px 12px; margin-top:10px; font-size:12px; color:var(--verde-dark); line-height:1.5; max-height:220px; overflow-y:auto;">' + bloques + '</div>';
 }
 
 function labGuardar() {
   var fecha = document.getElementById('lab-fecha').value;
   var finca = document.getElementById('lab-finca').value;
-  var loteNum = document.getElementById('lab-lote-select').value;
-  if (!fecha || !finca || !loteNum || !labSelLabor.length) {
+  if (!fecha || !finca || !labSelLotes.length || !labSelLabor.length) {
     alert('Completa todos los pasos antes de guardar.');
     return;
   }
   var esAbonada = labSelLabor.indexOf('Abonada') !== -1;
-  if (esAbonada && !labAbonadaNumero.length) {
-    alert('Selecciona si es la primera, segunda, tercera o cuarta abonada del lote.');
-    return;
-  }
-  if (esAbonada && !labSelProductosAbono.length) {
-    alert('Selecciona al menos un producto para la abonada.');
-    return;
+  if (esAbonada) {
+    var sinNumero = labSelLotes.filter(function(l) { return !labAbonadaNumeros[l]; });
+    if (sinNumero.length) {
+      alert('Selecciona si es la primera, segunda, tercera o cuarta abonada de: ' + sinNumero.join(', '));
+      return;
+    }
+    if (!labSelProductosAbono.length) {
+      alert('Selecciona al menos un producto para la abonada.');
+      return;
+    }
   }
   if (!navigator.onLine) {
     alert('No tienes conexion a internet. Este registro no se guardara hasta que recuperes la señal.');
@@ -1791,37 +1870,67 @@ function labGuardar() {
   setTimeout(function() { btn.disabled = false; }, 1200);
   document.getElementById('lab-error').style.display = 'none';
 
-  var loteLabel = 'Lote ' + loteNum;
+  // Foto de todo lo que se va a guardar, tomada ANTES de limpiar el
+  // formulario: el envio de abajo sigue corriendo en segundo plano
+  // despues de limpiarlo, y no puede depender de datos ya borrados. La
+  // variedad y el numero de abonada son propios de cada lote.
   var laborTxt = labSelLabor.join(', ');
-
-  // Se dispara sin esperar la respuesta de Apps Script (es lenta); la
-  // confirmacion real llega despues, en segundo plano.
-  postToWS({
-    action: 'addLaborCampo',
-    fecha: fecha,
-    finca: finca,
-    variedad: labVariedadActual,
-    lote: loteLabel,
-    labor: laborTxt,
-    abonada_numero: esAbonada ? labAbonadaNumero[0] : '',
-    abonada_productos: esAbonada ? labSelProductosAbono.join(', ') : ''
+  var productosTxt = esAbonada ? labSelProductosAbono.join(', ') : '';
+  var registros = labSelLotes.map(function(loteLabel) {
+    var loteNum = loteLabel.replace('Lote ', '');
+    var l = lotes.find(function(x) {
+      return String(x.Finca || x.finca || '') === String(finca) &&
+             String(x.Lote || x.lote || '') === String(loteNum) &&
+             String(x.Estado || x.estado || '').toLowerCase() === 'activo';
+    });
+    return {
+      lote: loteLabel,
+      variedad: l ? (l.Variedad || l.variedad || '') : '',
+      abonada_numero: esAbonada ? labAbonadaNumeros[loteLabel] : ''
+    };
   });
 
-  document.getElementById('lab-ok-txt').textContent = finca + ' · ' + loteLabel;
+  // Un registro por cada lote marcado, mandados uno detras de otro (no
+  // todos a la vez) porque Google Sheets puede perder filas si le llegan
+  // varias escrituras al mismo tiempo. No se espera aqui, asi que la
+  // pantalla sigue sintiendose instantanea. El refresco se programa al
+  // terminar de mandar todo, no al apretar Guardar.
+  (async function() {
+    for (var i = 0; i < registros.length; i++) {
+      var r = registros[i];
+      try {
+        await postToWS({
+          action: 'addLaborCampo',
+          fecha: fecha,
+          finca: finca,
+          variedad: r.variedad,
+          lote: r.lote,
+          labor: laborTxt,
+          abonada_numero: r.abonada_numero,
+          abonada_productos: productosTxt
+        });
+      } catch (e) {
+        // si un envio falla, se sigue con los demas lotes
+      }
+    }
+    setTimeout(fetchLaboresCampo, 1500);
+  })();
+
+  document.getElementById('lab-ok-txt').textContent = finca + ' · ' + registros.map(function(r) { return r.lote; }).join(', ');
   document.getElementById('lab-ok').style.display = 'block';
   labResetCampos();
-  setTimeout(fetchLaboresCampo, 3000);
 }
 
 function labResetCampos() {
   labSelLabor.length = 0;
-  labAbonadaNumero.length = 0;
+  labSelLotes.length = 0;
+  labAbonadaNumeros = {};
+  labAbonadaManual = {};
   labSelProductosAbono.length = 0;
   document.getElementById('lab-fecha').value = new Date().toISOString().split('T')[0];
   document.getElementById('lab-finca').selectedIndex = 0;
   labActualizarFechaSemana();
-  poblarLabLoteSelect();
-  document.getElementById('lab-lote-select').value = '';
+  labRenderLotes();
   labActualizarInfoLote();
   labRenderLabores();
   labActualizarVisibilidadAbonada();
@@ -1839,18 +1948,20 @@ function labLimpiar() {
   document.getElementById('lab-fecha').addEventListener('change', labActualizarFechaSemana);
   labActualizarFechaSemana();
   document.getElementById('lab-finca').addEventListener('change', function() {
-    poblarLabLoteSelect();
-    document.getElementById('lab-lote-select').value = '';
+    // Se quitan de la seleccion los lotes que no existan en la nueva
+    // finca (por ejemplo los E de Oasis Garden). El numero de abonada
+    // depende del historial de la finca, asi que se recalcula.
+    var disponibles = labLotesDisponibles();
+    for (var i = labSelLotes.length - 1; i >= 0; i--) {
+      if (disponibles.indexOf(labSelLotes[i]) === -1) labSelLotes.splice(i, 1);
+    }
+    labAbonadaNumeros = {};
+    labAbonadaManual = {};
+    labRenderLotes();
     labActualizarInfoLote();
-    labAbonadaNumero.length = 0;
     labActualizarInfoAbonada();
   });
-  poblarLabLoteSelect();
-  document.getElementById('lab-lote-select').addEventListener('change', function() {
-    labActualizarInfoLote();
-    labAbonadaNumero.length = 0;
-    labActualizarInfoAbonada();
-  });
+  labRenderLotes();
   setTimeout(fetchLaboresCampo, 750);
   labActualizarInfoLote();
   labRenderLabores();
