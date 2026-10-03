@@ -987,6 +987,10 @@ function renderLotes() {
       <p style="font-size:12px; color:var(--ink-mid); margin-bottom:8px;">Puedes elegir mas de uno</p>
       <div id="fum-productos-lista" style="height:200px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; padding:6px; display:flex; flex-direction:column; gap:6px; background:#fafafa;"></div>
       <p style="font-size:11px; color:var(--ink-soft); margin-top:6px; text-align:right;">Desliza para ver mas</p>
+      <div id="fum-producto-otro-box" style="display:none; margin-top:10px;">
+        <label style="font-size:12px; font-weight:600; color:var(--verde-dark); display:block; margin-bottom:4px;">Otro producto: escribe el nombre y la dosis</label>
+        <input type="text" id="fum-producto-otro" maxlength="60" autocomplete="off" placeholder="Ej: Nombre del producto 100 cc" style="width:100%; padding:10px 12px; font-size:15px; border:1px solid var(--verde-mid); border-radius:8px; color:var(--ink); background:var(--verde-pale);" />
+      </div>
     </div>
 
     <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
@@ -996,6 +1000,10 @@ function renderLotes() {
       <p style="font-size:12px; color:var(--ink-mid); margin-bottom:8px;">Puedes elegir mas de uno</p>
       <div id="fum-fertilizantes-lista" style="height:200px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; padding:6px; display:flex; flex-direction:column; gap:6px; background:#fafafa;"></div>
       <p style="font-size:11px; color:var(--ink-soft); margin-top:6px; text-align:right;">Desliza para ver mas</p>
+      <div id="fum-fertilizante-otro-box" style="display:none; margin-top:10px;">
+        <label style="font-size:12px; font-weight:600; color:var(--verde-dark); display:block; margin-bottom:4px;">Otro fertilizante: escribe el nombre y la dosis</label>
+        <input type="text" id="fum-fertilizante-otro" maxlength="60" autocomplete="off" placeholder="Ej: Nombre del fertilizante 50 gr" style="width:100%; padding:10px 12px; font-size:15px; border:1px solid var(--verde-mid); border-radius:8px; color:var(--ink); background:var(--verde-pale);" />
+      </div>
     </div>
 
     <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
@@ -1164,9 +1172,9 @@ function renderLotes() {
 // ===== FUMIGACION MODULE =====
 var FUM_FINCAS = ['Oasis Garden','Flor de agua 3','Flor Esperancita','Flor Madera','La Reserva'];
 var FUM_LOTES = Array.from({length:33}, function(_,i){ return 'Lote '+(i+1); });
-var FUM_PLAGAS = ['Afido','Alternaria','Babosa','Botritis','Ceniza','Control malezas','Mancha foliar','Secadera','Thirps','Acaro','Acaro blanco'];
-var FUM_PRODUCTOS = ['Abafec 100 cc','Agrifos 100 cc','Athirn 50 cc','Cal brava','Carial opti 200 cc','Chakal 100 cc','Divino 100 cc','Elosal 200 cc','Fungitox 200 cc','Gramoxone 100 cm','Incipio 50 cc','LS 60','Mesulfuron 150 cc','Metarez','Panser 100 cm','Propamotal 200 cc','Rally 100 cc','Sencor 5 cm','Zafiro 200 cc','Zorvec 100 cc'];
-var FUM_FERTILIZANTES = ['Calcio 200 gr','Potasio 200 gr','Aminoácidos 50 gr','Ácido alginico 50 gr'];
+var FUM_PLAGAS = ['Acaro','Acaro blanco','Afido','Alternaria','Babosa','Botritis','Ceniza','Control malezas','Mancha foliar','Secadera','Thirps'];
+var FUM_PRODUCTOS = ['Abafec 100 cc','Agrifos 100 cc','Athirn 50 cc','Cal brava','Carial opti 200 cc','Centauro 200 cc','Chakal 100 cc','Divino 100 cc','Elosal 200 cc','Fungitox 200 cc','Gramoxone 100 cm','Incipio 50 cc','Leonardita 1 L','LS 60','Mesulfuron 150 cc','Metarez','Milbeknovk 100 cc','Panser 100 cm','Pga5 50 cc','Propamotal 200 cc','Rally 100 cc','Sencor 5 cm','Spax 100 cc','Trichoderma 330 gr','Zafiro 200 cc','Zorvec 100 cc'];
+var FUM_FERTILIZANTES = ['Ácido alginico 50 gr','Aminoácidos 50 gr','Calcio 200 gr','Potasio 200 gr'];
 var FUM_EQUIPOS = {
   'Flor de agua 3': ['Antony Jose Gonzalez Diaz','Edison De Jesus Otalvaro Giraldo','German Antonio Valencia Orozco','Luis Ernesto Ocampo Ocampo','Nestor Emilio Giraldo Acevedo','Santiago Patino Marulanda','Sebastian Ocampo Rios','Yonathan Enrique Gonzalez Diaz','Yorman Alexander Otalvaro Orozco'],
   'Oasis Garden': ['Carlos Andres Garcia Areiza','Cristian Danilo Ocampo Arboleda','Eliecer De Jesus Valencia Osorio','Elkin Arias Escobar','Guillermo Antonio Pavas Ramirez','Hernan Dario Duque Arango','Jhon Jairo Quintero Posada','John Jairo Bedoya Uribe','Jose Humberto Loaiza','Juan David Palencia Doria','Julian Esteban Londono Alzate','Lino De Jesus Quintero Castano','Pedro Luis Pavas Martinez'],
@@ -1211,9 +1219,13 @@ function showTab(tab, btn) {
   }
 }
 
-function fumMkItemBtn(items, selArr, containerId, single) {
+// onChange (opcional) se llama despues de cada click. Se conserva la
+// posicion del scroll de la lista para que, al marcar algo lejano (por
+// ejemplo "Otro", que va al final), la lista no salte de vuelta al inicio.
+function fumMkItemBtn(items, selArr, containerId, single, onChange) {
   var c = document.getElementById(containerId);
   if (!c) return;
+  var scrollPrevio = c.scrollTop;
   c.innerHTML = '';
   items.forEach(function(item) {
     var btn = document.createElement('button');
@@ -1233,9 +1245,33 @@ function fumMkItemBtn(items, selArr, containerId, single) {
         for(var x=0;x<selArr.length;x++){if(selArr[x]===item){idx=x;break;}}
         if (idx > -1) selArr.splice(idx, 1); else selArr.push(item);
       }
-      fumMkItemBtn(items, selArr, containerId, single);
+      fumMkItemBtn(items, selArr, containerId, single, onChange);
+      if (onChange) onChange();
     };
     c.appendChild(btn);
+  });
+  c.scrollTop = scrollPrevio;
+}
+
+// Opcion "Otro" en Productos y en Fertilizacion foliar: va siempre al
+// final de la lista y, al marcarla, aparece un cuadro para escribir cual
+// es. Al guardar, "Otro" se reemplaza por lo que se escribio.
+var FUM_OTRO = 'Otro';
+
+function fumActualizarOtros() {
+  [
+    { sel: fumSelProductos,      box: 'fum-producto-otro-box',     input: 'fum-producto-otro' },
+    { sel: fumSelFertilizantes,  box: 'fum-fertilizante-otro-box', input: 'fum-fertilizante-otro' }
+  ].forEach(function(g) {
+    var box = document.getElementById(g.box);
+    if (!box) return;
+    var mostrar = g.sel.indexOf(FUM_OTRO) !== -1;
+    var estabaOculto = box.style.display === 'none';
+    box.style.display = mostrar ? 'block' : 'none';
+    if (mostrar && estabaOculto) {
+      var inp = document.getElementById(g.input);
+      if (inp) inp.focus();
+    }
   });
 }
 
@@ -1428,6 +1464,18 @@ function fumGuardar() {
     alert('Completa los pasos obligatorios (1, 2, 3, 4, 5 y 7) antes de guardar.');
     return;
   }
+  // Si marcaron "Otro", tienen que escribir cual es (no se guarda la
+  // palabra "Otro" sola).
+  var otroProd = (document.getElementById('fum-producto-otro').value || '').replace(/\s+/g, ' ').trim();
+  var otroFert = (document.getElementById('fum-fertilizante-otro').value || '').replace(/\s+/g, ' ').trim();
+  if (fumSelProductos.indexOf(FUM_OTRO) !== -1 && !otroProd) {
+    alert('Escribe el nombre del producto en "Otro" (o desmarca "Otro").');
+    return;
+  }
+  if (fumSelFertilizantes.indexOf(FUM_OTRO) !== -1 && !otroFert) {
+    alert('Escribe el nombre del fertilizante en "Otro" (o desmarca "Otro").');
+    return;
+  }
   if (!navigator.onLine) {
     alert('No tienes conexion a internet. Este registro no se guardara hasta que recuperes la señal.');
     return;
@@ -1441,8 +1489,8 @@ function fumGuardar() {
   var finca = fumSelFinca[0];
   var lotesEsperados = fumSelLotes.slice();
   var novedades = document.getElementById('fum-novedades').value.trim();
-  var productos = fumSelProductos.join(', ');
-  var fertilizantes = fumSelFertilizantes.join(', ');
+  var productos = fumSelProductos.map(function(p) { return p === FUM_OTRO ? otroProd : p; }).join(', ');
+  var fertilizantes = fumSelFertilizantes.map(function(p) { return p === FUM_OTRO ? otroFert : p; }).join(', ');
   var plagas = fumSelPlagas.join(', ');
   var equipo = fumSelEquipo.join(', ');
 
@@ -1497,9 +1545,12 @@ function fumResetCampos() {
   fumRenderLotes();
   fumActualizarInfoLote();
   fumMkItemBtn(FUM_PLAGAS, fumSelPlagas, 'fum-plagas-lista', false);
-  fumMkItemBtn(FUM_PRODUCTOS, fumSelProductos, 'fum-productos-lista', false);
-  fumMkItemBtn(FUM_FERTILIZANTES, fumSelFertilizantes, 'fum-fertilizantes-lista', false);
+  fumMkItemBtn(FUM_PRODUCTOS.concat([FUM_OTRO]), fumSelProductos, 'fum-productos-lista', false, fumActualizarOtros);
+  fumMkItemBtn(FUM_FERTILIZANTES.concat([FUM_OTRO]), fumSelFertilizantes, 'fum-fertilizantes-lista', false, fumActualizarOtros);
   fumRenderEquipo();
+  document.getElementById('fum-producto-otro').value = '';
+  document.getElementById('fum-fertilizante-otro').value = '';
+  fumActualizarOtros();
 }
 
 function fumLimpiar() {
@@ -1518,8 +1569,8 @@ function fumLimpiar() {
   fumActualizarInfoLote();
   setTimeout(fetchFumigaciones, 500);
   fumMkItemBtn(FUM_PLAGAS, fumSelPlagas, 'fum-plagas-lista', false);
-  fumMkItemBtn(FUM_PRODUCTOS, fumSelProductos, 'fum-productos-lista', false);
-  fumMkItemBtn(FUM_FERTILIZANTES, fumSelFertilizantes, 'fum-fertilizantes-lista', false);
+  fumMkItemBtn(FUM_PRODUCTOS.concat([FUM_OTRO]), fumSelProductos, 'fum-productos-lista', false, fumActualizarOtros);
+  fumMkItemBtn(FUM_FERTILIZANTES.concat([FUM_OTRO]), fumSelFertilizantes, 'fum-fertilizantes-lista', false, fumActualizarOtros);
   fumRenderEquipo();
 })();
 
