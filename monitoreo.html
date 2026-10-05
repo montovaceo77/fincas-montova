@@ -521,12 +521,7 @@ function renderResumen() {
   var gruposArr = Object.keys(grupos).map(function(k) { return grupos[k]; });
   gruposArr.sort(function(a, b) {
     if (a.finca !== b.finca) return a.finca.localeCompare(b.finca);
-    var esEspecialA = /[a-zA-Z]/.test(a.loteN);
-    var esEspecialB = /[a-zA-Z]/.test(b.loteN);
-    if (esEspecialA !== esEspecialB) return esEspecialA ? 1 : -1;
-    var na = parseInt(a.loteN.replace(/[^0-9]/g, ''), 10) || 0;
-    var nb = parseInt(b.loteN.replace(/[^0-9]/g, ''), 10) || 0;
-    return na - nb;
+    return compararCodigosLote(a.loteN, b.loteN);
   });
 
   gruposArr.forEach(function(g) {
@@ -711,6 +706,24 @@ function buildFincaStep() {
   return wrap;
 }
 
+// Compara dos codigos de lote para ordenarlos. Los numericos van primero
+// (1, 2, 3... o con punto, como en Flor Madera: 1.1, 1.2 ... 1.10),
+// comparando cada parte como NUMERO (asi 1.2 va antes que 1.10); los
+// especiales con letras (E1...) van al final, como antes.
+function compararCodigosLote(a, b) {
+  a = String(a); b = String(b);
+  var esEspecialA = /[a-zA-Z]/.test(a);
+  var esEspecialB = /[a-zA-Z]/.test(b);
+  if (esEspecialA !== esEspecialB) return esEspecialA ? 1 : -1;
+  var pa = a.replace(/[^0-9.\-]/g, '').split(/[.\-]/).map(function(n) { return parseInt(n, 10) || 0; });
+  var pb = b.replace(/[^0-9.\-]/g, '').split(/[.\-]/).map(function(n) { return parseInt(n, 10) || 0; });
+  for (var i = 0; i < Math.max(pa.length, pb.length); i++) {
+    var dif = (pa[i] || 0) - (pb[i] || 0);
+    if (dif !== 0) return dif;
+  }
+  return 0;
+}
+
 // ===== Paso: Lote =====
 function buildLoteStep() {
   var wrap = document.createElement('div');
@@ -734,14 +747,7 @@ function buildLoteStep() {
     if (c && codigos.indexOf(c) === -1) codigos.push(c);
   });
 
-  codigos.sort(function(a, b) {
-    var esEspecialA = /[a-zA-Z]/.test(a);
-    var esEspecialB = /[a-zA-Z]/.test(b);
-    if (esEspecialA !== esEspecialB) return esEspecialA ? 1 : -1;
-    var na = parseInt(a.replace(/[^0-9]/g, ''), 10) || 0;
-    var nb = parseInt(b.replace(/[^0-9]/g, ''), 10) || 0;
-    return na - nb;
-  });
+  codigos.sort(compararCodigosLote);
 
   if (codigos.length === 0) {
     var empty = document.createElement('div');
