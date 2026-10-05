@@ -408,6 +408,47 @@ var LOTES_MAX_POR_FINCA = {
   'La Reserva': 1
 };
 
+// Fincas con codigos de lote PROPIOS, en vez del rango normal 1-33.
+// Flor Madera tiene 3 bloques de lotes con codigos tipo 1.1 ... 1.11,
+// 2.1 ... 2.10 y 3.1 ... 3.10. Cada par es [bloque, cantidad de lotes];
+// para agregar lotes, sube la cantidad del bloque que corresponda.
+var LOTES_POR_FINCA = {
+  'Flor Madera': (function() {
+    var lista = [];
+    [[1, 11], [2, 10], [3, 10]].forEach(function(bloque) {
+      for (var n = 1; n <= bloque[1]; n++) { lista.push(bloque[0] + '.' + n); }
+    });
+    return lista;
+  })()
+};
+
+// Codigos de lote "base" de una finca (sin los especiales E1-E11 de
+// Oasis Garden). Es la unica fuente que usan Programacion, Fumigacion,
+// Labores de Campo e Ingreso a Sala para armar su lista de lotes.
+function codigosLotesBase(finca) {
+  if (LOTES_POR_FINCA[finca]) return LOTES_POR_FINCA[finca].slice();
+  var maxLote = LOTES_MAX_POR_FINCA[finca] || 33;
+  var lista = [];
+  for (var i = 1; i <= maxLote; i++) { lista.push(String(i)); }
+  return lista;
+}
+
+// Si el lote de un registro que ya existe no esta entre las opciones de
+// su finca (por ejemplo, un lote con un codigo anterior), se agrega a la
+// lista para que ese registro se pueda editar o reprogramar igual.
+function asegurarOpcionLote(codigo) {
+  var sel = document.getElementById('l-num');
+  codigo = String(codigo == null ? '' : codigo);
+  if (!sel || !codigo) return;
+  var existe = Array.prototype.some.call(sel.options, function(o) { return o.value === codigo; });
+  if (!existe) {
+    var opt = document.createElement('option');
+    opt.value = codigo;
+    opt.textContent = 'Lote ' + codigo;
+    sel.appendChild(opt);
+  }
+}
+
 function actualizarOpcionesLoteNum() {
   var sel = document.getElementById('l-num');
   var finca = document.getElementById('l-finca').value;
@@ -426,13 +467,12 @@ function actualizarOpcionesLoteNum() {
       sel.appendChild(opt);
     });
   } else {
-    var maxLote = LOTES_MAX_POR_FINCA[finca] || 33;
-    for (var i = 1; i <= maxLote; i++) {
+    codigosLotesBase(finca).forEach(function(codigo) {
       var opt = document.createElement('option');
-      opt.value = i;
-      opt.textContent = 'Lote ' + i;
+      opt.value = codigo;
+      opt.textContent = 'Lote ' + codigo;
       sel.appendChild(opt);
-    }
+    });
   }
 
   // Si el valor que estaba seleccionado sigue siendo valido para la
@@ -558,6 +598,7 @@ function abrirModalReprogramar(id) {
   actualizarOpcionesVariedad();
   document.getElementById('l-variedad').value = l.Variedad || l.variedad || '';
   actualizarOpcionesLoteNum();
+  asegurarOpcionLote(l.Lote || l.lote || '');
   document.getElementById('l-num').value = l.Lote || l.lote || '';
   document.getElementById('l-finca').disabled = true;
   document.getElementById('l-variedad').disabled = true;
@@ -591,6 +632,7 @@ function abrirModalEditar(id) {
   actualizarOpcionesVariedad();
   document.getElementById('l-variedad').value = variedad;
   actualizarOpcionesLoteNum();
+  asegurarOpcionLote(loteNum);
   document.getElementById('l-num').value = loteNum;
   document.getElementById('l-finca').disabled = true;
   document.getElementById('l-variedad').disabled = true;
@@ -1142,12 +1184,8 @@ function renderLotes() {
       <button id="ing-descarte-btn" onclick="ingToggleDescarte()" style="margin-top:14px; width:100%; padding:12px; font-size:14px; font-weight:600; border-radius:8px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; background:#fff; border:1px solid var(--border); color:var(--ink-mid);">Descarte</button>
       <div id="ing-descarte-motivo-container" style="display:none; margin-top:14px;">
         <label style="font-size:13px; font-weight:600; color:var(--ink); display:block; margin-bottom:6px;">Motivo del descarte</label>
-        <div class="chk-list">
+        <div class="chk-list" id="ing-motivos-lista">
           <div class="chk-list-title">SELECCIONA UNO O MAS MOTIVOS</div>
-          <label class="chk-item"><input type="checkbox" id="ing-mot-ceniza" value="Ceniza"><span>Ceniza</span></label>
-          <label class="chk-item"><input type="checkbox" id="ing-mot-plaga" value="Plaga"><span>Plaga</span></label>
-          <label class="chk-item"><input type="checkbox" id="ing-mot-tallo" value="Tallo leñoso"><span>Tallo leñoso</span></label>
-          <label class="chk-item"><input type="checkbox" id="ing-mot-pedunculo" value="Pedúnculo largo"><span>Pedúnculo largo</span></label>
         </div>
         <label style="font-size:12px; font-weight:600; color:var(--rose); display:block; margin-top:10px; margin-bottom:4px;">Cantidad de descarte</label>
         <input type="text" inputmode="numeric" pattern="[0-9]*" id="ing-cant-descarte" placeholder="Ej: 50" style="width:100%; padding:9px 12px; font-size:14px; border:1px solid var(--rose); border-radius:8px; color:var(--ink); background:var(--rose-bg);" />
@@ -1330,9 +1368,7 @@ function fumRenderFincas() {
 // (E1 a E11) al final de la lista normal 1-33, solo para esa finca.
 function fumLotesDisponibles() {
   var finca = fumSelFinca[0];
-  var maxLote = LOTES_MAX_POR_FINCA[finca] || 33;
-  var lista = [];
-  for (var i = 1; i <= maxLote; i++) { lista.push('Lote ' + i); }
+  var lista = codigosLotesBase(finca).map(function(codigo) { return 'Lote ' + codigo; });
   if (finca === 'Oasis Garden') {
     var especiales = (LOTES_ESPECIALES['Oasis Garden'] && LOTES_ESPECIALES['Oasis Garden']['Esmeralda']) || [];
     especiales.forEach(function(codigo) { lista.push('Lote ' + codigo); });
@@ -1797,9 +1833,7 @@ function labActualizarInfoAbonada() {
 // La Reserva solo tiene los que indique LOTES_MAX_POR_FINCA.
 function labLotesDisponibles() {
   var finca = document.getElementById('lab-finca') ? document.getElementById('lab-finca').value : '';
-  var maxLote = LOTES_MAX_POR_FINCA[finca] || 33;
-  var lista = [];
-  for (var i = 1; i <= maxLote; i++) { lista.push('Lote ' + i); }
+  var lista = codigosLotesBase(finca).map(function(codigo) { return 'Lote ' + codigo; });
   if (finca === 'Oasis Garden') {
     var especiales = (LOTES_ESPECIALES['Oasis Garden'] && LOTES_ESPECIALES['Oasis Garden']['Esmeralda']) || [];
     especiales.forEach(function(codigo) { lista.push('Lote ' + codigo); });
@@ -2023,6 +2057,27 @@ function labLimpiar() {
 
 // ===== INGRESO A SALA MODULE =====
 var ING_TIPOS = ['Mini', 'Selec', 'Premium', 'Jumbo'];
+
+// Motivos de descarte (en orden alfabetico). Para agregar uno nuevo,
+// basta con sumarlo a esta lista: el formulario lo dibuja solo.
+var ING_MOTIVOS = ['Babosa', 'Ceniza', 'Daño mecánico', 'Pedúnculo largo', 'Plaga', 'Punto rojo', 'Secadera', 'Tallo leñoso'];
+
+function ingRenderMotivos() {
+  var c = document.getElementById('ing-motivos-lista');
+  if (!c) return;
+  ING_MOTIVOS.forEach(function(motivo) {
+    var label = document.createElement('label');
+    label.className = 'chk-item';
+    var input = document.createElement('input');
+    input.type = 'checkbox';
+    input.value = motivo;
+    var span = document.createElement('span');
+    span.textContent = motivo;
+    label.appendChild(input);
+    label.appendChild(span);
+    c.appendChild(label);
+  });
+}
 var ingSelTipo = [];
 var ingDescarteActivo = false;
 var ingCantidades = {}; // cantidad por cada tipo/"Descarte" marcado
@@ -2039,14 +2094,13 @@ function poblarIngLoteSelect() {
   var sel = document.getElementById('ing-lote-select');
   if (!sel) return;
   var finca = document.getElementById('ing-finca') ? document.getElementById('ing-finca').value : '';
-  var maxLote = LOTES_MAX_POR_FINCA[finca] || 33;
   sel.innerHTML = '<option value="">Selecciona un lote</option>';
-  for (var i = 1; i <= maxLote; i++) {
+  codigosLotesBase(finca).forEach(function(codigo) {
     var opt = document.createElement('option');
-    opt.value = i;
-    opt.textContent = 'Lote ' + i;
+    opt.value = codigo;
+    opt.textContent = 'Lote ' + codigo;
     sel.appendChild(opt);
-  }
+  });
   if (finca === 'Oasis Garden') {
     var especiales = (LOTES_ESPECIALES['Oasis Garden'] && LOTES_ESPECIALES['Oasis Garden']['Esmeralda']) || [];
     especiales.forEach(function(codigo) {
@@ -2154,9 +2208,8 @@ function ingActualizarDescarteUI() {
   }
   if (cont) cont.style.display = ingDescarteActivo ? 'block' : 'none';
   if (!ingDescarteActivo) {
-    ['ing-mot-ceniza', 'ing-mot-plaga', 'ing-mot-tallo', 'ing-mot-pedunculo'].forEach(function(id) {
-      var el = document.getElementById(id);
-      if (el) el.checked = false;
+    Array.prototype.forEach.call(document.querySelectorAll('#ing-motivos-lista input[type=checkbox]'), function(el) {
+      el.checked = false;
     });
   }
   if (inputCant) inputCant.value = ingCantidades['Descarte'] || '';
@@ -2238,10 +2291,8 @@ function ingGuardar() {
 
   var motivos = [];
   if (ingDescarteActivo) {
-    var motivoMap = { 'ing-mot-ceniza': 'Ceniza', 'ing-mot-plaga': 'Plaga', 'ing-mot-tallo': 'Tallo leñoso', 'ing-mot-pedunculo': 'Pedúnculo largo' };
-    Object.keys(motivoMap).forEach(function(id) {
-      var el = document.getElementById(id);
-      if (el && el.checked) motivos.push(motivoMap[id]);
+    Array.prototype.forEach.call(document.querySelectorAll('#ing-motivos-lista input[type=checkbox]'), function(el) {
+      if (el.checked) motivos.push(el.value);
     });
     if (!motivos.length) {
       alert('Selecciona al menos un motivo del descarte.');
@@ -2346,6 +2397,7 @@ function ingLimpiar() {
     ingActualizarAcumulado();
   });
   setTimeout(fetchIngresoSala, 1000);
+  ingRenderMotivos();
   ingRenderTipos();
   ingActualizarInfoLote();
   ingActualizarAcumulado();
