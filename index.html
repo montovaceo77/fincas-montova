@@ -38,7 +38,8 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
 .header-date { font-size: 11px; color: var(--ink-soft); }
 
 .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--white); border-top: 1px solid var(--border); display: flex; z-index: 200; }
-.nav-btn { flex: 1; padding: 12px 0 14px; font-size: 12px; font-family: 'DM Sans', sans-serif; color: var(--ink-soft); background: none; border: none; cursor: pointer; }
+/* Con 5 pestañas la letra se ajusta al ancho de la pantalla (entre 9.5px y 12px) para que "Programacion" quepa en celulares. */
+.nav-btn { flex: 1; min-width: 0; overflow: hidden; padding: 12px 0 14px; font-size: clamp(9.5px, 2.8vw, 12px); font-family: 'DM Sans', sans-serif; color: var(--ink-soft); background: none; border: none; cursor: pointer; }
 .nav-btn.on { color: var(--verde); font-weight: 600; border-top: 2px solid var(--verde); }
 
 .main { max-width: 720px; margin: 0 auto; padding: 1.25rem 1.25rem 1rem; }
@@ -173,6 +174,7 @@ actualizarEstadoConexion();
   <button class="nav-btn" onclick="showTab('fumigacion', this)">Fumigacion</button>
   <button class="nav-btn" onclick="showTab('labores', this)">Labores Campo</button>
   <button class="nav-btn" onclick="showTab('ingreso', this)">Ingreso Sala</button>
+  <button class="nav-btn" onclick="showTab('despachos', this)">Despachos</button>
 </nav>
 
 <!-- Modal lote -->
@@ -377,7 +379,7 @@ window.addEventListener('DOMContentLoaded', function() {
   // un acceso directo sin pasar por Programacion. El link normal (sin
   // ese parametro) sigue abriendo en Programacion como siempre.
   var moduloDirecto = new URLSearchParams(window.location.search).get('modulo');
-  var ordenNav = { fumigacion: 1, labores: 2, ingreso: 3 };
+  var ordenNav = { fumigacion: 1, labores: 2, ingreso: 3, despachos: 4 };
   if (moduloDirecto && ordenNav.hasOwnProperty(moduloDirecto)) {
     var btns = document.querySelectorAll('.nav-btn');
     var btnDestino = btns[ordenNav[moduloDirecto]];
@@ -1206,6 +1208,93 @@ function renderLotes() {
   </div>
 </div>
 
+
+<div id="sec-despachos" style="display:none; padding-bottom:70px;">
+  <div class="main" style="max-width:480px;">
+
+    <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
+      <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 1</span>
+      <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:4px;">Fecha</label>
+      <p style="font-size:12px; color:var(--ink-mid); margin-bottom:12px;">Semana del año en curso</p>
+      <input type="date" id="desp-fecha" style="width:100%; padding:10px 12px; font-size:15px; border:1px solid var(--border); border-radius:8px; color:var(--ink); background:#fafafa;" />
+      <div id="desp-fecha-semana" style="font-size:12px; font-weight:600; color:var(--verde-dark); margin-top:8px;"></div>
+    </div>
+
+    <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
+      <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 2</span>
+      <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:12px;">Finca</label>
+      <select id="desp-finca" style="width:100%; padding:10px 12px; font-size:15px; border:1px solid var(--border); border-radius:8px; color:var(--ink); background:#fafafa;">
+        <option value="" selected disabled>Selecciona una finca</option>
+        <option value="Flor Esperancita">Flor Esperancita</option>
+        <option value="Flor de Agua 3">Flor de Agua 3</option>
+        <option value="Oasis Garden">Oasis Garden</option>
+        <option value="Flor Madera">Flor Madera</option>
+        <option value="La Reserva">La Reserva</option>
+      </select>
+    </div>
+
+    <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
+      <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 3</span>
+      <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:12px;"># Fito</label>
+      <input type="text" id="desp-fito" maxlength="40" autocomplete="off" placeholder="Numero del fito" style="width:100%; padding:10px 12px; font-size:15px; border:1px solid var(--border); border-radius:8px; color:var(--ink); background:#fafafa;" />
+    </div>
+
+    <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
+      <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 4</span>
+      <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:4px;">Despacho</label>
+      <p style="font-size:12px; color:var(--ink-mid); margin-bottom:12px;">Numero o codigo del despacho</p>
+      <input type="text" id="desp-despacho" maxlength="40" autocomplete="off" placeholder="Ej: 125" style="width:100%; padding:10px 12px; font-size:15px; border:1px solid var(--border); border-radius:8px; color:var(--ink); background:#fafafa;" />
+    </div>
+
+    <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
+      <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 5</span>
+      <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:12px;">Comercializadora</label>
+      <select id="desp-comercializadora" style="width:100%; padding:10px 12px; font-size:15px; border:1px solid var(--border); border-radius:8px; color:var(--ink); background:#fafafa;"></select>
+    </div>
+
+    <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
+      <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 6</span>
+      <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:12px;">Variedad</label>
+      <select id="desp-variedad" style="width:100%; padding:10px 12px; font-size:15px; border:1px solid var(--border); border-radius:8px; color:var(--ink); background:#fafafa;"></select>
+    </div>
+
+    <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
+      <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 7</span>
+      <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:4px;">Tipo de flor</label>
+      <p style="font-size:12px; color:var(--ink-mid); margin-bottom:8px;">Puedes elegir varios y poner la cantidad de cada uno</p>
+      <div id="desp-tipo-lista" style="display:flex; flex-direction:column; gap:8px;"></div>
+      <div id="desp-total" style="display:flex; justify-content:space-between; align-items:center; margin-top:14px; background:var(--verde-light); border:1px solid var(--verde-mid); border-radius:10px; padding:12px 14px;">
+        <span style="font-size:13px; font-weight:600; color:var(--verde-dark);">Total despachado</span>
+        <strong id="desp-total-valor" style="font-size:20px; color:var(--verde-dark);">0</strong>
+      </div>
+    </div>
+
+    <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
+      <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 8</span>
+      <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:12px;">Lider de sala</label>
+      <select id="desp-lider" style="width:100%; padding:10px 12px; font-size:15px; border:1px solid var(--border); border-radius:8px; color:var(--ink); background:#fafafa; display:none;"></select>
+      <div id="desp-lider-nota" style="font-size:13px; color:var(--ink-soft); font-style:italic;">Primero selecciona la finca</div>
+    </div>
+
+    <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
+      <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 9</span>
+      <span style="display:inline-block; background:#e5e7eb; color:#9ca3af; font-size:10px; padding:3px 10px; border-radius:6px; margin-left:6px; letter-spacing:1px;">Opcional</span>
+      <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-top:8px; margin-bottom:8px;">Novedades o comentarios</label>
+      <textarea id="desp-novedades" rows="4" placeholder="Escribe aqui si necesitas especificar algo mas..." style="width:100%; padding:10px 12px; font-size:15px; border:1px solid var(--border); border-radius:8px; color:var(--ink); background:#fafafa; resize:vertical; font-family:inherit; line-height:1.5;"></textarea>
+    </div>
+
+    <div style="display:flex; gap:10px; margin-top:0.5rem;">
+      <button id="desp-guardar-btn" onclick="despGuardar()" style="flex:1; padding:15px; font-size:16px; font-weight:600; background:var(--verde-dark); color:#fff; border:none; border-radius:12px; cursor:pointer;">Guardar despacho</button>
+      <button onclick="despLimpiar()" style="padding:15px 18px; font-size:15px; font-weight:600; border-radius:12px; cursor:pointer; background:var(--white); border:1px solid var(--border); color:var(--ink-mid); white-space:nowrap;">Nuevo despacho</button>
+    </div>
+    <div id="desp-ok" style="display:none; margin-top:1rem; background:var(--verde-light); border:1px solid var(--verde-mid); border-radius:12px; padding:1rem 1.25rem;">
+      <div style="font-size:15px; font-weight:600; color:var(--verde-dark); margin-bottom:4px;">Despacho guardado con exito</div>
+      <div id="desp-ok-txt" style="font-size:13px; color:var(--verde);"></div>
+    </div>
+    <div id="desp-error" style="display:none; margin-top:1rem; background:#fff0f0; border:1px solid #ffcccc; border-radius:12px; padding:1rem 1.25rem; font-size:14px; color:#c0392b;">Hubo un problema al guardar. Intenta de nuevo.</div>
+  </div>
+</div>
+
 <script>
 // ===== FUMIGACION MODULE =====
 var FUM_FINCAS = ['Oasis Garden','Flor de agua 3','Flor Esperancita','Flor Madera','La Reserva'];
@@ -1237,7 +1326,8 @@ function showTab(tab, btn) {
   var secciones = {
     fumigacion: document.getElementById('sec-fumigacion'),
     labores: document.getElementById('sec-labores'),
-    ingreso: document.getElementById('sec-ingreso')
+    ingreso: document.getElementById('sec-ingreso'),
+    despachos: document.getElementById('sec-despachos')
   };
 
   document.querySelectorAll('.nav-btn').forEach(function(b){ b.classList.remove('on'); });
@@ -2056,7 +2146,15 @@ function labLimpiar() {
 })();
 
 // ===== INGRESO A SALA MODULE =====
-var ING_TIPOS = ['Mini', 'Selec', 'Premium', 'Jumbo'];
+var ING_TIPOS = ['Minigreen', 'Selec', 'Premium', 'Jumbo', 'Fancy'];
+
+// Escrituras ANTERIORES de un tipo de flor. "Mini" ahora se llama
+// "Minigreen": los registros viejos del Sheet siguen diciendo "Mini" y el
+// acumulado los suma como Minigreen para que no se pierdan.
+var ING_TIPOS_ANTIGUOS = { 'Mini': 'Minigreen' };
+function ingNombreTipoActual(tipo) {
+  return Object.prototype.hasOwnProperty.call(ING_TIPOS_ANTIGUOS, tipo) ? ING_TIPOS_ANTIGUOS[tipo] : tipo;
+}
 
 // Motivos de descarte (en orden alfabetico). Para agregar uno nuevo,
 // basta con sumarlo a esta lista: el formulario lo dibuja solo.
@@ -2167,6 +2265,7 @@ function ingActualizarAcumulado() {
     var rCantidad = Number(r.Cantidad || r.cantidad || 0) || 0;
     var rDescarte = String(r.Descarte || r.descarte || '').trim();
     var rTipo = String(r.Tipo_Flor || r.tipo_flor || r.TipoFlor || r.tipoFlor || '').trim();
+    rTipo = ingNombreTipoActual(rTipo);
     total += rCantidad;
     if (rDescarte) {
       totalDescarte += rCantidad;
@@ -2187,7 +2286,7 @@ function ingActualizarAcumulado() {
 }
 
 // Activa o desactiva el interruptor de Descarte. Ya no excluye los
-// tipos de flor marcados: puedes tener, por ejemplo, Mini + Premium +
+// tipos de flor marcados: puedes tener, por ejemplo, Minigreen + Premium +
 // Descarte en el mismo registro, cada uno con su propia cantidad.
 function ingToggleDescarte() {
   ingDescarteActivo = !ingDescarteActivo;
@@ -2401,6 +2500,269 @@ function ingLimpiar() {
   ingRenderTipos();
   ingActualizarInfoLote();
   ingActualizarAcumulado();
+})();
+
+// ===== DESPACHOS MODULE =====
+// Comercializadoras y variedades (siempre se muestran en orden alfabetico).
+var DESP_COMERCIALIZADORAS = ['American Flowers', 'Blooming Mountain', 'Condor Andino'];
+var DESP_VARIEDADES = ['Blanca', 'Esmeralda', 'Lemon', 'Shocking'];
+
+// Lider de sala segun la finca. Las demas fincas se agregan despues: basta
+// con sumar una linea aqui (la lista de cada finca puede tener varios nombres).
+var DESP_LIDERES = {
+  'Oasis Garden': ['Magaly Quintero Posada'],
+  'Flor de Agua 3': ['Maryory Lopez Rodriguez']
+};
+
+var despSelTipo = [];
+var despCantidades = {};
+
+function despOrdenAlfabetico(lista) {
+  return lista.slice().sort(new Intl.Collator('es', { sensitivity: 'base' }).compare);
+}
+
+function despActualizarFechaSemana() {
+  var fecha = document.getElementById('desp-fecha').value;
+  var el = document.getElementById('desp-fecha-semana');
+  if (!el) return;
+  if (!fecha) { el.textContent = ''; return; }
+  var sa = calcSemanaAnio(fecha);
+  var yearNum = new Date(fecha + 'T12:00:00').getFullYear();
+  el.textContent = sa ? 'Semana ' + sa + ' / ' + yearNum : '';
+}
+
+function despPoblarSelect(id, lista, placeholder) {
+  var sel = document.getElementById(id);
+  if (!sel) return;
+  sel.innerHTML = '';
+  var ph = document.createElement('option');
+  ph.value = '';
+  ph.textContent = placeholder;
+  ph.selected = true;
+  ph.disabled = true;
+  sel.appendChild(ph);
+  despOrdenAlfabetico(lista).forEach(function(v) {
+    var o = document.createElement('option');
+    o.value = v;
+    o.textContent = v;
+    sel.appendChild(o);
+  });
+}
+
+// El lider de sala depende de la finca. Si la finca tiene un solo lider,
+// queda elegido solo; si todavia no tiene ninguno registrado, el paso no
+// bloquea el guardado.
+function despActualizarLider() {
+  var finca = document.getElementById('desp-finca').value;
+  var sel = document.getElementById('desp-lider');
+  var nota = document.getElementById('desp-lider-nota');
+  var lideres = DESP_LIDERES[finca] ? despOrdenAlfabetico(DESP_LIDERES[finca]) : [];
+  sel.innerHTML = '';
+  if (!finca || !lideres.length) {
+    sel.style.display = 'none';
+    nota.style.display = 'block';
+    nota.textContent = !finca
+      ? 'Primero selecciona la finca'
+      : 'Aun no hay lider de sala registrado para esta finca. Puedes guardar el despacho sin este dato.';
+    return;
+  }
+  nota.style.display = 'none';
+  sel.style.display = 'block';
+  if (lideres.length > 1) {
+    var ph = document.createElement('option');
+    ph.value = '';
+    ph.textContent = 'Selecciona el lider de sala';
+    ph.selected = true;
+    ph.disabled = true;
+    sel.appendChild(ph);
+  }
+  lideres.forEach(function(n) {
+    var o = document.createElement('option');
+    o.value = n;
+    o.textContent = n;
+    sel.appendChild(o);
+  });
+  if (lideres.length === 1) sel.value = lideres[0];
+}
+
+function despTotal() {
+  return despSelTipo.reduce(function(t, tipo) { return t + (parseInt(despCantidades[tipo], 10) || 0); }, 0);
+}
+
+function despActualizarTotal() {
+  var el = document.getElementById('desp-total-valor');
+  if (el) el.textContent = despTotal().toLocaleString('es-CO');
+}
+
+// Mismos tipos de flor que Ingreso a Sala (ING_TIPOS): se pueden marcar
+// varios y cada uno muestra su cuadro de cantidad. El total se actualiza
+// solo al final de la lista.
+function despRenderTipos() {
+  var c = document.getElementById('desp-tipo-lista');
+  if (!c) return;
+  c.innerHTML = '';
+  ING_TIPOS.forEach(function(item) {
+    var btn = document.createElement('button');
+    var sel = despSelTipo.indexOf(item) !== -1;
+    btn.style.cssText = 'padding:10px 12px; font-size:13px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; background:'+(sel?'var(--verde-light)':'#fff')+'; border:1px solid '+(sel?'var(--verde-mid)':'var(--border)')+'; color:'+(sel?'var(--verde-dark)':'var(--ink-mid)')+'; font-weight:'+(sel?'600':'400')+'; width:100%; text-align:left;';
+    var chk = document.createElement('div');
+    chk.style.cssText = 'width:20px; height:20px; border-radius:50%; border:1.5px solid '+(sel?'var(--verde-dark)':'var(--border)')+'; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:11px; background:'+(sel?'var(--verde-dark)':'transparent')+'; color:#fff;';
+    chk.textContent = sel ? '✓' : '';
+    var sp = document.createElement('span');
+    sp.textContent = item;
+    btn.appendChild(chk);
+    btn.appendChild(sp);
+    btn.onclick = function() {
+      var idx = despSelTipo.indexOf(item);
+      if (idx > -1) {
+        despSelTipo.splice(idx, 1);
+        delete despCantidades[item];
+      } else {
+        despSelTipo.push(item);
+      }
+      despRenderTipos();
+    };
+    c.appendChild(btn);
+
+    if (sel) {
+      var field = document.createElement('div');
+      field.style.cssText = 'margin-top:-2px;';
+      var label = document.createElement('label');
+      label.style.cssText = 'font-size:11px; color:var(--verde-dark); font-weight:600; display:block; margin:4px 0 4px 2px;';
+      label.textContent = 'Cantidad de ' + item;
+      var input = document.createElement('input');
+      input.type = 'text';
+      input.inputMode = 'numeric';
+      input.pattern = '[0-9]*';
+      input.placeholder = 'Ej: 150';
+      input.value = despCantidades[item] || '';
+      input.style.cssText = 'width:100%; padding:9px 12px; font-size:14px; border:1px solid var(--verde-mid); border-radius:8px; color:var(--ink); background:var(--verde-pale);';
+      input.addEventListener('input', function() {
+        this.value = this.value.replace(/[^0-9]/g, '');
+        despCantidades[item] = this.value;
+        despActualizarTotal();
+      });
+      field.appendChild(label);
+      field.appendChild(input);
+      c.appendChild(field);
+    }
+  });
+  despActualizarTotal();
+}
+
+function despLimpiarTexto(s) {
+  return String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
+}
+
+function despGuardar() {
+  var fecha = document.getElementById('desp-fecha').value;
+  var finca = document.getElementById('desp-finca').value;
+  var fito = despLimpiarTexto(document.getElementById('desp-fito').value);
+  var despacho = despLimpiarTexto(document.getElementById('desp-despacho').value);
+  var comercializadora = document.getElementById('desp-comercializadora').value;
+  var variedad = document.getElementById('desp-variedad').value;
+  var novedades = String(document.getElementById('desp-novedades').value || '').trim();
+  var hayLideres = !!(DESP_LIDERES[finca] && DESP_LIDERES[finca].length);
+  var lider = hayLideres ? document.getElementById('desp-lider').value : '';
+
+  var faltan = [];
+  if (!fecha) faltan.push('Fecha');
+  if (!finca) faltan.push('Finca');
+  if (!fito) faltan.push('# Fito');
+  if (!despacho) faltan.push('Despacho');
+  if (!comercializadora) faltan.push('Comercializadora');
+  if (!variedad) faltan.push('Variedad');
+  if (!despSelTipo.length) faltan.push('Tipo de flor');
+  if (hayLideres && !lider) faltan.push('Lider de sala');
+  if (faltan.length) {
+    alert('Falta completar: ' + faltan.join(', ') + '.');
+    return;
+  }
+  var sinCantidad = despSelTipo.filter(function(t) { return !(parseInt(despCantidades[t], 10) > 0); });
+  if (sinCantidad.length) {
+    alert('Falta la cantidad de: ' + sinCantidad.join(', '));
+    return;
+  }
+  if (!navigator.onLine) {
+    alert('No tienes conexion a internet. Este despacho no se guardara hasta que recuperes la señal.');
+    return;
+  }
+
+  var btn = document.getElementById('desp-guardar-btn');
+  btn.disabled = true;
+  setTimeout(function() { btn.disabled = false; }, 1200);
+  document.getElementById('desp-error').style.display = 'none';
+
+  // Foto de todo lo que se va a guardar, tomada ANTES de limpiar el formulario
+  // (el envio sigue corriendo en segundo plano despues de limpiarlo).
+  var filas = ING_TIPOS.filter(function(t) { return despSelTipo.indexOf(t) !== -1; }).map(function(t) {
+    return { tipo: t, cantidad: String(parseInt(despCantidades[t], 10)) };
+  });
+  var total = filas.reduce(function(s, f) { return s + parseInt(f.cantidad, 10); }, 0);
+  var idDespacho = Date.now();   // mismo para todas las filas del despacho, para poder agruparlas en el Sheet
+
+  // Una fila por cada tipo de flor, mandadas una detras de otra (no todas a la
+  // vez) porque Google Sheets puede perder filas si le llegan varias escrituras
+  // al mismo tiempo. Si una falla, se sigue con las demas.
+  (async function() {
+    for (var i = 0; i < filas.length; i++) {
+      try {
+        await postToWS({
+          action: 'addDespacho',
+          id_despacho: idDespacho,
+          fecha: fecha,
+          finca: finca,
+          fito: fito,
+          despacho: despacho,
+          comercializadora: comercializadora,
+          variedad: variedad,
+          tipo_flor: filas[i].tipo,
+          cantidad: filas[i].cantidad,
+          lider_sala: lider,
+          novedades: novedades
+        });
+      } catch (e) {
+        // si un envio falla, se sigue con los demas tipos
+      }
+    }
+  })();
+
+  document.getElementById('desp-ok-txt').textContent = finca + ' · Despacho ' + despacho + ' · ' + comercializadora + ' · Total ' + total.toLocaleString('es-CO');
+  document.getElementById('desp-ok').style.display = 'block';
+  despResetCampos();
+}
+
+function despResetCampos() {
+  despSelTipo.length = 0;
+  despCantidades = {};
+  document.getElementById('desp-fecha').value = new Date().toISOString().split('T')[0];
+  document.getElementById('desp-finca').selectedIndex = 0;
+  document.getElementById('desp-fito').value = '';
+  document.getElementById('desp-despacho').value = '';
+  document.getElementById('desp-comercializadora').selectedIndex = 0;
+  document.getElementById('desp-variedad').selectedIndex = 0;
+  document.getElementById('desp-novedades').value = '';
+  despActualizarFechaSemana();
+  despActualizarLider();
+  despRenderTipos();
+}
+
+function despLimpiar() {
+  document.getElementById('desp-ok').style.display = 'none';
+  document.getElementById('desp-error').style.display = 'none';
+  despResetCampos();
+}
+
+// Init despachos
+(function() {
+  document.getElementById('desp-fecha').value = new Date().toISOString().split('T')[0];
+  document.getElementById('desp-fecha').addEventListener('change', despActualizarFechaSemana);
+  despActualizarFechaSemana();
+  document.getElementById('desp-finca').addEventListener('change', despActualizarLider);
+  despPoblarSelect('desp-comercializadora', DESP_COMERCIALIZADORAS, 'Selecciona una comercializadora');
+  despPoblarSelect('desp-variedad', DESP_VARIEDADES, 'Selecciona una variedad');
+  despActualizarLider();
+  despRenderTipos();
 })();
 </script>
 
