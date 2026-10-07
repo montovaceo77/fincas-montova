@@ -2701,31 +2701,26 @@ function despGuardar() {
   var total = filas.reduce(function(s, f) { return s + parseInt(f.cantidad, 10); }, 0);
   var idDespacho = Date.now();   // mismo para todas las filas del despacho, para poder agruparlas en el Sheet
 
-  // Una fila por cada tipo de flor, mandadas una detras de otra (no todas a la
-  // vez) porque Google Sheets puede perder filas si le llegan varias escrituras
-  // al mismo tiempo. Si una falla, se sigue con las demas.
-  (async function() {
-    for (var i = 0; i < filas.length; i++) {
-      try {
-        await postToWS({
-          action: 'addDespacho',
-          id_despacho: idDespacho,
-          fecha: fecha,
-          finca: finca,
-          fito: fito,
-          despacho: despacho,
-          comercializadora: comercializadora,
-          variedad: variedad,
-          tipo_flor: filas[i].tipo,
-          cantidad: filas[i].cantidad,
-          lider_sala: lider,
-          novedades: novedades
-        });
-      } catch (e) {
-        // si un envio falla, se sigue con los demas tipos
-      }
-    }
-  })();
+  // TODAS las filas del despacho (una por tipo de flor) viajan juntas en UNA
+  // sola peticion, y el servidor las escribe de un solo golpe. Antes se
+  // mandaban una detras de otra, esperando la respuesta de cada una: era lento
+  // (los tiempos se sumaban) y, si la app se pausaba a mitad del envio, las
+  // ultimas filas no salian nunca.
+  postToWS({
+    action: 'addDespacho',
+    id_despacho: idDespacho,
+    fecha: fecha,
+    finca: finca,
+    fito: fito,
+    despacho: despacho,
+    comercializadora: comercializadora,
+    variedad: variedad,
+    lider_sala: lider,
+    novedades: novedades,
+    filas: filas.map(function(f) { return { tipo_flor: f.tipo, cantidad: f.cantidad }; })
+  }).catch(function() {
+    // postToWS ya reintenta una vez; si aun asi falla, no hay mas que hacer desde aqui
+  });
 
   document.getElementById('desp-ok-txt').textContent = finca + ' · Despacho ' + despacho + ' · ' + comercializadora + ' · Total ' + total.toLocaleString('es-CO');
   document.getElementById('desp-ok').style.display = 'block';
