@@ -200,6 +200,7 @@ actualizarEstadoConexion();
           <option value="Esmeralda">Esmeralda</option>
           <option value="Shocking">Shocking</option>
           <option value="Blanca">Blanca</option>
+          <option value="Variegada">Variegada</option>
         </select>
       </div>
     </div>
@@ -335,7 +336,7 @@ var LOTES_ESPECIALES = {
 // Variedades disponibles por finca. Si una finca no aparece aqui, se
 // muestran las 4 variedades normales. La Reserva, por ahora, solo
 // maneja Esmeralda.
-var VARIEDADES_TODAS = ['Lemon', 'Esmeralda', 'Shocking', 'Blanca'];
+var VARIEDADES_TODAS = ['Lemon', 'Esmeralda', 'Shocking', 'Blanca', 'Variegada'];
 var VARIEDADES_POR_FINCA = {
   'La Reserva': ['Esmeralda']
 };
@@ -424,12 +425,58 @@ var LOTES_POR_FINCA = {
   })()
 };
 
-// Codigos de lote "base" de una finca (sin los especiales E1-E11 de
-// Oasis Garden). Es la unica fuente que usan Programacion, Fumigacion,
-// Labores de Campo e Ingreso a Sala para armar su lista de lotes.
-function codigosLotesBase(finca) {
-  if (LOTES_POR_FINCA[finca]) return LOTES_POR_FINCA[finca].slice();
-  var maxLote = LOTES_MAX_POR_FINCA[finca] || 33;
+// Compara nombres de finca sin distinguir mayusculas ni tildes. Hace falta
+// porque Fumigacion escribe "Flor de agua 3" y los demas modulos "Flor de Agua 3".
+function normFinca(s) {
+  return String(s == null ? '' : s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+}
+function mismaFinca(a, b) {
+  return normFinca(a) === normFinca(b);
+}
+// Busca el valor de una finca en un mapa de configuracion (por nombre, sin
+// distinguir mayusculas).
+function configFinca(mapa, finca) {
+  var clave = Object.keys(mapa).filter(function(k) { return mismaFinca(k, finca); })[0];
+  return clave === undefined ? undefined : mapa[clave];
+}
+
+function serieCodigos(prefijo, hasta) {
+  var lista = [];
+  for (var n = 1; n <= hasta; n++) { lista.push(prefijo + n); }
+  return lista;
+}
+
+// Fincas cuyos lotes dependen de la VARIEDAD: cada variedad tiene sus propios
+// codigos de lote, asi no se confunden entre si. En Programacion, al elegir la
+// variedad solo salen sus lotes; en los demas modulos salen todos juntos.
+//   Flor de Agua 3:  Blanca 1-28 | Esmeralda E1-E7 | Lemon L.1-L.7 | Shocking S1-S15
+var LOTES_POR_VARIEDAD = {
+  'Flor de Agua 3': {
+    'Blanca':    serieCodigos('', 28),
+    'Esmeralda': serieCodigos('E', 7),
+    'Lemon':     serieCodigos('L.', 7),
+    'Shocking':  serieCodigos('S', 15)
+  }
+};
+
+// Codigos de lote "base" de una finca (sin los especiales E1-E11 de Oasis
+// Garden). Es la unica fuente que usan Programacion, Fumigacion, Labores de
+// Campo e Ingreso a Sala para armar su lista de lotes. Si se indica la
+// variedad (solo Programacion) y la finca tiene lotes por variedad, devuelve
+// unicamente los de esa variedad (ninguno si esa variedad no tiene lotes alli).
+function codigosLotesBase(finca, variedad) {
+  var porVariedad = configFinca(LOTES_POR_VARIEDAD, finca);
+  if (porVariedad) {
+    if (variedad) return (porVariedad[variedad] || []).slice();
+    var todos = [];
+    Object.keys(porVariedad).sort(new Intl.Collator('es', { sensitivity: 'base' }).compare).forEach(function(v) {
+      todos = todos.concat(porVariedad[v]);
+    });
+    return todos;
+  }
+  var propios = configFinca(LOTES_POR_FINCA, finca);
+  if (propios) return propios.slice();
+  var maxLote = configFinca(LOTES_MAX_POR_FINCA, finca) || 33;
   var lista = [];
   for (var i = 1; i <= maxLote; i++) { lista.push(String(i)); }
   return lista;
@@ -469,12 +516,14 @@ function actualizarOpcionesLoteNum() {
       sel.appendChild(opt);
     });
   } else {
-    codigosLotesBase(finca).forEach(function(codigo) {
+    var codigos = codigosLotesBase(finca, variedad);
+    codigos.forEach(function(codigo) {
       var opt = document.createElement('option');
       opt.value = codigo;
       opt.textContent = 'Lote ' + codigo;
       sel.appendChild(opt);
     });
+    if (!codigos.length) sel.options[0].textContent = 'Sin lotes para esta variedad';
   }
 
   // Si el valor que estaba seleccionado sigue siendo valido para la
@@ -787,7 +836,7 @@ function initModal() {
       setTimeout(function() { fetchLotes(); fetchPreparaciones(); }, 5000);
     } else {
       var existe = lotes.find(function(x) {
-        return String(x.Finca || x.finca || '') === String(finca) &&
+        return mismaFinca(x.Finca || x.finca || '', finca) &&
                String(x.Variedad || x.variedad || '') === String(variedad) &&
                String(x.Lote || x.lote || '') === String(loteNum) &&
                (x.Estado || x.estado || '').toLowerCase() === 'activo';
@@ -841,7 +890,7 @@ function finalizarLote(id) {
 
 function getPrep(finca, variedad, lote, fechaInicioCiclo) {
   var candidatos = preparaciones.filter(function(p) {
-    return String(p.Finca    || p.finca    || '') === String(finca) &&
+    return mismaFinca(p.Finca || p.finca || '', finca) &&
            String(p.Variedad || p.variedad || '') === String(variedad) &&
            String(p.Lote     || p.lote     || '') === String(lote);
   });
@@ -1498,7 +1547,7 @@ function fumUltimaAplicacion(finca, loteNum) {
   fumigaciones.forEach(function(r) {
     var rFinca = String(r.Finca || r.finca || '');
     var rLotes = String(r.Lotes || r.lotes || '').split(',').map(function(s){ return s.trim(); });
-    if (rFinca === String(finca) && rLotes.indexOf(loteLabel) !== -1) {
+    if (mismaFinca(rFinca, finca) && rLotes.indexOf(loteLabel) !== -1) {
       var f = getISO(r.Fecha || r.fecha || '');
       if (f && (!ultima || f > ultima)) {
         ultima = f;
@@ -1522,7 +1571,7 @@ function fumActualizarInfoLote() {
   var bloques = fumSelLotes.map(function(loteLabel) {
     var loteNum = loteLabel.replace('Lote ', '');
     var l = lotes.find(function(x) {
-      return String(x.Finca || x.finca || '') === String(finca) &&
+      return mismaFinca(x.Finca || x.finca || '', finca) &&
              String(x.Lote || x.lote || '') === String(loteNum) &&
              String(x.Estado || x.estado || '').toLowerCase() === 'activo';
     });
@@ -1841,7 +1890,7 @@ function labContarAbonadasCiclo(finca, loteLabel, fechaInicioISO) {
     var rFinca = String(r.Finca || r.finca || '');
     var rLote = String(r.Lote || r.lote || '');
     var rLabor = String(r.Labor || r.labor || '');
-    if (rFinca === String(finca) && rLote === loteLabel && rLabor.indexOf('Abonada') !== -1) {
+    if (mismaFinca(rFinca, finca) && rLote === loteLabel && rLabor.indexOf('Abonada') !== -1) {
       var f = getISO(r.Fecha || r.fecha || '');
       if (!fechaInicioISO || (f && f >= fechaInicioISO)) count++;
     }
@@ -1855,7 +1904,7 @@ function labContarAbonadasCiclo(finca, loteLabel, fechaInicioISO) {
 function labDatosAbonada(finca, loteLabel) {
   var loteNum = loteLabel.replace('Lote ', '');
   var l = lotes.find(function(x) {
-    return String(x.Finca || x.finca || '') === String(finca) &&
+    return mismaFinca(x.Finca || x.finca || '', finca) &&
            String(x.Lote || x.lote || '') === String(loteNum) &&
            String(x.Estado || x.estado || '').toLowerCase() === 'activo';
   });
@@ -1866,7 +1915,7 @@ function labDatosAbonada(finca, loteLabel) {
     var rFinca = String(r.Finca || r.finca || '');
     var rLote = String(r.Lote || r.lote || '');
     var rLabor = String(r.Labor || r.labor || '');
-    if (rFinca === String(finca) && rLote === loteLabel && rLabor.indexOf('Abonada') !== -1) {
+    if (mismaFinca(rFinca, finca) && rLote === loteLabel && rLabor.indexOf('Abonada') !== -1) {
       var f = getISO(r.Fecha || r.fecha || '');
       if (!fechaInicioISO || (f && f >= fechaInicioISO)) {
         if (f && (!ultimaFecha || f > ultimaFecha)) ultimaFecha = f;
@@ -1992,7 +2041,7 @@ function labActualizarInfoLote() {
   var bloques = labSelLotes.map(function(loteLabel) {
     var loteNum = loteLabel.replace('Lote ', '');
     var l = lotes.find(function(x) {
-      return String(x.Finca || x.finca || '') === String(finca) &&
+      return mismaFinca(x.Finca || x.finca || '', finca) &&
              String(x.Lote || x.lote || '') === String(loteNum) &&
              String(x.Estado || x.estado || '').toLowerCase() === 'activo';
     });
@@ -2054,7 +2103,7 @@ function labGuardar() {
   var registros = labSelLotes.map(function(loteLabel) {
     var loteNum = loteLabel.replace('Lote ', '');
     var l = lotes.find(function(x) {
-      return String(x.Finca || x.finca || '') === String(finca) &&
+      return mismaFinca(x.Finca || x.finca || '', finca) &&
              String(x.Lote || x.lote || '') === String(loteNum) &&
              String(x.Estado || x.estado || '').toLowerCase() === 'activo';
     });
@@ -2227,7 +2276,7 @@ function ingActualizarInfoLote() {
   var loteNum = document.getElementById('ing-lote-select') ? document.getElementById('ing-lote-select').value : '';
   if (!loteNum) { info.innerHTML = ''; return; }
   var l = lotes.find(function(x) {
-    return String(x.Finca || x.finca || '') === String(finca) &&
+    return mismaFinca(x.Finca || x.finca || '', finca) &&
            String(x.Lote || x.lote || '') === String(loteNum) &&
            String(x.Estado || x.estado || '').toLowerCase() === 'activo';
   });
@@ -2261,7 +2310,7 @@ function ingActualizarAcumulado() {
   ingresoSalaRegistros.forEach(function(r) {
     var rFinca = String(r.Finca || r.finca || '');
     var rLote = String(r.Lote || r.lote || '');
-    if (rFinca !== String(finca) || rLote !== loteLabel) return;
+    if (!mismaFinca(rFinca, finca) || rLote !== loteLabel) return;
     var rCantidad = Number(r.Cantidad || r.cantidad || 0) || 0;
     var rDescarte = String(r.Descarte || r.descarte || '').trim();
     var rTipo = String(r.Tipo_Flor || r.tipo_flor || r.TipoFlor || r.tipoFlor || '').trim();
@@ -2505,7 +2554,7 @@ function ingLimpiar() {
 // ===== DESPACHOS MODULE =====
 // Comercializadoras y variedades (siempre se muestran en orden alfabetico).
 var DESP_COMERCIALIZADORAS = ['American Flowers', 'Blooming Mountain', 'Condor Andino'];
-var DESP_VARIEDADES = ['Blanca', 'Esmeralda', 'Lemon', 'Shocking'];
+var DESP_VARIEDADES = ['Blanca', 'Esmeralda', 'Lemon', 'Shocking', 'Variegada'];
 
 // Lider de sala segun la finca. Las demas fincas se agregan despues: basta
 // con sumar una linea aqui (la lista de cada finca puede tener varios nombres).
