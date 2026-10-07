@@ -47,6 +47,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
 .filter-bar { display: flex; gap: 6px; margin-bottom: 1.25rem; flex-wrap: wrap; }
 .fb { font-size: 12px; font-family: 'DM Sans', sans-serif; padding: 5px 14px; border-radius: 20px; border: 1px solid var(--border); background: var(--white); color: var(--ink-mid); cursor: pointer; }
 .fb.on { background: var(--verde-light); border-color: var(--verde-mid); color: var(--verde-dark); font-weight: 500; }
+.fb-label { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--ink-soft); align-self: center; padding-right: 2px; }
 
 .lote-card { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 10px; }
 .lote-card:hover { border-color: var(--verde-mid); }
@@ -164,6 +165,7 @@ actualizarEstadoConexion();
     <button class="fb" data-f="Flor Madera">Flor Madera</button>
     <button class="fb" data-f="La Reserva">La Reserva</button>
   </div>
+  <div class="filter-bar" id="filter-variedad" style="margin-top:-0.75rem;"></div>
   <div id="lotes-list"></div>
 </div>
 
@@ -299,6 +301,8 @@ var WS = 'https://script.google.com/macros/s/AKfycbwOaernLHGUZQOOymVFCFPyAEB6RgM
 var lotes = [];
 var preparaciones = [];
 var loteFilter = 'activo';
+// Filtro por variedad: se combina con el de estado/finca (no lo reemplaza).
+var varFilter = 'todas';
 var expandedPrep = {};
 var reprogramarId = null;
 var editarId = null;
@@ -369,6 +373,7 @@ window.addEventListener('DOMContentLoaded', function() {
   document.getElementById('hdate').textContent = new Date().toLocaleDateString('es-CO', {weekday:'long', day:'numeric', month:'long'});
   actualizarOpcionesVariedad();
   actualizarOpcionesLoteNum();
+  renderFiltroVariedad();
   initFilters();
   initFab();
   initModal();
@@ -603,11 +608,31 @@ function actualizarHints() {
   });
 }
 
+// Dibuja la fila de filtro por variedad: "Todas" + cada variedad en orden alfabetico.
+function renderFiltroVariedad() {
+  var cont = document.getElementById('filter-variedad');
+  if (!cont) return;
+  cont.innerHTML = '';
+  var etiqueta = document.createElement('span');
+  etiqueta.className = 'fb-label';
+  etiqueta.textContent = 'Variedad';
+  cont.appendChild(etiqueta);
+  ['todas'].concat(VARIEDADES_TODAS.slice().sort(new Intl.Collator('es', { sensitivity: 'base' }).compare)).forEach(function(v) {
+    var b = document.createElement('button');
+    b.className = 'fb' + (v === varFilter ? ' on' : '');
+    b.dataset.v = v;
+    b.textContent = v === 'todas' ? 'Todas' : v;
+    cont.appendChild(b);
+  });
+}
+
 function initFilters() {
   document.querySelectorAll('.fb').forEach(function(b) {
     b.addEventListener('click', function() {
-      loteFilter = this.dataset.f;
-      document.querySelectorAll('.fb').forEach(function(x) { x.classList.remove('on'); });
+      // Cada fila tiene su propia seleccion: estado/finca (data-f) y variedad (data-v).
+      if (this.dataset.v !== undefined) varFilter = this.dataset.v;
+      else loteFilter = this.dataset.f;
+      this.parentNode.querySelectorAll('.fb').forEach(function(x) { x.classList.remove('on'); });
       this.classList.add('on');
       renderLotes();
     });
@@ -912,8 +937,17 @@ function renderLotes() {
   else if (loteFilter === 'inactivo') vis = lotes.filter(function(l) { return (l.Estado || '').toLowerCase() === 'inactivo'; });
   else if (loteFilter !== 'todos') vis = lotes.filter(function(l) { return (l.Finca || l.finca || '') === loteFilter; });
 
+  if (varFilter !== 'todas') {
+    vis = vis.filter(function(l) {
+      return String(l.Variedad || l.variedad || '').trim().toLowerCase() === varFilter.toLowerCase();
+    });
+  }
+
   var container = document.getElementById('lotes-list');
-  if (!vis.length) { container.innerHTML = '<div class="empty">No hay lotes aqui todavia</div>'; return; }
+  if (!vis.length) {
+    container.innerHTML = '<div class="empty">' + (varFilter !== 'todas' ? 'No hay lotes de ' + varFilter + ' con los filtros elegidos' : 'No hay lotes aqui todavia') + '</div>';
+    return;
+  }
 
   vis.sort(function(a, b) {
     var sa = calcSemanaCiclo(getISO(a.Fecha_Inicio || a.fecha_inicio || ''));
