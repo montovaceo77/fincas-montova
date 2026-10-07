@@ -168,6 +168,9 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
 .sev-track { position: relative; height: 10px; border-radius: 5px; background: #EAEAEA; margin: 0 10px; touch-action: none; }
 .sev-track-fill { position: absolute; left: 0; top: 0; height: 100%; border-radius: 5px; background: transparent; transition: width 0.1s; }
 .sev-thumb { position: absolute; top: 50%; width: 24px; height: 24px; border-radius: 50%; transform: translate(-12px, -50%); border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.3); transition: left 0.1s, background 0.1s; }
+/* Zona para agarrar el deslizador: mas alta que la barra (10px) para que sea facil de tocar y arrastrar con el dedo.
+   El margen negativo compensa el relleno, asi el diseno no se mueve. */
+.sev-hit { padding: 10px 0; margin: -10px 0; touch-action: none; cursor: pointer; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
 .sev-bottom-row { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
 .sev-label { font-size: 13px; font-weight: 700; }
 .sev-clear { font-size: 12px; color: var(--ink-soft); cursor: pointer; text-decoration: underline; }
@@ -858,64 +861,28 @@ function buildSeverityCard(item, n, sevState) {
   title.textContent = item;
   wrap.appendChild(title);
 
-  var touched = Object.prototype.hasOwnProperty.call(sevState, item);
-  var nivel = touched ? sevState[item] : null;
+  var hit = document.createElement('div');   // zona de agarre (ver .sev-hit)
+  hit.className = 'sev-hit';
 
   var track = document.createElement('div');
   track.className = 'sev-track';
 
   var fill = document.createElement('div');
   fill.className = 'sev-track-fill';
-  if (touched) {
-    fill.style.width = ((nivel + 1) / 3 * 100) + '%';
-    fill.style.background = NIVEL_COLORES[nivel];
-  } else {
-    fill.style.width = '0%';
-  }
   track.appendChild(fill);
 
   var thumb = document.createElement('div');
   thumb.className = 'sev-thumb';
-  thumb.style.left = touched ? (((nivel * 2 + 1) / 6) * 100) + '%' : '3%';
-  thumb.style.background = touched ? NIVEL_COLORES[nivel] : '#B9C7BF';
   track.appendChild(thumb);
 
-  function setNivelFromClientX(clientX) {
-    // La pantalla se redibuja cada vez que cambia un nivel, y el navegador
-    // sigue avisando de los movimientos del dedo al control VIEJO, que ya no
-    // esta en pantalla y mide 0 de ancho: la cuenta daba "Severo" o un valor
-    // que no existe. Un control que ya no esta en pantalla se ignora.
-    if (!document.body.contains(track)) return;
-    var rect = track.getBoundingClientRect();
-    if (!rect.width) return;
-    var pct = (clientX - rect.left) / rect.width;
-    if (isNaN(pct)) return;
-    if (pct < 0) pct = 0;
-    if (pct > 1) pct = 1;
-    var lvl = Math.round(pct * 2);
-    sevState[item] = lvl;
-    render();
-  }
+  hit.appendChild(track);
+  wrap.appendChild(hit);
 
-  track.addEventListener('click', function(e) {
-    setNivelFromClientX(e.clientX);
-  });
-  track.addEventListener('touchstart', function(e) {
-    e.preventDefault();
-    setNivelFromClientX(e.touches[0].clientX);
-  }, {passive: false});
-  track.addEventListener('touchmove', function(e) {
-    e.preventDefault();
-    setNivelFromClientX(e.touches[0].clientX);
-  }, {passive: false});
-
-  wrap.appendChild(track);
-
-  if (touched) {
-    var lbl = document.createElement('div');
+  // Fila de abajo (nivel + "Quitar"): se crea la primera vez que se marca un nivel.
+  var lbl = null;
+  function crearFilaInferior() {
+    lbl = document.createElement('div');
     lbl.className = 'sev-label';
-    lbl.style.color = NIVEL_COLORES[nivel];
-    lbl.textContent = NIVELES[nivel];
     var clearBtn = document.createElement('span');
     clearBtn.className = 'sev-clear';
     clearBtn.textContent = 'Quitar';
@@ -929,6 +896,82 @@ function buildSeverityCard(item, n, sevState) {
     row.appendChild(lbl);
     row.appendChild(clearBtn);
     wrap.appendChild(row);
+  }
+
+  // Pinta el estado actual (barra, bolita y etiqueta) DIRECTAMENTE sobre estos
+  // elementos, sin redibujar la pantalla. Asi el control no se destruye en
+  // medio del gesto y se puede ARRASTRAR el dedo para elegir el nivel.
+  function pintar() {
+    var tocado = Object.prototype.hasOwnProperty.call(sevState, item);
+    if (!tocado) {
+      fill.style.width = '0%';
+      thumb.style.left = '3%';
+      thumb.style.background = '#B9C7BF';
+      return;
+    }
+    var nivel = sevState[item];
+    fill.style.width = ((nivel + 1) / 3 * 100) + '%';
+    fill.style.background = NIVEL_COLORES[nivel];
+    thumb.style.left = (((nivel * 2 + 1) / 6) * 100) + '%';
+    thumb.style.background = NIVEL_COLORES[nivel];
+    if (!lbl) crearFilaInferior();
+    lbl.style.color = NIVEL_COLORES[nivel];
+    lbl.textContent = NIVELES[nivel];
+  }
+
+  // Nivel (0 Leve, 1 Moderado, 2 Severo) segun donde esta el dedo sobre la barra.
+  // Devuelve null si no se puede calcular (control fuera de pantalla o sin ancho).
+  function nivelDesdeX(clientX) {
+    if (!document.body.contains(track)) return null;
+    var rect = track.getBoundingClientRect();
+    if (!rect.width) return null;
+    var pct = (clientX - rect.left) / rect.width;
+    if (isNaN(pct)) return null;
+    if (pct < 0) pct = 0;
+    if (pct > 1) pct = 1;
+    return Math.round(pct * 2);
+  }
+
+  function mover(clientX) {
+    var lvl = nivelDesdeX(clientX);
+    if (lvl === null) return;
+    sevState[item] = lvl;
+    pintar();
+  }
+
+  pintar();
+
+  if (window.PointerEvent) {
+    // Dedo o mouse: se puede tocar o arrastrar. Mientras se arrastra solo se
+    // repinta este control; la pantalla se redibuja UNA vez, al soltar, para
+    // actualizar el resto (lista de plagas del punto, boton Guardar...).
+    var arrastrando = false, puntero = null;
+    hit.addEventListener('pointerdown', function(e) {
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      arrastrando = true;
+      puntero = e.pointerId;
+      try { if (hit.setPointerCapture) hit.setPointerCapture(e.pointerId); } catch (err) {}
+      e.preventDefault();
+      mover(e.clientX);
+    });
+    hit.addEventListener('pointermove', function(e) {
+      if (arrastrando && e.pointerId === puntero) mover(e.clientX);
+    });
+    var soltar = function(e) {
+      if (!arrastrando || e.pointerId !== puntero) return;
+      arrastrando = false;
+      try { if (hit.releasePointerCapture) hit.releasePointerCapture(e.pointerId); } catch (err) {}
+      render();
+    };
+    hit.addEventListener('pointerup', soltar);
+    hit.addEventListener('pointercancel', soltar);
+    hit.addEventListener('lostpointercapture', soltar);
+  } else {
+    // Navegadores muy antiguos sin eventos de puntero: solo tocar.
+    hit.addEventListener('click', function(e) {
+      mover(e.clientX);
+      render();
+    });
   }
 
   return wrap;
