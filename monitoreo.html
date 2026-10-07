@@ -725,15 +725,24 @@ function buildFincaStep() {
 
 // Compara dos codigos de lote para ordenarlos. Los numericos van primero
 // (1, 2, 3... o con punto, como en Flor Madera: 1.1, 1.2 ... 1.10),
-// comparando cada parte como NUMERO (asi 1.2 va antes que 1.10); los
-// especiales con letras (E1...) van al final, como antes.
+// comparando cada parte como NUMERO (asi 1.2 va antes que 1.10). Los
+// especiales con letras van al final, agrupados por su letra y, dentro de
+// cada letra, por numero: E1...E7, L.1...L.7, S1...S15 (Flor de Agua 3) o
+// E1...E11 (Oasis Garden).
 function compararCodigosLote(a, b) {
   a = String(a); b = String(b);
   var esEspecialA = /[a-zA-Z]/.test(a);
   var esEspecialB = /[a-zA-Z]/.test(b);
   if (esEspecialA !== esEspecialB) return esEspecialA ? 1 : -1;
-  var pa = a.replace(/[^0-9.\-]/g, '').split(/[.\-]/).map(function(n) { return parseInt(n, 10) || 0; });
-  var pb = b.replace(/[^0-9.\-]/g, '').split(/[.\-]/).map(function(n) { return parseInt(n, 10) || 0; });
+  if (esEspecialA) {
+    var la = a.replace(/[^a-zA-Z]/g, '').toUpperCase();
+    var lb = b.replace(/[^a-zA-Z]/g, '').toUpperCase();
+    if (la !== lb) return la < lb ? -1 : 1;
+  }
+  var partes = function(s) {
+    return s.replace(/[^0-9.\-]/g, '').split(/[.\-]/).filter(function(p) { return p !== ''; }).map(function(n) { return parseInt(n, 10) || 0; });
+  };
+  var pa = partes(a), pb = partes(b);
   for (var i = 0; i < Math.max(pa.length, pb.length); i++) {
     var dif = (pa[i] || 0) - (pb[i] || 0);
     if (dif !== 0) return dif;
