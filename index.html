@@ -1270,10 +1270,9 @@ function renderLotes() {
       <div id="ing-descarte-motivo-container" style="display:none; margin-top:14px;">
         <label style="font-size:13px; font-weight:600; color:var(--ink); display:block; margin-bottom:6px;">Motivo del descarte</label>
         <div class="chk-list" id="ing-motivos-lista">
-          <div class="chk-list-title">SELECCIONA UNO O MAS MOTIVOS</div>
+          <div class="chk-list-title">MARCA CADA MOTIVO Y ESCRIBE SU CANTIDAD</div>
         </div>
-        <label style="font-size:12px; font-weight:600; color:var(--rose); display:block; margin-top:10px; margin-bottom:4px;">Cantidad de descarte</label>
-        <input type="text" inputmode="numeric" pattern="[0-9]*" id="ing-cant-descarte" placeholder="Ej: 50" style="width:100%; padding:9px 12px; font-size:14px; border:1px solid var(--rose); border-radius:8px; color:var(--ink); background:var(--rose-bg);" />
+        <div id="ing-descarte-total" style="font-size:12px; font-weight:600; color:var(--rose); margin-top:8px;"></div>
       </div>
       <div id="ing-acumulado-info"></div>
     </div>
@@ -1337,13 +1336,7 @@ function renderLotes() {
 
     <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
       <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 6</span>
-      <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:12px;">Variedad</label>
-      <select id="desp-variedad" style="width:100%; padding:10px 12px; font-size:15px; border:1px solid var(--border); border-radius:8px; color:var(--ink); background:#fafafa;"></select>
-    </div>
-
-    <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
-      <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 7</span>
-      <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:4px;">Tipo de flor</label>
+      <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:4px;">Producto</label>
       <p style="font-size:12px; color:var(--ink-mid); margin-bottom:8px;">Puedes elegir varios y poner la cantidad de cada uno</p>
       <div id="desp-tipo-lista" style="display:flex; flex-direction:column; gap:8px;"></div>
       <div id="desp-total" style="display:flex; justify-content:space-between; align-items:center; margin-top:14px; background:var(--verde-light); border:1px solid var(--verde-mid); border-radius:10px; padding:12px 14px;">
@@ -1353,14 +1346,14 @@ function renderLotes() {
     </div>
 
     <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
-      <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 8</span>
+      <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 7</span>
       <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:12px;">Lider de sala</label>
       <select id="desp-lider" style="width:100%; padding:10px 12px; font-size:15px; border:1px solid var(--border); border-radius:8px; color:var(--ink); background:#fafafa; display:none;"></select>
       <div id="desp-lider-nota" style="font-size:13px; color:var(--ink-soft); font-style:italic;">Primero selecciona la finca</div>
     </div>
 
     <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
-      <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 9</span>
+      <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 8</span>
       <span style="display:inline-block; background:#e5e7eb; color:#9ca3af; font-size:10px; padding:3px 10px; border-radius:6px; margin-left:6px; letter-spacing:1px;">Opcional</span>
       <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-top:8px; margin-bottom:8px;">Novedades o comentarios</label>
       <textarea id="desp-novedades" rows="4" placeholder="Escribe aqui si necesitas especificar algo mas..." style="width:100%; padding:10px 12px; font-size:15px; border:1px solid var(--border); border-radius:8px; color:var(--ink); background:#fafafa; resize:vertical; font-family:inherit; line-height:1.5;"></textarea>
@@ -2229,12 +2222,12 @@ function labLimpiar() {
 })();
 
 // ===== INGRESO A SALA MODULE =====
-var ING_TIPOS = ['Minigreen', 'Selec', 'Premium', 'Jumbo', 'Fancy'];
+var ING_TIPOS = ['Mini', 'Selec', 'Premium', 'Jumbo', 'Fancy'];
 
-// Escrituras ANTERIORES de un tipo de flor. "Mini" ahora se llama
-// "Minigreen": los registros viejos del Sheet siguen diciendo "Mini" y el
-// acumulado los suma como Minigreen para que no se pierdan.
-var ING_TIPOS_ANTIGUOS = { 'Mini': 'Minigreen' };
+// Escrituras ANTERIORES de un tipo de flor. El tipo se llama "Mini"; durante
+// un tiempo se llamo "Minigreen" y esos registros del Sheet se suman como
+// Mini en el acumulado para que no se pierdan.
+var ING_TIPOS_ANTIGUOS = { 'Minigreen': 'Mini' };
 function ingNombreTipoActual(tipo) {
   return Object.prototype.hasOwnProperty.call(ING_TIPOS_ANTIGUOS, tipo) ? ING_TIPOS_ANTIGUOS[tipo] : tipo;
 }
@@ -2243,12 +2236,27 @@ function ingNombreTipoActual(tipo) {
 // basta con sumarlo a esta lista: el formulario lo dibuja solo.
 var ING_MOTIVOS = ['Babosa', 'Ceniza', 'Daño mecánico', 'Flor pasada', 'Pedúnculo largo', 'Plaga', 'Punto rojo', 'Secadera', 'Tallo leñoso', 'Tallo torcido'];
 
+var ingDescMotivos = {}; // cantidad de descarte por cada motivo marcado
+
+function ingTotalDescarteForm() {
+  return Object.keys(ingDescMotivos).reduce(function(t, m) { return t + (parseInt(ingDescMotivos[m], 10) || 0); }, 0);
+}
+
+function ingActualizarTotalDescarte() {
+  var el = document.getElementById('ing-descarte-total');
+  if (!el) return;
+  var t = ingTotalDescarteForm();
+  el.textContent = t ? 'Total descarte: ' + t : '';
+}
+
 function ingRenderMotivos() {
   var c = document.getElementById('ing-motivos-lista');
   if (!c) return;
   ING_MOTIVOS.forEach(function(motivo) {
+    var fila = document.createElement('div');
+    fila.className = 'chk-item';
     var label = document.createElement('label');
-    label.className = 'chk-item';
+    label.style.cssText = 'display:flex; align-items:center; gap:8px; flex:1; cursor:pointer;';
     var input = document.createElement('input');
     input.type = 'checkbox';
     input.value = motivo;
@@ -2256,7 +2264,34 @@ function ingRenderMotivos() {
     span.textContent = motivo;
     label.appendChild(input);
     label.appendChild(span);
-    c.appendChild(label);
+    var cant = document.createElement('input');
+    cant.type = 'text';
+    cant.setAttribute('inputmode', 'numeric');
+    cant.setAttribute('pattern', '[0-9]*');
+    cant.className = 'ing-motivo-cant';
+    cant.setAttribute('data-motivo', motivo);
+    cant.placeholder = 'Cant.';
+    cant.style.cssText = 'display:none; width:84px; padding:6px 8px; font-size:14px; border:1px solid var(--rose); border-radius:8px; color:var(--ink); background:var(--rose-bg);';
+    input.addEventListener('change', function() {
+      if (input.checked) {
+        cant.style.display = 'block';
+        cant.focus();
+      } else {
+        cant.style.display = 'none';
+        cant.value = '';
+        delete ingDescMotivos[motivo];
+        ingActualizarTotalDescarte();
+        ingActualizarAcumulado();
+      }
+    });
+    cant.addEventListener('input', function() {
+      cant.value = cant.value.replace(/[^0-9]/g, '');
+      ingDescMotivos[motivo] = cant.value;
+      ingActualizarTotalDescarte();
+    });
+    fila.appendChild(label);
+    fila.appendChild(cant);
+    c.appendChild(fila);
   });
 }
 var ingSelTipo = [];
@@ -2369,12 +2404,12 @@ function ingActualizarAcumulado() {
 }
 
 // Activa o desactiva el interruptor de Descarte. Ya no excluye los
-// tipos de flor marcados: puedes tener, por ejemplo, Minigreen + Premium +
+// tipos de flor marcados: puedes tener, por ejemplo, Mini + Premium +
 // Descarte en el mismo registro, cada uno con su propia cantidad.
 function ingToggleDescarte() {
   ingDescarteActivo = !ingDescarteActivo;
   if (!ingDescarteActivo) {
-    delete ingCantidades['Descarte'];
+    ingDescMotivos = {};
   }
   ingActualizarDescarteUI();
 }
@@ -2382,7 +2417,6 @@ function ingToggleDescarte() {
 function ingActualizarDescarteUI() {
   var btn = document.getElementById('ing-descarte-btn');
   var cont = document.getElementById('ing-descarte-motivo-container');
-  var inputCant = document.getElementById('ing-cant-descarte');
   if (btn) {
     btn.style.background = ingDescarteActivo ? 'var(--rose-bg)' : '#fff';
     btn.style.borderColor = ingDescarteActivo ? 'var(--rose)' : 'var(--border)';
@@ -2393,8 +2427,13 @@ function ingActualizarDescarteUI() {
     Array.prototype.forEach.call(document.querySelectorAll('#ing-motivos-lista input[type=checkbox]'), function(el) {
       el.checked = false;
     });
+    Array.prototype.forEach.call(document.querySelectorAll('#ing-motivos-lista .ing-motivo-cant'), function(el) {
+      el.value = '';
+      el.style.display = 'none';
+    });
+    ingDescMotivos = {};
   }
-  if (inputCant) inputCant.value = ingCantidades['Descarte'] || '';
+  ingActualizarTotalDescarte();
 }
 
 function ingRenderTipos() {
@@ -2464,13 +2503,13 @@ function ingGuardar() {
   // Cada tipo marcado (y Descarte, si esta activo) necesita su propia
   // cantidad antes de guardar.
   var items = ingSelTipo.slice();
-  if (ingDescarteActivo) items.push('Descarte');
   var sinCantidad = items.filter(function(item) { return !ingCantidades[item] || !ingCantidades[item].trim(); });
   if (sinCantidad.length) {
     alert('Falta la cantidad de: ' + sinCantidad.join(', '));
     return;
   }
 
+  // Descarte: cada motivo marcado lleva SU propia cantidad.
   var motivos = [];
   if (ingDescarteActivo) {
     Array.prototype.forEach.call(document.querySelectorAll('#ing-motivos-lista input[type=checkbox]'), function(el) {
@@ -2478,6 +2517,11 @@ function ingGuardar() {
     });
     if (!motivos.length) {
       alert('Selecciona al menos un motivo del descarte.');
+      return;
+    }
+    var sinCantMotivo = motivos.filter(function(m) { return !(parseInt(ingDescMotivos[m], 10) > 0); });
+    if (sinCantMotivo.length) {
+      alert('Falta la cantidad de descarte de: ' + sinCantMotivo.join(', '));
       return;
     }
   }
@@ -2493,15 +2537,21 @@ function ingGuardar() {
   document.getElementById('ing-error').style.display = 'none';
 
   var loteLabel = 'Lote ' + loteNum;
-  var motivosTxt = motivos.join(', ');
 
   // Guardamos una copia de las cantidades ANTES de limpiar el
   // formulario (ingResetCampos borra ingCantidades casi de inmediato,
   // y el envio de abajo sigue corriendo en segundo plano despues de
   // eso) para que cada registro mande la cantidad correcta y no una ya
   // borrada.
-  var cantidadesEnvio = {};
-  items.forEach(function(item) { cantidadesEnvio[item] = ingCantidades[item]; });
+  var envios = items.map(function(item) {
+    return { tipo_flor: item, cantidad: ingCantidades[item], descarte: '', motivo_descarte: '' };
+  });
+  // Un registro por cada motivo de descarte, con su cantidad.
+  motivos.forEach(function(m) {
+    envios.push({ tipo_flor: '', cantidad: String(parseInt(ingDescMotivos[m], 10)), descarte: 'Si', motivo_descarte: m });
+  });
+  var resumenOk = items.slice();
+  if (motivos.length) resumenOk.push('Descarte (' + motivos.join(', ') + ')');
 
   // Un registro por cada tipo marcado (y uno para Descarte si aplica),
   // para que en el Sheet quede desglosado por tipo. Se mandan uno
@@ -2509,18 +2559,16 @@ function ingGuardar() {
   // perder filas si le llegan varias escrituras al mismo tiempo. Esto
   // no se espera aqui, asi que la pantalla sigue sintiendose instantanea.
   (async function() {
-    for (var i = 0; i < items.length; i++) {
-      var item = items[i];
-      var esDescarte = item === 'Descarte';
+    for (var i = 0; i < envios.length; i++) {
       await postToWS({
         action: 'addIngresoSala',
         fecha: fecha,
         finca: finca,
         lote: loteLabel,
-        tipo_flor: esDescarte ? '' : item,
-        cantidad: cantidadesEnvio[item],
-        descarte: esDescarte ? 'Si' : '',
-        motivo_descarte: esDescarte ? motivosTxt : ''
+        tipo_flor: envios[i].tipo_flor,
+        cantidad: envios[i].cantidad,
+        descarte: envios[i].descarte,
+        motivo_descarte: envios[i].motivo_descarte
       });
     }
     // El refresco se programa AQUI, despues de que de verdad termino de
@@ -2531,7 +2579,7 @@ function ingGuardar() {
     setTimeout(fetchIngresoSala, 1500);
   })();
 
-  document.getElementById('ing-ok-txt').textContent = finca + ' · ' + loteLabel + ' · ' + items.join(', ');
+  document.getElementById('ing-ok-txt').textContent = finca + ' · ' + loteLabel + ' · ' + resumenOk.join(', ');
   document.getElementById('ing-ok').style.display = 'block';
   ingResetCampos();
 }
@@ -2540,6 +2588,7 @@ function ingResetCampos() {
   ingSelTipo.length = 0;
   ingDescarteActivo = false;
   ingCantidades = {};
+  ingDescMotivos = {};
   document.getElementById('ing-fecha').value = new Date().toISOString().split('T')[0];
   document.getElementById('ing-finca').selectedIndex = 0;
   ingActualizarFechaSemana();
@@ -2573,11 +2622,6 @@ function ingLimpiar() {
     ingActualizarInfoLote();
     ingActualizarAcumulado();
   });
-  document.getElementById('ing-cant-descarte').addEventListener('input', function() {
-    this.value = this.value.replace(/[^0-9]/g, '');
-    ingCantidades['Descarte'] = this.value;
-    ingActualizarAcumulado();
-  });
   setTimeout(fetchIngresoSala, 1000);
   ingRenderMotivos();
   ingRenderTipos();
@@ -2586,9 +2630,37 @@ function ingLimpiar() {
 })();
 
 // ===== DESPACHOS MODULE =====
-// Comercializadoras y variedades (siempre se muestran en orden alfabetico).
+// Comercializadoras y productos (siempre se muestran en orden alfabetico).
 var DESP_COMERCIALIZADORAS = ['American Flowers', 'Blooming Mountain', 'Condor Andino'];
-var DESP_VARIEDADES = ['Blanca', 'Esmeralda', 'Lemon', 'Shocking', 'Variegada'];
+
+// Productos de despacho: el nombre COMERCIAL (el que usan las comercializadoras
+// y con el que se pone el precio) y, detras, la variedad y el tipo de flor
+// con los mismos terminos de Ingreso a Sala. Asi lo que ingresa a sala y lo
+// que se despacha se puede comparar. "Tinted ..." es la misma flor Blanca
+// (mismo tipo) pero teñida antes de enviarla: lleva su propio nombre comercial.
+// Para agregar un producto nuevo basta con sumar una linea aqui.
+var DESP_PRODUCTOS = [
+  { nombre: 'Esmeralda Premium', variedad: 'Esmeralda', tipo: 'Premium' },
+  { nombre: 'Esmeralda Select',  variedad: 'Esmeralda', tipo: 'Selec' },
+  { nombre: 'Fancy White',       variedad: 'Blanca',    tipo: 'Fancy' },
+  { nombre: 'Lemon Jumbo',       variedad: 'Lemon',     tipo: 'Jumbo' },
+  { nombre: 'Lemon Premium',     variedad: 'Lemon',     tipo: 'Premium' },
+  { nombre: 'Lemon Select',      variedad: 'Lemon',     tipo: 'Selec' },
+  { nombre: 'Mini White',        variedad: 'Blanca',    tipo: 'Mini' },
+  { nombre: 'Shocking Premium',  variedad: 'Shocking',  tipo: 'Premium' },
+  { nombre: 'Shocking Select',   variedad: 'Shocking',  tipo: 'Selec' },
+  { nombre: 'Tinted Jumbo',      variedad: 'Blanca',    tipo: 'Jumbo' },
+  { nombre: 'Tinted Premium',    variedad: 'Blanca',    tipo: 'Premium' },
+  { nombre: 'Tinted Select',     variedad: 'Blanca',    tipo: 'Selec' },
+  { nombre: 'Variegada',         variedad: 'Variegada', tipo: '' },
+  { nombre: 'White Jumbo',       variedad: 'Blanca',    tipo: 'Jumbo' },
+  { nombre: 'White Premium',     variedad: 'Blanca',    tipo: 'Premium' },
+  { nombre: 'White Select',      variedad: 'Blanca',    tipo: 'Selec' }
+];
+function despProductosOrdenados() {
+  var col = new Intl.Collator('es', { sensitivity: 'base' });
+  return DESP_PRODUCTOS.slice().sort(function(a, b) { return col.compare(a.nombre, b.nombre); });
+}
 
 // Lider de sala segun la finca. Las demas fincas se agregan despues: basta
 // con sumar una linea aqui (la lista de cada finca puede tener varios nombres).
@@ -2597,7 +2669,7 @@ var DESP_LIDERES = {
   'Flor de Agua 3': ['Maryory Lopez Rodriguez']
 };
 
-var despSelTipo = [];
+var despSelProd = [];
 var despCantidades = {};
 
 function despOrdenAlfabetico(lista) {
@@ -2669,7 +2741,7 @@ function despActualizarLider() {
 }
 
 function despTotal() {
-  return despSelTipo.reduce(function(t, tipo) { return t + (parseInt(despCantidades[tipo], 10) || 0); }, 0);
+  return despSelProd.reduce(function(t, nombre) { return t + (parseInt(despCantidades[nombre], 10) || 0); }, 0);
 }
 
 function despActualizarTotal() {
@@ -2677,16 +2749,17 @@ function despActualizarTotal() {
   if (el) el.textContent = despTotal().toLocaleString('es-CO');
 }
 
-// Mismos tipos de flor que Ingreso a Sala (ING_TIPOS): se pueden marcar
-// varios y cada uno muestra su cuadro de cantidad. El total se actualiza
-// solo al final de la lista.
+// Lista de productos de despacho (DESP_PRODUCTOS, en orden alfabetico): se
+// pueden marcar varios y cada uno muestra su cuadro de cantidad. El total se
+// actualiza solo al final de la lista.
 function despRenderTipos() {
   var c = document.getElementById('desp-tipo-lista');
   if (!c) return;
   c.innerHTML = '';
-  ING_TIPOS.forEach(function(item) {
+  despProductosOrdenados().forEach(function(prod) {
+    var item = prod.nombre;
     var btn = document.createElement('button');
-    var sel = despSelTipo.indexOf(item) !== -1;
+    var sel = despSelProd.indexOf(item) !== -1;
     btn.style.cssText = 'padding:10px 12px; font-size:13px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; background:'+(sel?'var(--verde-light)':'#fff')+'; border:1px solid '+(sel?'var(--verde-mid)':'var(--border)')+'; color:'+(sel?'var(--verde-dark)':'var(--ink-mid)')+'; font-weight:'+(sel?'600':'400')+'; width:100%; text-align:left;';
     var chk = document.createElement('div');
     chk.style.cssText = 'width:20px; height:20px; border-radius:50%; border:1.5px solid '+(sel?'var(--verde-dark)':'var(--border)')+'; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:11px; background:'+(sel?'var(--verde-dark)':'transparent')+'; color:#fff;';
@@ -2696,12 +2769,12 @@ function despRenderTipos() {
     btn.appendChild(chk);
     btn.appendChild(sp);
     btn.onclick = function() {
-      var idx = despSelTipo.indexOf(item);
+      var idx = despSelProd.indexOf(item);
       if (idx > -1) {
-        despSelTipo.splice(idx, 1);
+        despSelProd.splice(idx, 1);
         delete despCantidades[item];
       } else {
-        despSelTipo.push(item);
+        despSelProd.push(item);
       }
       despRenderTipos();
     };
@@ -2743,7 +2816,6 @@ function despGuardar() {
   var fito = despLimpiarTexto(document.getElementById('desp-fito').value);
   var despacho = despLimpiarTexto(document.getElementById('desp-despacho').value);
   var comercializadora = document.getElementById('desp-comercializadora').value;
-  var variedad = document.getElementById('desp-variedad').value;
   var novedades = String(document.getElementById('desp-novedades').value || '').trim();
   var hayLideres = !!(DESP_LIDERES[finca] && DESP_LIDERES[finca].length);
   var lider = hayLideres ? document.getElementById('desp-lider').value : '';
@@ -2754,14 +2826,13 @@ function despGuardar() {
   if (!fito) faltan.push('# Fito');
   if (!despacho) faltan.push('Despacho');
   if (!comercializadora) faltan.push('Comercializadora');
-  if (!variedad) faltan.push('Variedad');
-  if (!despSelTipo.length) faltan.push('Tipo de flor');
+  if (!despSelProd.length) faltan.push('Producto');
   if (hayLideres && !lider) faltan.push('Lider de sala');
   if (faltan.length) {
     alert('Falta completar: ' + faltan.join(', ') + '.');
     return;
   }
-  var sinCantidad = despSelTipo.filter(function(t) { return !(parseInt(despCantidades[t], 10) > 0); });
+  var sinCantidad = despSelProd.filter(function(t) { return !(parseInt(despCantidades[t], 10) > 0); });
   if (sinCantidad.length) {
     alert('Falta la cantidad de: ' + sinCantidad.join(', '));
     return;
@@ -2778,13 +2849,13 @@ function despGuardar() {
 
   // Foto de todo lo que se va a guardar, tomada ANTES de limpiar el formulario
   // (el envio sigue corriendo en segundo plano despues de limpiarlo).
-  var filas = ING_TIPOS.filter(function(t) { return despSelTipo.indexOf(t) !== -1; }).map(function(t) {
-    return { tipo: t, cantidad: String(parseInt(despCantidades[t], 10)) };
+  var filas = despProductosOrdenados().filter(function(p) { return despSelProd.indexOf(p.nombre) !== -1; }).map(function(p) {
+    return { nombre: p.nombre, variedad: p.variedad, tipo: p.tipo, cantidad: String(parseInt(despCantidades[p.nombre], 10)) };
   });
   var total = filas.reduce(function(s, f) { return s + parseInt(f.cantidad, 10); }, 0);
   var idDespacho = Date.now();   // mismo para todas las filas del despacho, para poder agruparlas en el Sheet
 
-  // TODAS las filas del despacho (una por tipo de flor) viajan juntas en UNA
+  // TODAS las filas del despacho (una por producto) viajan juntas en UNA
   // sola peticion, y el servidor las escribe de un solo golpe. Antes se
   // mandaban una detras de otra, esperando la respuesta de cada una: era lento
   // (los tiempos se sumaban) y, si la app se pausaba a mitad del envio, las
@@ -2797,10 +2868,9 @@ function despGuardar() {
     fito: fito,
     despacho: despacho,
     comercializadora: comercializadora,
-    variedad: variedad,
     lider_sala: lider,
     novedades: novedades,
-    filas: filas.map(function(f) { return { tipo_flor: f.tipo, cantidad: f.cantidad }; })
+    filas: filas.map(function(f) { return { nombre_comercial: f.nombre, variedad: f.variedad, tipo_flor: f.tipo, cantidad: f.cantidad }; })
   }).catch(function() {
     // postToWS ya reintenta una vez; si aun asi falla, no hay mas que hacer desde aqui
   });
@@ -2811,14 +2881,13 @@ function despGuardar() {
 }
 
 function despResetCampos() {
-  despSelTipo.length = 0;
+  despSelProd.length = 0;
   despCantidades = {};
   document.getElementById('desp-fecha').value = new Date().toISOString().split('T')[0];
   document.getElementById('desp-finca').selectedIndex = 0;
   document.getElementById('desp-fito').value = '';
   document.getElementById('desp-despacho').value = '';
   document.getElementById('desp-comercializadora').selectedIndex = 0;
-  document.getElementById('desp-variedad').selectedIndex = 0;
   document.getElementById('desp-novedades').value = '';
   despActualizarFechaSemana();
   despActualizarLider();
@@ -2838,7 +2907,6 @@ function despLimpiar() {
   despActualizarFechaSemana();
   document.getElementById('desp-finca').addEventListener('change', despActualizarLider);
   despPoblarSelect('desp-comercializadora', DESP_COMERCIALIZADORAS, 'Selecciona una comercializadora');
-  despPoblarSelect('desp-variedad', DESP_VARIEDADES, 'Selecciona una variedad');
   despActualizarLider();
   despRenderTipos();
 })();
