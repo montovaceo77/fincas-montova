@@ -2671,6 +2671,7 @@ var DESP_LIDERES = {
 
 var despSelProd = [];
 var despCantidades = {};
+var despEnfocarProd = null;
 
 function despOrdenAlfabetico(lista) {
   return lista.slice().sort(new Intl.Collator('es', { sensitivity: 'base' }).compare);
@@ -2756,11 +2757,15 @@ function despRenderTipos() {
   var c = document.getElementById('desp-tipo-lista');
   if (!c) return;
   c.innerHTML = '';
+  var enfocar = null;
   despProductosOrdenados().forEach(function(prod) {
     var item = prod.nombre;
-    var btn = document.createElement('button');
     var sel = despSelProd.indexOf(item) !== -1;
-    btn.style.cssText = 'padding:10px 12px; font-size:13px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; background:'+(sel?'var(--verde-light)':'#fff')+'; border:1px solid '+(sel?'var(--verde-mid)':'var(--border)')+'; color:'+(sel?'var(--verde-dark)':'var(--ink-mid)')+'; font-weight:'+(sel?'600':'400')+'; width:100%; text-align:left;';
+    // Una sola fila: el producto a la izquierda y, si esta marcado, su cantidad al frente.
+    var fila = document.createElement('div');
+    fila.style.cssText = 'display:flex; align-items:center; gap:8px; width:100%;';
+    var btn = document.createElement('button');
+    btn.style.cssText = 'flex:1; min-width:0; padding:10px 12px; font-size:13px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; background:'+(sel?'var(--verde-light)':'#fff')+'; border:1px solid '+(sel?'var(--verde-mid)':'var(--border)')+'; color:'+(sel?'var(--verde-dark)':'var(--ink-mid)')+'; font-weight:'+(sel?'600':'400')+'; text-align:left;';
     var chk = document.createElement('div');
     chk.style.cssText = 'width:20px; height:20px; border-radius:50%; border:1.5px solid '+(sel?'var(--verde-dark)':'var(--border)')+'; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:11px; background:'+(sel?'var(--verde-dark)':'transparent')+'; color:#fff;';
     chk.textContent = sel ? '✓' : '';
@@ -2775,34 +2780,34 @@ function despRenderTipos() {
         delete despCantidades[item];
       } else {
         despSelProd.push(item);
+        despEnfocarProd = item;
       }
       despRenderTipos();
     };
-    c.appendChild(btn);
+    fila.appendChild(btn);
 
     if (sel) {
-      var field = document.createElement('div');
-      field.style.cssText = 'margin-top:-2px;';
-      var label = document.createElement('label');
-      label.style.cssText = 'font-size:11px; color:var(--verde-dark); font-weight:600; display:block; margin:4px 0 4px 2px;';
-      label.textContent = 'Cantidad de ' + item;
       var input = document.createElement('input');
       input.type = 'text';
       input.inputMode = 'numeric';
       input.pattern = '[0-9]*';
-      input.placeholder = 'Ej: 150';
+      input.placeholder = 'Cant.';
+      input.setAttribute('aria-label', 'Cantidad de ' + item);
+      input.setAttribute('data-producto', item);
       input.value = despCantidades[item] || '';
-      input.style.cssText = 'width:100%; padding:9px 12px; font-size:14px; border:1px solid var(--verde-mid); border-radius:8px; color:var(--ink); background:var(--verde-pale);';
+      input.style.cssText = 'width:92px; flex-shrink:0; padding:9px 10px; font-size:14px; border:1px solid var(--verde-mid); border-radius:8px; color:var(--ink); background:var(--verde-pale);';
       input.addEventListener('input', function() {
         this.value = this.value.replace(/[^0-9]/g, '');
         despCantidades[item] = this.value;
         despActualizarTotal();
       });
-      field.appendChild(label);
-      field.appendChild(input);
-      c.appendChild(field);
+      fila.appendChild(input);
+      if (despEnfocarProd === item) enfocar = input;
     }
+    c.appendChild(fila);
   });
+  despEnfocarProd = null;
+  if (enfocar) enfocar.focus();
   despActualizarTotal();
 }
 
