@@ -539,6 +539,14 @@ function actualizarOpcionesLoteNum() {
   if (sigueValido) sel.value = valorActual;
 }
 
+// Separador de miles con punto (18367 -> 18.367). Solo para MOSTRAR: lo que se
+// guarda en el Sheets siempre son los numeros sin separador.
+function fmtMiles(n) {
+  var v = Math.round(Number(n) || 0);
+  var neg = v < 0; v = Math.abs(v);
+  return (neg ? '-' : '') + String(v).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+
 function calcSemanaAnio(fechaISO) {
   if (!fechaISO) return null;
   var d = new Date(fechaISO + 'T12:00:00');
@@ -2246,7 +2254,7 @@ function ingActualizarTotalDescarte() {
   var el = document.getElementById('ing-descarte-total');
   if (!el) return;
   var t = ingTotalDescarteForm();
-  el.textContent = t ? 'Total descarte: ' + t : '';
+  el.textContent = t ? 'Total descarte: ' + fmtMiles(t) : '';
 }
 
 function ingRenderMotivos() {
@@ -2376,6 +2384,15 @@ function ingActualizarAcumulado() {
   var totalDescarte = 0;
   var total = 0;
 
+  // Semana de la fecha que se esta ingresando (semana del año, lunes a domingo)
+  var fechaSel = document.getElementById('ing-fecha') ? document.getElementById('ing-fecha').value : '';
+  var semSel = fechaSel ? calcSemanaAnio(fechaSel) : null;
+  var anioSel = fechaSel ? new Date(fechaSel + 'T12:00:00').getFullYear() : null;
+  var semTipo = {};
+  ING_TIPOS.forEach(function(t) { semTipo[t] = 0; });
+  var semDescarte = 0;
+  var semTotal = 0;
+
   ingresoSalaRegistros.forEach(function(r) {
     var rFinca = String(r.Finca || r.finca || '');
     var rLote = String(r.Lote || r.lote || '');
@@ -2390,17 +2407,39 @@ function ingActualizarAcumulado() {
     } else if (porTipo.hasOwnProperty(rTipo)) {
       porTipo[rTipo] += rCantidad;
     }
+    // Mismo registro, pero solo si cae en la semana de la fecha elegida
+    if (semSel !== null) {
+      var rFecha = getISO(r.Fecha || r.fecha || '');
+      if (rFecha && calcSemanaAnio(rFecha) === semSel && new Date(rFecha + 'T12:00:00').getFullYear() === anioSel) {
+        semTotal += rCantidad;
+        if (rDescarte) {
+          semDescarte += rCantidad;
+        } else if (semTipo.hasOwnProperty(rTipo)) {
+          semTipo[rTipo] += rCantidad;
+        }
+      }
+    }
   });
 
   var filas = ING_TIPOS.map(function(t) {
-    return '<div style="display:flex; justify-content:space-between;"><span>' + t + '</span><strong>' + porTipo[t] + '</strong></div>';
+    return '<div style="display:flex; justify-content:space-between;"><span>' + t + '</span><strong>' + fmtMiles(porTipo[t]) + '</strong></div>';
   }).join('');
-  filas += '<div style="display:flex; justify-content:space-between; color:var(--rose);"><span>Descarte</span><strong>' + totalDescarte + '</strong></div>';
+  filas += '<div style="display:flex; justify-content:space-between; color:var(--rose);"><span>Descarte</span><strong>' + fmtMiles(totalDescarte) + '</strong></div>';
+
+  var filasSem = ING_TIPOS.map(function(t) {
+    return '<div style="display:flex; justify-content:space-between;"><span>' + t + '</span><strong>' + fmtMiles(semTipo[t]) + '</strong></div>';
+  }).join('');
+  filasSem += '<div style="display:flex; justify-content:space-between; color:var(--rose);"><span>Descarte</span><strong>' + fmtMiles(semDescarte) + '</strong></div>';
+  var bloqueSemana = semSel === null ? '' :
+    '<div id="ing-acumulado-semana" style="background:var(--verde-pale); border-radius:8px; padding:10px 12px; margin-top:8px; font-size:12px; color:var(--ink-mid); line-height:1.7;">' +
+    '<div style="font-weight:600; color:var(--ink); margin-bottom:4px;">Semana ' + semSel + ' / ' + anioSel + ' en este lote: ' + fmtMiles(semTotal) + '</div>' +
+    filasSem +
+    '</div>';
 
   info.innerHTML = '<div style="background:var(--verde-pale); border-radius:8px; padding:10px 12px; margin-top:8px; font-size:12px; color:var(--ink-mid); line-height:1.7;">' +
-    '<div style="font-weight:600; color:var(--ink); margin-bottom:4px;">Acumulado en este lote: ' + total + '</div>' +
+    '<div style="font-weight:600; color:var(--ink); margin-bottom:4px;">Acumulado en este lote: ' + fmtMiles(total) + '</div>' +
     filas +
-  '</div>';
+  '</div>' + bloqueSemana;
 }
 
 // Activa o desactiva el interruptor de Descarte. Ya no excluye los
@@ -2610,6 +2649,7 @@ function ingLimpiar() {
 (function() {
   document.getElementById('ing-fecha').value = new Date().toISOString().split('T')[0];
   document.getElementById('ing-fecha').addEventListener('change', ingActualizarFechaSemana);
+  document.getElementById('ing-fecha').addEventListener('change', ingActualizarAcumulado);
   ingActualizarFechaSemana();
   document.getElementById('ing-finca').addEventListener('change', function() {
     poblarIngLoteSelect();
@@ -2747,7 +2787,7 @@ function despTotal() {
 
 function despActualizarTotal() {
   var el = document.getElementById('desp-total-valor');
-  if (el) el.textContent = despTotal().toLocaleString('es-CO');
+  if (el) el.textContent = fmtMiles(despTotal());
 }
 
 // Lista de productos de despacho (DESP_PRODUCTOS, en orden alfabetico): se
@@ -2880,7 +2920,7 @@ function despGuardar() {
     // postToWS ya reintenta una vez; si aun asi falla, no hay mas que hacer desde aqui
   });
 
-  document.getElementById('desp-ok-txt').textContent = finca + ' · Despacho ' + despacho + ' · ' + comercializadora + ' · Total ' + total.toLocaleString('es-CO');
+  document.getElementById('desp-ok-txt').textContent = finca + ' · Despacho ' + despacho + ' · ' + comercializadora + ' · Total ' + fmtMiles(total);
   document.getElementById('desp-ok').style.display = 'block';
   despResetCampos();
 }
