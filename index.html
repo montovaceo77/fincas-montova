@@ -1128,7 +1128,7 @@ function renderLotes() {
       </div>
     </div>
 
-    <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
+    <div id="desp-paso-producto" style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
       <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 6</span>
       <span style="display:inline-block; background:#e5e7eb; color:#9ca3af; font-size:10px; padding:3px 10px; border-radius:6px; margin-left:6px; letter-spacing:1px;">Opcional</span>
       <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-top:8px; margin-bottom:4px;">Fertilización Foliar</label>
@@ -1141,7 +1141,7 @@ function renderLotes() {
       </div>
     </div>
 
-    <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
+    <div id="desp-paso-lider" style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
       <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 7</span>
       <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:4px;">Equipo de fumigacion</label>
       <p style="font-size:12px; color:var(--ink-mid); margin-bottom:8px;">Puedes elegir mas de uno</p>
@@ -1339,7 +1339,8 @@ function renderLotes() {
     <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
       <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 5</span>
       <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:12px;">Comercializadora</label>
-      <select id="desp-comercializadora" style="width:100%; padding:10px 12px; font-size:15px; border:1px solid var(--border); border-radius:8px; color:var(--ink); background:#fafafa;"></select>
+      <select id="desp-comercializadora" onchange="despActualizarModoAnulado()" style="width:100%; padding:10px 12px; font-size:15px; border:1px solid var(--border); border-radius:8px; color:var(--ink); background:#fafafa;"></select>
+      <div id="desp-anulado-aviso" style="display:none; margin-top:10px; background:var(--rose-bg); border:1px solid var(--rose); border-radius:8px; padding:10px 12px; font-size:12px; color:var(--rose); line-height:1.5;">Despacho ANULADO: solo se registra el # Fito y el Despacho. Al guardar se pedira el PIN de supervisor.</div>
     </div>
 
     <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
@@ -1361,7 +1362,7 @@ function renderLotes() {
     </div>
 
     <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
-      <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 8</span>
+      <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;" id="desp-paso-novedades-num">Paso 8</span>
       <span style="display:inline-block; background:#e5e7eb; color:#9ca3af; font-size:10px; padding:3px 10px; border-radius:6px; margin-left:6px; letter-spacing:1px;">Opcional</span>
       <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-top:8px; margin-bottom:8px;">Novedades o comentarios</label>
       <textarea id="desp-novedades" rows="4" placeholder="Escribe aqui si necesitas especificar algo mas..." style="width:100%; padding:10px 12px; font-size:15px; border:1px solid var(--border); border-radius:8px; color:var(--ink); background:#fafafa; resize:vertical; font-family:inherit; line-height:1.5;"></textarea>
@@ -2672,6 +2673,10 @@ function ingLimpiar() {
 // ===== DESPACHOS MODULE =====
 // Comercializadoras y productos (siempre se muestran en orden alfabetico).
 var DESP_COMERCIALIZADORAS = ['American Flowers', 'Blooming Mountain', 'Condor Andino'];
+// Opcion especial (siempre va AL FINAL de la lista, fuera del orden alfabetico):
+// un despacho ANULADO solo registra # Fito y Despacho (sin
+// productos ni lider) y al guardar pide el PIN de supervisor.
+var DESP_ANULADO = 'ANULADO';
 
 // Productos de despacho: el nombre COMERCIAL (el que usan las comercializadoras
 // y con el que se pone el precio) y, detras, la variedad y el tipo de flor
@@ -2749,6 +2754,26 @@ function despPoblarSelect(id, lista, placeholder) {
 // El lider de sala depende de la finca. Si la finca tiene un solo lider,
 // queda elegido solo; si todavia no tiene ninguno registrado, el paso no
 // bloquea el guardado.
+function despEsAnulado() {
+  var el = document.getElementById('desp-comercializadora');
+  return !!el && el.value === DESP_ANULADO;
+}
+
+// Muestra u oculta lo que no hace falta cuando el despacho es ANULADO.
+function despActualizarModoAnulado() {
+  var an = despEsAnulado();
+  var p6 = document.getElementById('desp-paso-producto');
+  var p7 = document.getElementById('desp-paso-lider');
+  var av = document.getElementById('desp-anulado-aviso');
+  var n8 = document.getElementById('desp-paso-novedades-num');
+  if (p6) p6.style.display = an ? 'none' : '';
+  if (p7) p7.style.display = an ? 'none' : '';
+  if (av) av.style.display = an ? 'block' : 'none';
+  if (n8) n8.textContent = an ? 'Paso 6' : 'Paso 8';
+  var btn = document.getElementById('desp-guardar-btn');
+  if (btn) btn.textContent = an ? 'Guardar anulacion' : 'Guardar despacho';
+}
+
 function despActualizarLider() {
   var finca = document.getElementById('desp-finca').value;
   var sel = document.getElementById('desp-lider');
@@ -2863,7 +2888,8 @@ function despGuardar() {
   var despacho = despLimpiarTexto(document.getElementById('desp-despacho').value);
   var comercializadora = document.getElementById('desp-comercializadora').value;
   var novedades = String(document.getElementById('desp-novedades').value || '').trim();
-  var hayLideres = !!(DESP_LIDERES[finca] && DESP_LIDERES[finca].length);
+  var esAnulado = (comercializadora === DESP_ANULADO);
+  var hayLideres = !esAnulado && !!(DESP_LIDERES[finca] && DESP_LIDERES[finca].length);
   var lider = hayLideres ? document.getElementById('desp-lider').value : '';
 
   var faltan = [];
@@ -2872,16 +2898,25 @@ function despGuardar() {
   if (!fito) faltan.push('# Fito');
   if (!despacho) faltan.push('Despacho');
   if (!comercializadora) faltan.push('Comercializadora');
-  if (!despSelProd.length) faltan.push('Producto');
+  if (!esAnulado && !despSelProd.length) faltan.push('Producto');
   if (hayLideres && !lider) faltan.push('Lider de sala');
   if (faltan.length) {
     alert('Falta completar: ' + faltan.join(', ') + '.');
     return;
   }
-  var sinCantidad = despSelProd.filter(function(t) { return !(parseInt(despCantidades[t], 10) > 0); });
+  var sinCantidad = esAnulado ? [] : despSelProd.filter(function(t) { return !(parseInt(despCantidades[t], 10) > 0); });
   if (sinCantidad.length) {
     alert('Falta la cantidad de: ' + sinCantidad.join(', '));
     return;
+  }
+  // Anular un despacho exige el PIN de supervisor (el mismo de Programacion).
+  if (esAnulado) {
+    var pinIngresado = prompt('PIN de supervisor para anular el despacho:');
+    if (pinIngresado === null) return;   // cancelo: no se guarda nada y el formulario queda como estaba
+    if (String(pinIngresado).trim() !== SUPERVISOR_PIN) {
+      alert('PIN incorrecto: no se guardo la anulacion.');
+      return;
+    }
   }
   if (!navigator.onLine) {
     alert('No tienes conexion a internet. Este despacho no se guardara hasta que recuperes la señal.');
@@ -2895,10 +2930,11 @@ function despGuardar() {
 
   // Foto de todo lo que se va a guardar, tomada ANTES de limpiar el formulario
   // (el envio sigue corriendo en segundo plano despues de limpiarlo).
-  var filas = despProductosOrdenados().filter(function(p) { return despSelProd.indexOf(p.nombre) !== -1; }).map(function(p) {
-    return { nombre: p.nombre, variedad: p.variedad, tipo: p.tipo, cantidad: String(parseInt(despCantidades[p.nombre], 10)) };
-  });
-  var total = filas.reduce(function(s, f) { return s + parseInt(f.cantidad, 10); }, 0);
+  var filas = esAnulado ? [{ nombre: '', variedad: '', tipo: '', cantidad: '' }] :
+    despProductosOrdenados().filter(function(p) { return despSelProd.indexOf(p.nombre) !== -1; }).map(function(p) {
+      return { nombre: p.nombre, variedad: p.variedad, tipo: p.tipo, cantidad: String(parseInt(despCantidades[p.nombre], 10)) };
+    });
+  var total = esAnulado ? 0 : filas.reduce(function(s, f) { return s + parseInt(f.cantidad, 10); }, 0);
   var idDespacho = Date.now();   // mismo para todas las filas del despacho, para poder agruparlas en el Sheet
 
   // TODAS las filas del despacho (una por producto) viajan juntas en UNA
@@ -2921,7 +2957,7 @@ function despGuardar() {
     // postToWS ya reintenta una vez; si aun asi falla, no hay mas que hacer desde aqui
   });
 
-  document.getElementById('desp-ok-txt').textContent = finca + ' · Despacho ' + despacho + ' · ' + comercializadora + ' · Total ' + fmtMiles(total);
+  document.getElementById('desp-ok-txt').textContent = finca + ' · Despacho ' + despacho + ' · ' + comercializadora + (esAnulado ? ' (sin productos)' : ' · Total ' + fmtMiles(total));
   document.getElementById('desp-ok').style.display = 'block';
   despResetCampos();
 }
@@ -2938,6 +2974,7 @@ function despResetCampos() {
   despActualizarFechaSemana();
   despActualizarLider();
   despRenderTipos();
+  despActualizarModoAnulado();
 }
 
 function despLimpiar() {
@@ -2953,6 +2990,13 @@ function despLimpiar() {
   despActualizarFechaSemana();
   document.getElementById('desp-finca').addEventListener('change', despActualizarLider);
   despPoblarSelect('desp-comercializadora', DESP_COMERCIALIZADORAS, 'Selecciona una comercializadora');
+  var selCom = document.getElementById('desp-comercializadora');
+  if (selCom) {
+    var oAn = document.createElement('option');
+    oAn.value = DESP_ANULADO;
+    oAn.textContent = DESP_ANULADO;
+    selCom.appendChild(oAn);
+  }
   despActualizarLider();
   despRenderTipos();
 })();
