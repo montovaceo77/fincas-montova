@@ -431,7 +431,8 @@ var LOTES_POR_FINCA = {
 };
 
 // Compara nombres de finca sin distinguir mayusculas ni tildes. Hace falta
-// porque Fumigacion escribe "Flor de agua 3" y los demas modulos "Flor de Agua 3".
+// porque en el Sheets quedaron registros viejos de Fumigacion escritos "Flor de agua 3"
+// (el nombre correcto, y el que usan todos los modulos, es "Flor de Agua 3").
 function normFinca(s) {
   return String(s == null ? '' : s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
 }
@@ -1382,13 +1383,13 @@ function renderLotes() {
 
 <script>
 // ===== FUMIGACION MODULE =====
-var FUM_FINCAS = ['Oasis Garden','Flor de agua 3','Flor Esperancita','Flor Madera','La Reserva'];
+var FUM_FINCAS = ['Oasis Garden','Flor de Agua 3','Flor Esperancita','Flor Madera','La Reserva'];
 var FUM_LOTES = Array.from({length:33}, function(_,i){ return 'Lote '+(i+1); });
 var FUM_PLAGAS = ['Acaro','Acaro blanco','Afido','Alternaria','Babosa','Botritis','Ceniza','Control malezas','Mancha foliar','Secadera','Thirps'];
 var FUM_PRODUCTOS = ['Abafec 100 cc','Agrifos 100 cc','Athirn 50 cc','Cal brava','Carial opti 200 cc','Centauro 200 cc','Chakal 100 cc','Divino 100 cc','Elosal 200 cc','Fungitox 200 cc','Gramoxone 100 cm','Incipio 50 cc','Leonardita 1 L','LS 60','Mesulfuron 150 cc','Metarez','Milbeknovk 100 cc','Panser 100 cm','Pga5 50 cc','Propamotal 200 cc','Rally 100 cc','Sencor 5 cm','Spax 100 cc','Trichoderma 330 gr','Zafiro 200 cc','Zorvec 100 cc'];
 var FUM_FERTILIZANTES = ['Ácido alginico 50 gr','Aminoácidos 50 gr','Calcio 200 gr','Potasio 200 gr'];
 var FUM_EQUIPOS = {
-  'Flor de agua 3': ['Antony Jose Gonzalez Diaz','Edison De Jesus Otalvaro Giraldo','German Antonio Valencia Orozco','Luis Ernesto Ocampo Ocampo','Nestor Emilio Giraldo Acevedo','Santiago Patino Marulanda','Sebastian Ocampo Rios','Yonathan Enrique Gonzalez Diaz','Yorman Alexander Otalvaro Orozco'],
+  'Flor de Agua 3': ['Antony Jose Gonzalez Diaz','Edison De Jesus Otalvaro Giraldo','German Antonio Valencia Orozco','Luis Ernesto Ocampo Ocampo','Nestor Emilio Giraldo Acevedo','Santiago Patino Marulanda','Sebastian Ocampo Rios','Yonathan Enrique Gonzalez Diaz','Yorman Alexander Otalvaro Orozco'],
   'Oasis Garden': ['Carlos Andres Garcia Areiza','Cristian Danilo Ocampo Arboleda','Eliecer De Jesus Valencia Osorio','Elkin Arias Escobar','Guillermo Antonio Pavas Ramirez','Hernan Dario Duque Arango','Jhon Jairo Quintero Posada','John Jairo Bedoya Uribe','Jose Humberto Loaiza','Juan David Palencia Doria','Julian Esteban Londono Alzate','Lino De Jesus Quintero Castano','Pedro Luis Pavas Martinez'],
   'Flor Madera': ['Agustin Davila Marin','Belisario Ocampo','Cristian Dario Lopez Jaramillo','Daniel De Jesus Cardona Castro','Henry Antonio Franco Jaramillo','Luis Antonio Pavas Cardona','Neiser De Jesus Alvarez Tabares','Wilmar Alonso Castro Tabares'],
   'Flor Esperancita': ['Diego Alexander Garcia Usma','Jose Angel Rivera Rivera'],
