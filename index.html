@@ -1213,7 +1213,7 @@ function renderLotes() {
     <div id="lab-abonada-numero-card" style="display:none; background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
       <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 5</span>
       <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:4px;">Numero de abonada</label>
-      <p style="font-size:12px; color:var(--ink-mid); margin-bottom:12px;">Es la primera, segunda, tercera o cuarta abonada? Se calcula sola para cada lote.</p>
+      <p style="font-size:12px; color:var(--ink-mid); margin-bottom:12px;">Es la primera, segunda, tercera, cuarta o quinta abonada? Se calcula sola para cada lote.</p>
       <div id="lab-abonada-numero-lista" style="display:flex; flex-direction:column;"></div>
       <div id="lab-abonada-info"></div>
     </div>
@@ -1386,11 +1386,11 @@ function renderLotes() {
 var FUM_FINCAS = ['Oasis Garden','Flor de Agua 3','Flor Esperancita','Flor Madera','La Reserva'];
 var FUM_LOTES = Array.from({length:33}, function(_,i){ return 'Lote '+(i+1); });
 var FUM_PLAGAS = ['Acaro','Acaro blanco','Afido','Alternaria','Babosa','Botritis','Ceniza','Control malezas','Mancha foliar','Secadera','Thirps'];
-var FUM_PRODUCTOS = ['Abafec 100 cc','Agrifos 100 cc','Athirn 50 cc','Cal brava','Carial opti 200 cc','Centauro 200 cc','Chakal 100 cc','Divino 100 cc','Elosal 200 cc','Fungitox 200 cc','Gramoxone 100 cm','Incipio 50 cc','Leonardita 1 L','LS 60','Mesulfuron 150 cc','Metarez','Milbeknovk 100 cc','Panser 100 cm','Pga5 50 cc','Propamotal 200 cc','Rally 100 cc','Sencor 5 cm','Spax 100 cc','Trichoderma 330 gr','Zafiro 200 cc','Zorvec 100 cc'];
-var FUM_FERTILIZANTES = ['Ácido alginico 50 gr','Aminoácidos 50 gr','Calcio 200 gr','Potasio 200 gr'];
+var FUM_PRODUCTOS = ['Abafec 100 cc','Agrifos 100 cc','Athirn 50 cc','Cal brava','Carial opti 200 cc','Centauro 200 cc','Chakal 100 cc','Divino 100 cc','Elosal 200 cc','Fungitox 200 cc','Furtivo 100 cc','Gramoxone 100 cm','Incipio 50 cc','Leonardita 1 L','LS 60','Malathion 200 cc','Mesulfuron 150 cc','Metarez','Milbeknovk 100 cc','Panser 100 cm','Pga5 50 cc','Propamotal 200 cc','Rally 100 cc','Sencor 5 cm','Spax 100 cc','Trichoderma 330 gr','Zafiro 200 cc','Zorvec 100 cc'];
+var FUM_FERTILIZANTES = ['Ácido alginico 50 gr','Aminoácidos 50 gr','Calcio 200 gr','KLip-k 200 cc','Potasio 200 gr'];
 var FUM_EQUIPOS = {
   'Flor de Agua 3': ['Antony Jose Gonzalez Diaz','Edison De Jesus Otalvaro Giraldo','German Antonio Valencia Orozco','Luis Ernesto Ocampo Ocampo','Nestor Emilio Giraldo Acevedo','Santiago Patino Marulanda','Sebastian Ocampo Rios','Yonathan Enrique Gonzalez Diaz','Yorman Alexander Otalvaro Orozco'],
-  'Oasis Garden': ['Carlos Andres Garcia Areiza','Cristian Danilo Ocampo Arboleda','Eliecer De Jesus Valencia Osorio','Elkin Arias Escobar','Guillermo Antonio Pavas Ramirez','Hernan Dario Duque Arango','Jhon Jairo Quintero Posada','John Jairo Bedoya Uribe','Jose Humberto Loaiza','Juan David Palencia Doria','Julian Esteban Londono Alzate','Lino De Jesus Quintero Castano','Pedro Luis Pavas Martinez'],
+  'Oasis Garden': ['Alba Rocio Perez Marin','Carlos Andres Garcia Areiza','Cristian Danilo Ocampo Arboleda','Eliecer De Jesus Valencia Osorio','Elkin Arias Escobar','Guillermo Antonio Pavas Ramirez','Hernan Dario Duque Arango','Jhon Jairo Quintero Posada','John Jairo Bedoya Uribe','Jose Humberto Loaiza','Juan David Palencia Doria','Julian Esteban Londono Alzate','Lino De Jesus Quintero Castano','Pedro Luis Pavas Martinez'],
   'Flor Madera': ['Agustin Davila Marin','Belisario Ocampo','Cristian Dario Lopez Jaramillo','Daniel De Jesus Cardona Castro','Henry Antonio Franco Jaramillo','Luis Antonio Pavas Cardona','Neiser De Jesus Alvarez Tabares','Wilmar Alonso Castro Tabares'],
   'Flor Esperancita': ['Diego Alexander Garcia Usma','Jose Angel Rivera Rivera'],
   'La Reserva': ['Esneider De Jesus Ocampo Soto']
@@ -1851,10 +1851,10 @@ function labActualizarVisibilidadAbonada() {
   }
 }
 
-var LAB_NUMEROS_ABONADA = ['1era', '2da', '3era', '4ta'];
+var LAB_NUMEROS_ABONADA = ['1era', '2da', '3era', '4ta', '5ta'];
 
 // Dibuja una fila por cada lote marcado, con su propio selector de
-// 1era/2da/3era/4ta y los datos de su ultima abonada.
+// 1era/2da/3era/4ta/5ta y los datos de su ultima abonada.
 function labRenderAbonadaNumero() {
   var c = document.getElementById('lab-abonada-numero-lista');
   if (!c) return;
