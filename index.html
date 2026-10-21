@@ -1282,6 +1282,8 @@ function renderLotes() {
           <div class="chk-list-title">MARCA CADA MOTIVO Y ESCRIBE SU CANTIDAD</div>
         </div>
         <div id="ing-descarte-total" style="font-size:12px; font-weight:600; color:var(--rose); margin-top:8px;"></div>
+        <label style="font-size:12px; font-weight:600; color:var(--ink); display:block; margin-top:12px; margin-bottom:4px;">Novedades del descarte <span style="font-weight:400; color:var(--ink-soft);">(opcional)</span></label>
+        <textarea id="ing-novedades" rows="3" maxlength="500" placeholder="Escribe aqui lo que quieras contar sobre este descarte..." style="width:100%; padding:9px 12px; font-size:14px; border:1px solid var(--border); border-radius:8px; color:var(--ink); background:#fafafa; resize:vertical; font-family:inherit; line-height:1.5;"></textarea>
       </div>
       <div id="ing-acumulado-info"></div>
     </div>
@@ -2244,7 +2246,7 @@ function ingNombreTipoActual(tipo) {
 
 // Motivos de descarte (en orden alfabetico). Para agregar uno nuevo,
 // basta con sumarlo a esta lista: el formulario lo dibuja solo.
-var ING_MOTIVOS = ['Babosa', 'Ceniza', 'Daño mecánico', 'Flor pasada', 'Pedúnculo largo', 'Plaga', 'Punto rojo', 'Secadera', 'Tallo leñoso', 'Tallo torcido'];
+var ING_MOTIVOS = ['Babosa', 'Botritis', 'Ceniza', 'Daño mecánico', 'Daño por ácaro', 'Flor pasada', 'Ingreso a sala con daño mecánico (desde campo)', 'Pedúnculo largo', 'Plaga', 'Punto rojo', 'Quemazón', 'Secadera', 'Tallo leñoso', 'Tallo torcido'];
 
 var ingDescMotivos = {}; // cantidad de descarte por cada motivo marcado
 
@@ -2473,6 +2475,8 @@ function ingActualizarDescarteUI() {
       el.style.display = 'none';
     });
     ingDescMotivos = {};
+    var nv = document.getElementById('ing-novedades');
+    if (nv) nv.value = '';
   }
   ingActualizarTotalDescarte();
 }
@@ -2584,12 +2588,17 @@ function ingGuardar() {
   // y el envio de abajo sigue corriendo en segundo plano despues de
   // eso) para que cada registro mande la cantidad correcta y no una ya
   // borrada.
+  var novedadesDescarte = '';
+  if (motivos.length) {
+    var elNov = document.getElementById('ing-novedades');
+    novedadesDescarte = elNov ? String(elNov.value || '').replace(/\s+/g, ' ').trim() : '';
+  }
   var envios = items.map(function(item) {
-    return { tipo_flor: item, cantidad: ingCantidades[item], descarte: '', motivo_descarte: '' };
+    return { tipo_flor: item, cantidad: ingCantidades[item], descarte: '', motivo_descarte: '', novedades: '' };
   });
   // Un registro por cada motivo de descarte, con su cantidad.
   motivos.forEach(function(m) {
-    envios.push({ tipo_flor: '', cantidad: String(parseInt(ingDescMotivos[m], 10)), descarte: 'Si', motivo_descarte: m });
+    envios.push({ tipo_flor: '', cantidad: String(parseInt(ingDescMotivos[m], 10)), descarte: 'Si', motivo_descarte: m, novedades: novedadesDescarte });
   });
   var resumenOk = items.slice();
   if (motivos.length) resumenOk.push('Descarte (' + motivos.join(', ') + ')');
@@ -2609,7 +2618,8 @@ function ingGuardar() {
         tipo_flor: envios[i].tipo_flor,
         cantidad: envios[i].cantidad,
         descarte: envios[i].descarte,
-        motivo_descarte: envios[i].motivo_descarte
+        motivo_descarte: envios[i].motivo_descarte,
+        novedades: envios[i].novedades
       });
     }
     // El refresco se programa AQUI, despues de que de verdad termino de
