@@ -60,6 +60,10 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
 .sync-bar.pendiente { background: #FFF3E0; color: #B45309; }
 .sync-bar.sincronizando { background: var(--verde-light); color: var(--verde-dark); }
 .sync-bar.error { background: #FFECEC; color: #C0392B; }
+.sync-bar.ok { background: var(--verde-light); color: var(--verde-dark); }
+.sync-sub { font-size: 11.5px; font-weight: 500; margin-top: 2px; opacity: .85; }
+.sync-prog { height: 6px; background: rgba(0,0,0,.10); border-radius: 3px; margin: 6px auto 0; max-width: 420px; overflow: hidden; }
+.sync-prog-fill { height: 100%; width: 0%; background: var(--verde-dark); border-radius: 3px; transition: width .25s; }
 
 .resumen-title { font-size: 20px; font-weight: 700; color: var(--ink); margin-bottom: 2px; }
 .resumen-rango { font-size: 12px; color: var(--ink-mid); margin-bottom: 1.25rem; }
@@ -213,8 +217,10 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
   </div>
 </div>
 
-<div class="sync-bar" id="sync-bar" onclick="sincronizarPendientes()">
+<div class="sync-bar" id="sync-bar" onclick="tocarSyncBar()">
   <span id="sync-bar-text">Todo sincronizado</span>
+  <div class="sync-sub" id="sync-bar-sub" style="display:none"></div>
+  <div class="sync-prog" id="sync-prog" style="display:none"><div class="sync-prog-fill" id="sync-prog-fill"></div></div>
 </div>
 
 <div id="view-wizard">
@@ -330,6 +336,7 @@ function itemsPunto(n) {
 window.addEventListener('DOMContentLoaded', function() {
   cargarPendientesLocal();
   cargarPendientesTrampasLocal();
+  asegurarCids();
   actualizarSyncBar();
   fetchLotes();
   fetchMonitoreos();
@@ -1120,15 +1127,6 @@ function buildWorkStep() {
   return wrap;
 }
 
-async function postToWS(payload) {
-  try {
-    await fetch(WS, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
-  } catch (e) {
-    await new Promise(function(res) { setTimeout(res, 1200); });
-    await fetch(WS, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
-  }
-}
-
 function monGuardar() {
   var payload = {
     action: 'addMonitoreo',
@@ -1138,7 +1136,8 @@ function monGuardar() {
     cama: st.cama,
     punto_1: itemsPunto(1).join(', '),
     punto_2: itemsPunto(2).join(', '),
-    punto_3: itemsPunto(3).join(', ')
+    punto_3: itemsPunto(3).join(', '),
+    cid: nuevoCid()
   };
 
   pendientes.push(payload);
@@ -1154,80 +1153,221 @@ function monGuardar() {
   render();
 }
 
-function actualizarSyncBar() {
-  var bar = document.getElementById('sync-bar');
-  var txt = document.getElementById('sync-bar-text');
-  if (!bar) return;
-  bar.className = 'sync-bar';
-  var n = totalPendientes();
-  if (n === 0) {
-    txt.textContent = 'Todo sincronizado';
+// ===================== SINCRONIZACION (manual, por lotes, sin duplicados) =====================
+// - Cada registro lleva un "cid" (identificador unico) creado en el celular.
+// - El servidor no repite un cid que ya tiene: reenviar es seguro.
+// - Un registro SOLO sale de la cola cuando el servidor responde que lo tiene.
+// - Si la respuesta se pierde, se le pregunta al servidor que llego antes de reenviar.
+var syncing = false;
+var syncPausar = false;
+var WS_TIMEOUT_MS = 30000;
+
+function nuevoCid() {
+  return 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+
+// Registros guardados antes de esta version no tienen cid: se les asigna y se marcan "legacy"
+// para que el servidor los compare por contenido y no repita los que ya llegaron.
+function asegurarCids() {
+  var cambio = false;
+  [pendientes, pendientesTrampas].forEach(function(arr) {
+    arr.forEach(function(r) {
+      if (!r.cid) { r.cid = nuevoCid(); r.legacy = true; cambio = true; }
+    });
+  });
+  if (cambio) { guardarPendientesLocal(); guardarPendientesTrampasLocal(); }
+}
+
+function esperar(ms) { return new Promise(function(res) { setTimeout(res, ms); }); }
+
+// fetch con limite de tiempo real (si la red se "congela", se corta y se reintenta)
+function wsJSON(url, init) {
+  var ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+  if (ctrl) init.signal = ctrl.signal;
+  var timer;
+  var limite = new Promise(function(_, rej) {
+    timer = setTimeout(function() {
+      if (ctrl) { try { ctrl.abort(); } catch (e) {} }
+      rej(new Error('tiempo agotado'));
+    }, WS_TIMEOUT_MS);
+  });
+  var peticion = fetch(url, init).then(function(resp) {
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    return resp.text();
+  }).then(function(txt) { return JSON.parse(txt); });
+  return Promise.race([peticion, limite]).then(
+    function(v) { clearTimeout(timer); return v; },
+    function(e) { clearTimeout(timer); throw e; }
+  );
+}
+
+async function enviarLote(tipo, lote) {
+  var accion = tipo === 'm' ? 'addMonitoreoLote' : 'addTrampaLote';
+  var data = await wsJSON(WS, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action: accion, registros: lote })
+  });
+  if (!data || data.ok !== true || !Array.isArray(data.confirmados)) {
+    throw new Error((data && data.error) || 'respuesta no valida');
+  }
+  return data.confirmados;
+}
+
+// Si no llego la respuesta, preguntamos al servidor cuales cid ya estan guardados.
+async function verificarEnServidor(tipo, lote) {
+  var accion = tipo === 'm' ? 'getMonitoreo' : 'getTrampas';
+  var data = await wsJSON(WS + '?action=' + accion + '&_=' + Date.now(), { method: 'GET' });
+  if (!Array.isArray(data)) throw new Error('verificacion no valida');
+  var presentes = {};
+  data.forEach(function(r) { if (r.Client_ID) presentes[String(r.Client_ID)] = true; });
+  return lote.filter(function(r) { return presentes[r.cid]; }).map(function(r) { return r.cid; });
+}
+
+// Saca de la cola los confirmados, los pasa a "ya subidos" y guarda de inmediato.
+function aplicarConfirmados(tipo, cids) {
+  var set = {};
+  cids.forEach(function(c) { set[c] = true; });
+  if (tipo === 'm') {
+    pendientes.forEach(function(r) {
+      if (set[r.cid]) {
+        monitoreos.push({ Finca: r.finca, Lote: r.lote, Cama: r.cama, Fecha: r.fecha,
+                          Punto_1: r.punto_1, Punto_2: r.punto_2, Punto_3: r.punto_3 });
+      }
+    });
+    pendientes = pendientes.filter(function(r) { return !set[r.cid]; });
+    guardarPendientesLocal();
   } else {
-    bar.classList.add('pendiente');
-    txt.textContent = n + (n === 1 ? ' registro sin sincronizar \u2014 toca para subir' : ' registros sin sincronizar \u2014 toca para subir');
+    pendientesTrampas.forEach(function(r) {
+      if (set[r.cid]) {
+        trampas.push({ Finca: r.finca, Fecha: r.fecha, Anio: r.anio, Semana: r.semana, Dia: r.dia,
+                       Trampa_1: r.trampa_1, Trampa_2: r.trampa_2, Trampa_3: r.trampa_3, Trampa_4: r.trampa_4 });
+      }
+    });
+    pendientesTrampas = pendientesTrampas.filter(function(r) { return !set[r.cid]; });
+    guardarPendientesTrampasLocal();
   }
 }
 
-async function sincronizarPendientes() {
-  var totalInicial = totalPendientes();
-  if (totalInicial === 0) return;
+function formatoTiempo(seg) {
+  if (seg < 10) return 'unos segundos';
+  if (seg < 60) return Math.round(seg / 5) * 5 + ' segundos';
+  var m = Math.round(seg / 60);
+  return m + (m === 1 ? ' minuto' : ' minutos');
+}
+
+function pintarBarra(clase, texto, sub, pct) {
   var bar = document.getElementById('sync-bar');
-  var txt = document.getElementById('sync-bar-text');
-  bar.className = 'sync-bar sincronizando';
-  txt.textContent = 'Sincronizando ' + totalInicial + '...';
+  if (!bar) return;
+  bar.className = 'sync-bar' + (clase ? ' ' + clase : '');
+  document.getElementById('sync-bar-text').textContent = texto;
+  var subEl = document.getElementById('sync-bar-sub');
+  subEl.style.display = sub ? 'block' : 'none';
+  subEl.textContent = sub || '';
+  var prog = document.getElementById('sync-prog');
+  prog.style.display = (pct === null || pct === undefined) ? 'none' : 'block';
+  if (pct !== null && pct !== undefined) document.getElementById('sync-prog-fill').style.width = pct + '%';
+}
 
-  var pendientesCopia = pendientes.slice();
-  var restantes = [];
-  for (var i = 0; i < pendientesCopia.length; i++) {
-    var registro = pendientesCopia[i];
-    try {
-      await postToWS(registro);
-      monitoreos.push({
-        Finca: registro.finca,
-        Lote: registro.lote,
-        Cama: registro.cama,
-        Fecha: registro.fecha,
-        Punto_1: registro.punto_1,
-        Punto_2: registro.punto_2,
-        Punto_3: registro.punto_3
-      });
-    } catch (e) {
-      restantes.push(registro);
-    }
-  }
-  pendientes = restantes;
-  guardarPendientesLocal();
-
-  var pendientesTrampasCopia = pendientesTrampas.slice();
-  var restantesTrampas = [];
-  for (var j = 0; j < pendientesTrampasCopia.length; j++) {
-    var regT = pendientesTrampasCopia[j];
-    try {
-      await postToWS(regT);
-      trampas.push({
-        Finca: regT.finca,
-        Fecha: regT.fecha,
-        Anio: regT.anio,
-        Semana: regT.semana,
-        Dia: regT.dia,
-        Trampa_1: regT.trampa_1,
-        Trampa_2: regT.trampa_2,
-        Trampa_3: regT.trampa_3,
-        Trampa_4: regT.trampa_4
-      });
-    } catch (e) {
-      restantesTrampas.push(regT);
-    }
-  }
-  pendientesTrampas = restantesTrampas;
-  guardarPendientesTrampasLocal();
-
-  var totalRestante = restantes.length + restantesTrampas.length;
-  if (totalRestante > 0) {
-    bar.className = 'sync-bar error';
-    txt.textContent = 'No se pudo sincronizar todo (' + totalRestante + ' pendiente' + (totalRestante === 1 ? '' : 's') + '). Revisa tu conexion y toca para reintentar.';
+function actualizarSyncBar() {
+  if (syncing) return;
+  var n = totalPendientes();
+  if (n === 0) {
+    pintarBarra('', 'Todo sincronizado', '', null);
   } else {
-    actualizarSyncBar();
+    pintarBarra('pendiente',
+      n + (n === 1 ? ' registro sin subir' : ' registros sin subir') + ' — toca para subir',
+      '', null);
+  }
+}
+
+function tocarSyncBar() {
+  if (syncing) {
+    syncPausar = true;
+    var t = document.getElementById('sync-bar-sub');
+    if (t) { t.style.display = 'block'; t.textContent = 'Pausando al terminar este envio...'; }
+    return;
+  }
+  sincronizarPendientes();
+}
+
+window.addEventListener('beforeunload', function(e) {
+  if (syncing) { e.preventDefault(); e.returnValue = ''; }
+});
+
+async function sincronizarPendientes() {
+  if (syncing) return;
+  asegurarCids();
+  var total = totalPendientes();
+  if (total === 0) { actualizarSyncBar(); return; }
+
+  syncing = true;
+  syncPausar = false;
+  var hechos = 0;
+  var t0 = Date.now();
+  var tam = 10;
+  var fallos = 0;
+  var motivo = '';
+
+  function avance() {
+    var sub = 'Toca para pausar';
+    if (hechos > 0) {
+      var seg = ((Date.now() - t0) / hechos) * (total - hechos) / 1000;
+      sub = 'Faltan ~' + formatoTiempo(seg) + ' · toca para pausar';
+    }
+    pintarBarra('sincronizando', 'Subiendo ' + hechos + ' de ' + total, sub, Math.round(hechos * 100 / total));
+  }
+  avance();
+
+  var tipos = ['m', 't'];
+  fuera:
+  for (var k = 0; k < tipos.length; k++) {
+    var tipo = tipos[k];
+    while (true) {
+      var cola = tipo === 'm' ? pendientes : pendientesTrampas;
+      if (cola.length === 0) break;
+      if (syncPausar) { motivo = 'pausa'; break fuera; }
+
+      var lote = cola.slice(0, tam);
+      var inicioLote = Date.now();
+      var confirmados = null;
+      try {
+        confirmados = await enviarLote(tipo, lote);
+      } catch (e1) {
+        // No sabemos si llego: preguntamos al servidor antes de reenviar.
+        try { confirmados = await verificarEnServidor(tipo, lote); } catch (e2) { confirmados = null; }
+      }
+
+      if (confirmados && confirmados.length > 0) {
+        aplicarConfirmados(tipo, confirmados);
+        hechos += confirmados.length;
+        fallos = 0;
+        if (confirmados.length === lote.length && (Date.now() - inicioLote) < 12000) {
+          tam = Math.min(tam * 2, 25);
+        }
+        avance();
+      } else {
+        fallos++;
+        tam = Math.max(1, Math.floor(tam / 2));
+        if (fallos >= 4) { motivo = 'red'; break fuera; }
+        pintarBarra('sincronizando', 'Subiendo ' + hechos + ' de ' + total,
+          'Conexion lenta, reintentando (' + fallos + ')...', Math.round(hechos * 100 / total));
+        await esperar(1500 * fallos);
+      }
+    }
+  }
+
+  syncing = false;
+  var quedan = totalPendientes();
+  if (quedan === 0) {
+    pintarBarra('ok', '✓ Listo: ' + hechos + (hechos === 1 ? ' registro subido' : ' registros subidos'), '', 100);
+    setTimeout(function() { if (!syncing) actualizarSyncBar(); }, 4000);
+  } else if (motivo === 'pausa') {
+    pintarBarra('pendiente', 'En pausa: ' + hechos + ' de ' + total + ' subidos',
+      'Quedan ' + quedan + ' · toca para continuar', null);
+  } else {
+    pintarBarra('error', 'La conexion fallo: se subieron ' + hechos + ' de ' + total,
+      'Quedan ' + quedan + ' guardados en el celular · toca para reintentar', null);
   }
 
   if (currentView === 'resumen') renderResumen();
@@ -1430,7 +1570,8 @@ function guardarTrampa(anio, semana) {
     trampa_1: trampasInputs[1] || '0',
     trampa_2: trampasInputs[2] || '0',
     trampa_3: trampasInputs[3] || '0',
-    trampa_4: trampasInputs[4] || '0'
+    trampa_4: trampasInputs[4] || '0',
+    cid: nuevoCid()
   };
 
   pendientesTrampas.push(payload);
