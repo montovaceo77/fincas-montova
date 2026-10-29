@@ -1343,7 +1343,7 @@ function renderLotes() {
       <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 5</span>
       <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:12px;">Comercializadora</label>
       <select id="desp-comercializadora" onchange="despActualizarModoAnulado()" style="width:100%; padding:10px 12px; font-size:15px; border:1px solid var(--border); border-radius:8px; color:var(--ink); background:#fafafa;"></select>
-      <div id="desp-anulado-aviso" style="display:none; margin-top:10px; background:var(--rose-bg); border:1px solid var(--rose); border-radius:8px; padding:10px 12px; font-size:12px; color:var(--rose); line-height:1.5;">Despacho ANULADO: solo se registra el # Fito y el Despacho. Al guardar se pedira el PIN de supervisor.</div>
+      <div id="desp-anulado-aviso" style="display:none; margin-top:10px; background:var(--rose-bg); border:1px solid var(--rose); border-radius:8px; padding:10px 12px; font-size:12px; color:var(--rose); line-height:1.5;">Despacho ANULADO: solo se registra el # Fito y la # Remisión. Al guardar se pedira el PIN de supervisor.</div>
     </div>
 
     <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
@@ -3119,7 +3119,7 @@ function despGuardar() {
     // postToWS ya reintenta una vez; si aun asi falla, no hay mas que hacer desde aqui
   });
 
-  document.getElementById('desp-ok-txt').textContent = finca + ' · Despacho ' + despacho + ' · ' + comercializadora + (esAnulado ? ' (sin productos)' : ' · Total ' + fmtMiles(total));
+  document.getElementById('desp-ok-txt').textContent = finca + ' · Remisión ' + despacho + ' · ' + comercializadora + (esAnulado ? ' (sin productos)' : ' · Total ' + fmtMiles(total));
   document.getElementById('desp-ok').style.display = 'block';
   despResetCampos();
 }
