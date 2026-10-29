@@ -1334,8 +1334,8 @@ function renderLotes() {
 
     <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
       <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 4</span>
-      <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:4px;">Despacho</label>
-      <p style="font-size:12px; color:var(--ink-mid); margin-bottom:12px;">Numero o codigo del despacho</p>
+      <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:4px;"># Remisión</label>
+      <p style="font-size:12px; color:var(--ink-mid); margin-bottom:12px;">Numero de la remision</p>
       <input type="text" id="desp-despacho" maxlength="40" autocomplete="off" placeholder="Ej: 125" style="width:100%; padding:10px 12px; font-size:15px; border:1px solid var(--border); border-radius:8px; color:var(--ink); background:#fafafa;" />
     </div>
 
@@ -3014,7 +3014,7 @@ function despGuardar() {
   if (!fecha) faltan.push('Fecha');
   if (!finca) faltan.push('Finca');
   if (!fito) faltan.push('# Fito');
-  if (!despacho) faltan.push('Despacho');
+  if (!despacho) faltan.push('Remision');
   if (!comercializadora) faltan.push('Comercializadora');
   if (!esAnulado && !despSelProd.length) faltan.push('Producto');
   if (hayLideres && !lider) faltan.push('Lider de sala');
