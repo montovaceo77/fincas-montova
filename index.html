@@ -1349,12 +1349,13 @@ function renderLotes() {
     <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
       <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 6</span>
       <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:4px;">Producto</label>
-      <p style="font-size:12px; color:var(--ink-mid); margin-bottom:8px;">Puedes elegir varios y poner la cantidad de cada uno</p>
+      <p style="font-size:12px; color:var(--ink-mid); margin-bottom:8px;">Puedes elegir varios. Cada producto puede salir en varias presentaciones: tallos sueltos o ramos (tu escribes cuantos ramos y cuantos tallos lleva cada uno), con o sin capuchon de tela</p>
       <div id="desp-tipo-lista" style="display:flex; flex-direction:column; gap:8px;"></div>
       <div id="desp-total" style="display:flex; justify-content:space-between; align-items:center; margin-top:14px; background:var(--verde-light); border:1px solid var(--verde-mid); border-radius:10px; padding:12px 14px;">
         <span style="font-size:13px; font-weight:600; color:var(--verde-dark);">Total despachado</span>
         <strong id="desp-total-valor" style="font-size:20px; color:var(--verde-dark);">0</strong>
       </div>
+      <div id="desp-total-detalle" style="font-size:12px; color:var(--verde-dark); margin-top:6px; min-height:0;"></div>
     </div>
 
     <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
@@ -2727,7 +2728,7 @@ var DESP_LIDERES = {
 };
 
 var despSelProd = [];
-var despCantidades = {};
+var despLineas = {};   // producto -> lista de lineas {pres, cap, cant}
 var despEnfocarProd = null;
 
 function despOrdenAlfabetico(lista) {
@@ -2818,18 +2819,59 @@ function despActualizarLider() {
   if (lideres.length === 1) sel.value = lideres[0];
 }
 
+var DESP_PRESENTACIONES = [   // en orden alfabetico; "Tallos sueltos" es la que sale marcada por defecto
+  { id: 'R', texto: 'Ramos', ramo: true },
+  { id: 'S', texto: 'Tallos sueltos', ramo: false }
+];
+
+function despPres(id) {
+  for (var i = 0; i < DESP_PRESENTACIONES.length; i++) { if (DESP_PRESENTACIONES[i].id === id) return DESP_PRESENTACIONES[i]; }
+  return DESP_PRESENTACIONES[DESP_PRESENTACIONES.length - 1];
+}
+
+// Tallos por ramo de una linea (0 si son tallos sueltos).
+function despPorRamo(l) { return despPres(l.pres).ramo ? (parseInt(l.por, 10) || 0) : 0; }
+
+// Tallos totales de una linea: si son ramos, ramos x tallos por ramo; si no, los tallos tal cual.
+function despTallosLinea(l) {
+  var n = parseInt(l.cant, 10) || 0;
+  return despPres(l.pres).ramo ? n * despPorRamo(l) : n;
+}
+
+function despNuevaLinea() { return { pres: 'S', cap: false, cant: '', por: '' }; }
+
 function despTotal() {
-  return despSelProd.reduce(function(t, nombre) { return t + (parseInt(despCantidades[nombre], 10) || 0); }, 0);
+  var t = 0;
+  despSelProd.forEach(function(nombre) {
+    (despLineas[nombre] || []).forEach(function(l) { t += despTallosLinea(l); });
+  });
+  return t;
 }
 
 function despActualizarTotal() {
   var el = document.getElementById('desp-total-valor');
   if (el) el.textContent = fmtMiles(despTotal());
+  var det = document.getElementById('desp-total-detalle');
+  if (det) {
+    var ramos = 0, tallosRamo = 0, tallosCap = 0;
+    despSelProd.forEach(function(nombre) {
+      (despLineas[nombre] || []).forEach(function(l) {
+        if (despPres(l.pres).ramo) { ramos += parseInt(l.cant, 10) || 0; tallosRamo += despTallosLinea(l); }
+        if (l.cap) tallosCap += despTallosLinea(l);
+      });
+    });
+    var partes = [];
+    if (ramos) partes.push(fmtMiles(ramos) + ' ramos (' + fmtMiles(tallosRamo) + ' tallos)');
+    if (tallosCap) partes.push(fmtMiles(tallosCap) + ' tallos con capuchon de tela');
+    det.textContent = partes.join(' · ');
+  }
 }
 
 // Lista de productos de despacho (DESP_PRODUCTOS, en orden alfabetico): se
-// pueden marcar varios y cada uno muestra su cuadro de cantidad. El total se
-// actualiza solo al final de la lista.
+// pueden marcar varios. Cada producto marcado tiene una o mas LINEAS; cada
+// linea lleva su presentacion (tallos sueltos o ramo de 2, 3, 4 o 5), si lleva
+// capuchon de tela y su cantidad (tallos, o ramos si es ramo). La cantidad que
+// se guarda siempre son los TALLOS totales; los ramos se guardan aparte.
 function despRenderTipos() {
   var c = document.getElementById('desp-tipo-lista');
   if (!c) return;
@@ -2838,11 +2880,8 @@ function despRenderTipos() {
   despProductosOrdenados().forEach(function(prod) {
     var item = prod.nombre;
     var sel = despSelProd.indexOf(item) !== -1;
-    // Una sola fila: el producto a la izquierda y, si esta marcado, su cantidad al frente.
-    var fila = document.createElement('div');
-    fila.style.cssText = 'display:flex; align-items:center; gap:8px; width:100%;';
     var btn = document.createElement('button');
-    btn.style.cssText = 'flex:1; min-width:0; padding:10px 12px; font-size:13px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; background:'+(sel?'var(--verde-light)':'#fff')+'; border:1px solid '+(sel?'var(--verde-mid)':'var(--border)')+'; color:'+(sel?'var(--verde-dark)':'var(--ink-mid)')+'; font-weight:'+(sel?'600':'400')+'; text-align:left;';
+    btn.style.cssText = 'padding:10px 12px; font-size:13px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; background:'+(sel?'var(--verde-light)':'#fff')+'; border:1px solid '+(sel?'var(--verde-mid)':'var(--border)')+'; color:'+(sel?'var(--verde-dark)':'var(--ink-mid)')+'; font-weight:'+(sel?'600':'400')+'; width:100%; text-align:left;';
     var chk = document.createElement('div');
     chk.style.cssText = 'width:20px; height:20px; border-radius:50%; border:1.5px solid '+(sel?'var(--verde-dark)':'var(--border)')+'; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:11px; background:'+(sel?'var(--verde-dark)':'transparent')+'; color:#fff;';
     chk.textContent = sel ? '✓' : '';
@@ -2854,34 +2893,102 @@ function despRenderTipos() {
       var idx = despSelProd.indexOf(item);
       if (idx > -1) {
         despSelProd.splice(idx, 1);
-        delete despCantidades[item];
+        delete despLineas[item];
       } else {
         despSelProd.push(item);
-        despEnfocarProd = item;
+        despLineas[item] = [despNuevaLinea()];
+        despEnfocarProd = item + '|0';
       }
       despRenderTipos();
     };
-    fila.appendChild(btn);
+    c.appendChild(btn);
 
-    if (sel) {
-      var input = document.createElement('input');
-      input.type = 'text';
-      input.inputMode = 'numeric';
-      input.pattern = '[0-9]*';
-      input.placeholder = 'Cant.';
-      input.setAttribute('aria-label', 'Cantidad de ' + item);
-      input.setAttribute('data-producto', item);
-      input.value = despCantidades[item] || '';
-      input.style.cssText = 'width:92px; flex-shrink:0; padding:9px 10px; font-size:14px; border:1px solid var(--verde-mid); border-radius:8px; color:var(--ink); background:var(--verde-pale);';
-      input.addEventListener('input', function() {
+    if (!sel) return;
+    var lineas = despLineas[item] || (despLineas[item] = [despNuevaLinea()]);
+    var caja = document.createElement('div');
+    caja.style.cssText = 'margin:-2px 0 4px 0; padding:8px; background:var(--verde-pale); border:1px solid var(--verde-light); border-radius:8px; display:flex; flex-direction:column; gap:8px;';
+    lineas.forEach(function(l, li) {
+      var fila = document.createElement('div');
+      fila.style.cssText = 'display:flex; flex-wrap:wrap; align-items:center; gap:6px;';
+      var selPres = document.createElement('select');
+      selPres.className = 'desp-pres';
+      selPres.setAttribute('aria-label', 'Presentacion de ' + item);
+      selPres.style.cssText = 'flex:1 1 112px; min-width:0; padding:8px 6px; font-size:13px; border:1px solid var(--verde-mid); border-radius:8px; color:var(--ink); background:#fff;';
+      DESP_PRESENTACIONES.forEach(function(p) {
+        var o = document.createElement('option');
+        o.value = p.id; o.textContent = p.texto;
+        selPres.appendChild(o);
+      });
+      selPres.value = l.pres;
+      selPres.addEventListener('change', function() { l.pres = this.value; despRenderTipos(); });
+      var labCap = document.createElement('label');
+      labCap.style.cssText = 'display:flex; align-items:center; gap:4px; font-size:12px; color:var(--verde-dark); cursor:pointer; white-space:nowrap;';
+      var cb = document.createElement('input');
+      cb.type = 'checkbox'; cb.className = 'desp-cap'; cb.checked = !!l.cap;
+      cb.setAttribute('aria-label', 'Capuchon de tela para ' + item);
+      cb.addEventListener('change', function() { l.cap = this.checked; despActualizarTotal(); });
+      labCap.appendChild(cb);
+      labCap.appendChild(document.createTextNode('Capuchón de tela'));
+      var inp = document.createElement('input');
+      inp.type = 'text'; inp.inputMode = 'numeric'; inp.pattern = '[0-9]*';
+      inp.className = 'desp-cant';
+      inp.setAttribute('data-producto', item);
+      inp.setAttribute('data-linea', String(li));
+      inp.setAttribute('aria-label', 'Cantidad de ' + item);
+      inp.placeholder = despPres(l.pres).ramo ? 'Ramos' : 'Tallos';
+      inp.value = l.cant || '';
+      inp.style.cssText = 'width:80px; flex-shrink:0; padding:8px 8px; font-size:14px; border:1px solid var(--verde-mid); border-radius:8px; color:var(--ink); background:#fff;';
+      var nota = document.createElement('span');
+      nota.style.cssText = 'font-size:11px; color:var(--ink-soft); flex-basis:100%;';
+      var pintarNota = function() {
+        nota.textContent = (despPres(l.pres).ramo && despTallosLinea(l) > 0) ? '= ' + fmtMiles(despTallosLinea(l)) + ' tallos' : '';
+      };
+      pintarNota();
+      inp.addEventListener('input', function() {
         this.value = this.value.replace(/[^0-9]/g, '');
-        despCantidades[item] = this.value;
+        l.cant = this.value;
+        pintarNota();
         despActualizarTotal();
       });
-      fila.appendChild(input);
-      if (despEnfocarProd === item) enfocar = input;
-    }
-    c.appendChild(fila);
+      fila.appendChild(selPres);
+      fila.appendChild(inp);
+      if (despPres(l.pres).ramo) {
+        var por = document.createElement('input');
+        por.type = 'text'; por.inputMode = 'numeric'; por.pattern = '[0-9]*';
+        por.className = 'desp-por';
+        por.setAttribute('aria-label', 'Tallos por ramo de ' + item);
+        por.placeholder = 'Tallos x ramo';
+        por.value = l.por || '';
+        por.style.cssText = 'width:104px; flex-shrink:0; padding:8px 8px; font-size:14px; border:1px solid var(--verde-mid); border-radius:8px; color:var(--ink); background:#fff;';
+        por.addEventListener('input', function() {
+          this.value = this.value.replace(/[^0-9]/g, '');
+          l.por = this.value;
+          pintarNota();
+          despActualizarTotal();
+        });
+        fila.appendChild(por);
+      }
+      fila.appendChild(labCap);
+      if (lineas.length > 1) {
+        var quitar = document.createElement('button');
+        quitar.type = 'button'; quitar.textContent = '✕';
+        quitar.className = 'desp-quitar';
+        quitar.setAttribute('aria-label', 'Quitar esta linea de ' + item);
+        quitar.style.cssText = 'padding:6px 9px; font-size:13px; border:1px solid var(--border); border-radius:8px; background:#fff; color:var(--ink-mid); cursor:pointer;';
+        quitar.onclick = function() { lineas.splice(li, 1); despRenderTipos(); };
+        fila.appendChild(quitar);
+      }
+      fila.appendChild(nota);
+      caja.appendChild(fila);
+      if (despEnfocarProd === item + '|' + li) enfocar = inp;
+    });
+    var otra = document.createElement('button');
+    otra.type = 'button'; otra.className = 'desp-otra';
+    otra.textContent = '+ Otra presentacion de ' + item;
+    otra.style.cssText = 'align-self:flex-start; padding:6px 10px; font-size:12px; font-weight:600; border:1px dashed var(--verde-mid); border-radius:8px; background:transparent; color:var(--verde-dark); cursor:pointer;';
+    otra.onclick = function() { lineas.push(despNuevaLinea()); despEnfocarProd = item + '|' + (lineas.length - 1); despRenderTipos(); };
+    caja.appendChild(otra);
+    c.appendChild(caja);
   });
   despEnfocarProd = null;
   if (enfocar) enfocar.focus();
@@ -2915,9 +3022,36 @@ function despGuardar() {
     alert('Falta completar: ' + faltan.join(', ') + '.');
     return;
   }
-  var sinCantidad = esAnulado ? [] : despSelProd.filter(function(t) { return !(parseInt(despCantidades[t], 10) > 0); });
+  var sinCantidad = [];
+  var sinPorRamo = [];
+  var repetidas = [];
+  if (!esAnulado) {
+    despSelProd.forEach(function(nombre) {
+      var vistos = {};
+      (despLineas[nombre] || []).forEach(function(l) {
+        var pr = despPres(l.pres);
+        var detalle = [];
+        if (pr.ramo) detalle.push('Ramos' + (despPorRamo(l) ? ' x' + despPorRamo(l) : ''));
+        if (l.cap) detalle.push('con capuchon de tela');
+        var etiqueta = nombre + (detalle.length ? ' (' + detalle.join(', ') + ')' : '');
+        if (!(parseInt(l.cant, 10) > 0)) sinCantidad.push(etiqueta);
+        else if (pr.ramo && !(despPorRamo(l) > 0)) sinPorRamo.push(etiqueta);
+        var k = l.pres + '|' + despPorRamo(l) + '|' + (l.cap ? 1 : 0);
+        if (vistos[k]) repetidas.push(etiqueta);
+        vistos[k] = true;
+      });
+    });
+  }
   if (sinCantidad.length) {
     alert('Falta la cantidad de: ' + sinCantidad.join(', '));
+    return;
+  }
+  if (sinPorRamo.length) {
+    alert('Falta cuantos tallos lleva cada ramo de: ' + sinPorRamo.join(', '));
+    return;
+  }
+  if (repetidas.length) {
+    alert('Hay lineas repetidas (misma presentacion, mismos tallos por ramo y mismo capuchon de tela): ' + repetidas.join(', ') + '. Unelas en una sola.');
     return;
   }
   // Anular un despacho exige el PIN de supervisor (el mismo de Programacion).
@@ -2941,10 +3075,27 @@ function despGuardar() {
 
   // Foto de todo lo que se va a guardar, tomada ANTES de limpiar el formulario
   // (el envio sigue corriendo en segundo plano despues de limpiarlo).
-  var filas = esAnulado ? [{ nombre: '', variedad: '', tipo: '', cantidad: '' }] :
-    despProductosOrdenados().filter(function(p) { return despSelProd.indexOf(p.nombre) !== -1; }).map(function(p) {
-      return { nombre: p.nombre, variedad: p.variedad, tipo: p.tipo, cantidad: String(parseInt(despCantidades[p.nombre], 10)) };
+  var filas = [];
+  if (esAnulado) {
+    filas.push({ nombre: '', variedad: '', tipo: '', cantidad: '', presentacion: '', por_ramo: '', ramos: '', capuchon: '' });
+  } else {
+    despProductosOrdenados().forEach(function(p) {
+      if (despSelProd.indexOf(p.nombre) === -1) return;
+      (despLineas[p.nombre] || []).forEach(function(l) {
+        var pr = despPres(l.pres);
+        var n = parseInt(l.cant, 10);
+        var por = despPorRamo(l);
+        filas.push({
+          nombre: p.nombre, variedad: p.variedad, tipo: p.tipo,
+          cantidad: String(pr.ramo ? n * por : n),          // SIEMPRE tallos totales
+          presentacion: pr.texto,
+          por_ramo: pr.ramo ? String(por) : '',
+          ramos: pr.ramo ? String(n) : '',
+          capuchon: l.cap ? 'Si' : 'No'
+        });
+      });
     });
+  }
   var total = esAnulado ? 0 : filas.reduce(function(s, f) { return s + parseInt(f.cantidad, 10); }, 0);
   var idDespacho = Date.now();   // mismo para todas las filas del despacho, para poder agruparlas en el Sheet
 
@@ -2963,7 +3114,7 @@ function despGuardar() {
     comercializadora: comercializadora,
     lider_sala: lider,
     novedades: novedades,
-    filas: filas.map(function(f) { return { nombre_comercial: f.nombre, variedad: f.variedad, tipo_flor: f.tipo, cantidad: f.cantidad }; })
+    filas: filas.map(function(f) { return { nombre_comercial: f.nombre, variedad: f.variedad, tipo_flor: f.tipo, cantidad: f.cantidad, presentacion: f.presentacion, tallos_por_ramo: f.por_ramo, ramos: f.ramos, capuchon: f.capuchon }; })
   }).catch(function() {
     // postToWS ya reintenta una vez; si aun asi falla, no hay mas que hacer desde aqui
   });
@@ -2975,7 +3126,7 @@ function despGuardar() {
 
 function despResetCampos() {
   despSelProd.length = 0;
-  despCantidades = {};
+  despLineas = {};
   document.getElementById('desp-fecha').value = new Date().toISOString().split('T')[0];
   document.getElementById('desp-finca').selectedIndex = 0;
   document.getElementById('desp-fito').value = '';
