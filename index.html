@@ -1241,6 +1241,11 @@ function renderLotes() {
 
 <div id="sec-ingreso" style="display:none; padding-bottom:70px;">
   <div class="main" style="max-width:480px;">
+    <div id="ing-modos" style="display:flex; gap:6px; margin-bottom:1rem; background:var(--white); border:1px solid var(--border); border-radius:12px; padding:4px;">
+      <button type="button" id="ing-modo-lote-btn" onclick="ingModo('lote')" style="flex:1; padding:10px 6px; font-size:13px; font-weight:600; border:none; border-radius:9px; cursor:pointer; background:var(--verde-dark); color:#fff;">Ingreso de lote</button>
+      <button type="button" id="ing-modo-cf-btn" onclick="ingModo('cf')" style="flex:1; padding:10px 6px; font-size:13px; font-weight:600; border:none; border-radius:9px; cursor:pointer; background:transparent; color:var(--ink-mid);">Descarte cuarto frío</button>
+    </div>
+    <div id="ing-modo-lote">
 
     <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
       <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 1</span>
@@ -1298,6 +1303,38 @@ function renderLotes() {
       <div id="ing-ok-txt" style="font-size:13px; color:var(--verde);"></div>
     </div>
     <div id="ing-error" style="display:none; margin-top:1rem; background:#fff0f0; border:1px solid #ffcccc; border-radius:12px; padding:1rem 1.25rem; font-size:14px; color:#c0392b;">Hubo un problema al guardar. Intenta de nuevo.</div>
+    </div>
+    <div id="ing-modo-cf" style="display:none;">
+      <p style="font-size:12px; color:var(--ink-mid); margin-bottom:12px; line-height:1.5;">Flor que ya salió del cuarto frío y se descarta al preparar el despacho. No lleva lote.</p>
+      <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
+        <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 1</span>
+        <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:12px;">Fecha</label>
+        <input type="date" id="cf-fecha" style="width:100%; padding:10px 12px; font-size:15px; border:1px solid var(--border); border-radius:8px; color:var(--ink); background:#fafafa;" />
+        <div id="cf-fecha-semana" style="font-size:12px; font-weight:600; color:var(--verde-dark); margin-top:8px;"></div>
+      </div>
+      <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
+        <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 2</span>
+        <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:12px;">Finca</label>
+        <select id="cf-finca" style="width:100%; padding:10px 12px; font-size:15px; border:1px solid var(--border); border-radius:8px; color:var(--ink); background:#fafafa;"></select>
+      </div>
+      <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
+        <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 3</span>
+        <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:4px;">Motivos del descarte</label>
+        <p style="font-size:12px; color:var(--ink-mid); margin-bottom:12px;">Marca cada motivo y escribe su cantidad de tallos</p>
+        <div class="chk-list" id="cf-motivos-lista"></div>
+        <div id="cf-total" style="font-size:12px; font-weight:600; color:var(--rose); margin-top:8px;"></div>
+        <label style="font-size:13px; font-weight:600; color:var(--ink); display:block; margin:14px 0 6px;">Novedades (opcional)</label>
+        <textarea id="cf-novedades" rows="3" maxlength="500" placeholder="Escribe aqui lo que quieras contar sobre este descarte..." style="width:100%; padding:9px 12px; font-size:14px; border:1px solid var(--border); border-radius:8px; color:var(--ink); background:#fafafa; resize:vertical; font-family:inherit; line-height:1.5;"></textarea>
+      </div>
+      <div style="display:flex; gap:10px; margin-top:0.5rem;">
+        <button id="cf-guardar-btn" onclick="cfGuardar()" style="flex:1; padding:15px; font-size:16px; font-weight:600; background:var(--verde-dark); color:#fff; border:none; border-radius:12px; cursor:pointer;">Guardar descarte</button>
+        <button onclick="cfLimpiar()" style="padding:15px 18px; font-size:15px; font-weight:600; border-radius:12px; cursor:pointer; background:var(--white); border:1px solid var(--border); color:var(--ink-mid); white-space:nowrap;">Nuevo registro</button>
+      </div>
+      <div id="cf-ok" style="display:none; margin-top:1rem; background:var(--verde-light); border:1px solid var(--verde-mid); border-radius:12px; padding:1rem 1.25rem;">
+        <div style="font-size:15px; font-weight:600; color:var(--verde-dark); margin-bottom:4px;">Descarte guardado con exito</div>
+        <div id="cf-ok-txt" style="font-size:13px; color:var(--verde);"></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -2657,6 +2694,159 @@ function ingLimpiar() {
   document.getElementById('ing-error').style.display = 'none';
   ingResetCampos();
 }
+
+
+// ===== Descarte cuarto frio: descarte SIN lote (la flor ya esta mezclada) =====
+// Va a su propia hoja ("Descarte_Cuarto_Frio") para no mezclar filas sin lote
+// con los registros por lote de Ingreso_Sala.
+var CF_MOTIVOS = ING_MOTIVOS.filter(function(m) { return m !== 'Ingreso a sala con daño mecánico (desde campo)'; });
+var cfDesc = {};   // cantidad por cada motivo marcado
+
+function ingModo(modo) {
+  var cf = (modo === 'cf');
+  document.getElementById('ing-modo-lote').style.display = cf ? 'none' : '';
+  document.getElementById('ing-modo-cf').style.display = cf ? 'block' : 'none';
+  var bl = document.getElementById('ing-modo-lote-btn'), bc = document.getElementById('ing-modo-cf-btn');
+  bl.style.background = cf ? 'transparent' : 'var(--verde-dark)'; bl.style.color = cf ? 'var(--ink-mid)' : '#fff';
+  bc.style.background = cf ? 'var(--verde-dark)' : 'transparent'; bc.style.color = cf ? '#fff' : 'var(--ink-mid)';
+}
+
+function cfTotal() {
+  return Object.keys(cfDesc).reduce(function(t, m) { return t + (parseInt(cfDesc[m], 10) || 0); }, 0);
+}
+function cfActualizarTotal() {
+  var el = document.getElementById('cf-total');
+  if (!el) return;
+  var t = cfTotal();
+  el.textContent = t ? 'Total descarte: ' + fmtMiles(t) : '';
+}
+function cfActualizarSemana() {
+  var fecha = document.getElementById('cf-fecha').value;
+  var el = document.getElementById('cf-fecha-semana');
+  if (!el) return;
+  if (!fecha) { el.textContent = ''; return; }
+  var sa = calcSemanaAnio(fecha);
+  var yearNum = new Date(fecha + 'T12:00:00').getFullYear();
+  el.textContent = sa ? 'Semana ' + sa + ' / ' + yearNum : '';
+}
+
+function cfRenderMotivos() {
+  var c = document.getElementById('cf-motivos-lista');
+  if (!c) return;
+  c.innerHTML = '';
+  CF_MOTIVOS.forEach(function(motivo) {
+    var fila = document.createElement('div');
+    fila.className = 'chk-item';
+    var label = document.createElement('label');
+    label.style.cssText = 'display:flex; align-items:center; gap:8px; flex:1; cursor:pointer;';
+    var input = document.createElement('input');
+    input.type = 'checkbox';
+    input.value = motivo;
+    input.className = 'cf-motivo-chk';
+    var span = document.createElement('span');
+    span.textContent = motivo;
+    label.appendChild(input);
+    label.appendChild(span);
+    var cant = document.createElement('input');
+    cant.type = 'text';
+    cant.setAttribute('inputmode', 'numeric');
+    cant.setAttribute('pattern', '[0-9]*');
+    cant.className = 'cf-motivo-cant';
+    cant.setAttribute('data-motivo', motivo);
+    cant.placeholder = 'Cant.';
+    cant.style.cssText = 'display:none; width:84px; padding:6px 8px; font-size:14px; border:1px solid var(--rose); border-radius:8px; color:var(--ink); background:var(--rose-bg);';
+    input.addEventListener('change', function() {
+      if (input.checked) {
+        cant.style.display = 'block';
+        cant.focus();
+      } else {
+        cant.style.display = 'none';
+        cant.value = '';
+        delete cfDesc[motivo];
+        cfActualizarTotal();
+      }
+    });
+    cant.addEventListener('input', function() {
+      cant.value = cant.value.replace(/[^0-9]/g, '');
+      cfDesc[motivo] = cant.value;
+      cfActualizarTotal();
+    });
+    fila.appendChild(label);
+    fila.appendChild(cant);
+    c.appendChild(fila);
+  });
+}
+
+function cfResetCampos() {
+  cfDesc = {};
+  document.getElementById('cf-fecha').value = new Date().toISOString().split('T')[0];
+  document.getElementById('cf-finca').selectedIndex = 0;
+  document.getElementById('cf-novedades').value = '';
+  cfActualizarSemana();
+  cfRenderMotivos();
+  cfActualizarTotal();
+}
+
+function cfLimpiar() {
+  document.getElementById('cf-ok').style.display = 'none';
+  cfResetCampos();
+}
+
+function cfGuardar() {
+  var fecha = document.getElementById('cf-fecha').value;
+  var finca = document.getElementById('cf-finca').value;
+  if (!fecha || !finca) {
+    alert('Falta completar: ' + [!fecha ? 'Fecha' : '', !finca ? 'Finca' : ''].filter(Boolean).join(', ') + '.');
+    return;
+  }
+  var motivos = [];
+  Array.prototype.forEach.call(document.querySelectorAll('#cf-motivos-lista .cf-motivo-chk'), function(el) {
+    if (el.checked) motivos.push(el.value);
+  });
+  if (!motivos.length) {
+    alert('Selecciona al menos un motivo del descarte.');
+    return;
+  }
+  var sinCant = motivos.filter(function(m) { return !(parseInt(cfDesc[m], 10) > 0); });
+  if (sinCant.length) {
+    alert('Falta la cantidad de descarte de: ' + sinCant.join(', '));
+    return;
+  }
+  if (!navigator.onLine) {
+    alert('No tienes conexion a internet. Este registro no se guardara hasta que recuperes la señal.');
+    return;
+  }
+  var btn = document.getElementById('cf-guardar-btn');
+  btn.disabled = true;
+  setTimeout(function() { btn.disabled = false; }, 1200);
+
+  // Foto de lo que se va a guardar ANTES de limpiar el formulario.
+  var novedades = String(document.getElementById('cf-novedades').value || '').replace(/\s+/g, ' ').trim();
+  var filas = motivos.map(function(m) { return { motivo: m, cantidad: String(parseInt(cfDesc[m], 10)) }; });
+  var total = filas.reduce(function(s, f) { return s + parseInt(f.cantidad, 10); }, 0);
+
+  // Todos los motivos viajan juntos en UNA peticion (el servidor los escribe de un golpe).
+  postToWS({
+    action: 'addDescarteCuartoFrio',
+    id: Date.now(),
+    fecha: fecha,
+    finca: finca,
+    novedades: novedades,
+    filas: filas
+  }).catch(function() {});
+
+  document.getElementById('cf-ok-txt').textContent = finca + ' · ' + motivos.join(', ') + ' · Total ' + fmtMiles(total);
+  document.getElementById('cf-ok').style.display = 'block';
+  cfResetCampos();
+}
+
+(function() {
+  var origen = document.getElementById('ing-finca'), dest = document.getElementById('cf-finca');
+  Array.prototype.forEach.call(origen.options, function(o) { dest.appendChild(o.cloneNode(true)); });
+  dest.selectedIndex = 0;
+  document.getElementById('cf-fecha').addEventListener('change', cfActualizarSemana);
+  cfResetCampos();
+})();
 
 // Init ingreso a sala
 (function() {
