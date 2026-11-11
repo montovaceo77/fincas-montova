@@ -1746,32 +1746,24 @@ function fumGuardar() {
   var plagas = fumSelPlagas.join(', ');
   var equipo = fumSelEquipo.join(', ');
 
-  // Un registro por cada lote marcado, todos con los mismos datos
-  // (misma finca, plagas, productos, fertilizantes, equipo y fecha),
-  // para que en el Sheet quede desglosado lote por lote. Se mandan uno
-  // detras de otro (no todos a la vez) porque Google Sheets puede
-  // perder filas si le llegan varias escrituras al mismo tiempo. Esto
-  // no se espera aqui, asi que la pantalla sigue sintiendose instantanea.
-  (async function() {
-    for (var i = 0; i < lotesEsperados.length; i++) {
-      await postToWS({
-        action: 'addFumigacion',
-        fecha: fecha,
-        finca: finca,
-        lotes: lotesEsperados[i],
-        productos: productos,
-        fertilizantes: fertilizantes,
-        plagas: plagas,
-        equipo: equipo,
-        novedades: novedades
-      });
-    }
-    // El refresco se programa AQUI, despues de que de verdad termino de
-    // mandarse todo. Si se programara justo al apretar Guardar, con
-    // varios lotes el refresco podia llegar antes de que el ultimo
-    // terminara de escribirse, y se veia como si faltara ese lote.
+  // TODOS los lotes marcados viajan juntos en UNA sola peticion (mismos datos
+  // para todos: finca, plagas, productos, fertilizantes, equipo y fecha) y el
+  // servidor escribe una fila por lote de un solo golpe. Antes se mandaban uno
+  // detras de otro: si uno fallaba (señal, Google ocupado, pantalla cerrada),
+  // los lotes que faltaban se perdian sin avisar.
+  postToWS({
+    action: 'addFumigacionVarios',
+    fecha: fecha,
+    finca: finca,
+    lotes_lista: lotesEsperados,
+    productos: productos,
+    fertilizantes: fertilizantes,
+    plagas: plagas,
+    equipo: equipo,
+    novedades: novedades
+  }).then(function() {
     setTimeout(fetchFumigaciones, 1500);
-  })();
+  }).catch(function() {});
 
   document.getElementById('fum-ok-txt').textContent = finca + ' · ' + lotesEsperados.join(', ');
   document.getElementById('fum-ok').style.display = 'block';
@@ -2191,31 +2183,19 @@ function labGuardar() {
     };
   });
 
-  // Un registro por cada lote marcado, mandados uno detras de otro (no
-  // todos a la vez) porque Google Sheets puede perder filas si le llegan
-  // varias escrituras al mismo tiempo. No se espera aqui, asi que la
-  // pantalla sigue sintiendose instantanea. El refresco se programa al
-  // terminar de mandar todo, no al apretar Guardar.
-  (async function() {
-    for (var i = 0; i < registros.length; i++) {
-      var r = registros[i];
-      try {
-        await postToWS({
-          action: 'addLaborCampo',
-          fecha: fecha,
-          finca: finca,
-          variedad: r.variedad,
-          lote: r.lote,
-          labor: laborTxt,
-          abonada_numero: r.abonada_numero,
-          abonada_productos: productosTxt
-        });
-      } catch (e) {
-        // si un envio falla, se sigue con los demas lotes
-      }
-    }
+  // TODOS los lotes marcados viajan juntos en UNA sola peticion y el servidor
+  // escribe una fila por lote de un solo golpe (antes se mandaban uno por uno y,
+  // si uno fallaba, los siguientes se perdian sin avisar).
+  postToWS({
+    action: 'addLaboresVarios',
+    fecha: fecha,
+    finca: finca,
+    labor: laborTxt,
+    abonada_productos: productosTxt,
+    registros: registros.map(function(r) { return { lote: r.lote, variedad: r.variedad, abonada_numero: r.abonada_numero }; })
+  }).then(function() {
     setTimeout(fetchLaboresCampo, 1500);
-  })();
+  }).catch(function() {});
 
   document.getElementById('lab-ok-txt').textContent = finca + ' · ' + registros.map(function(r) { return r.lote; }).join(', ');
   document.getElementById('lab-ok').style.display = 'block';
@@ -2641,32 +2621,19 @@ function ingGuardar() {
   var resumenOk = items.slice();
   if (motivos.length) resumenOk.push('Descarte (' + motivos.join(', ') + ')');
 
-  // Un registro por cada tipo marcado (y uno para Descarte si aplica),
-  // para que en el Sheet quede desglosado por tipo. Se mandan uno
-  // detras de otro (no todos a la vez) porque Google Sheets puede
-  // perder filas si le llegan varias escrituras al mismo tiempo. Esto
-  // no se espera aqui, asi que la pantalla sigue sintiendose instantanea.
-  (async function() {
-    for (var i = 0; i < envios.length; i++) {
-      await postToWS({
-        action: 'addIngresoSala',
-        fecha: fecha,
-        finca: finca,
-        lote: loteLabel,
-        tipo_flor: envios[i].tipo_flor,
-        cantidad: envios[i].cantidad,
-        descarte: envios[i].descarte,
-        motivo_descarte: envios[i].motivo_descarte,
-        novedades: envios[i].novedades
-      });
-    }
-    // El refresco se programa AQUI, despues de que de verdad termino de
-    // mandarse todo. Si se programara justo al apretar Guardar, con
-    // varios tipos (o con Descarte, que siempre va de ultimo) el
-    // refresco podia llegar antes de que el ultimo terminara de
-    // escribirse, y el acumulado se veia incompleto.
+  // TODAS las filas (cada tipo marcado y cada motivo de descarte) viajan juntas en
+  // UNA sola peticion y el servidor las escribe de un solo golpe. Antes se mandaban
+  // una detras de otra y, si una fallaba, las que faltaban (casi siempre el
+  // descarte, que va de ultimo) se perdian sin avisar.
+  postToWS({
+    action: 'addIngresoSalaVarios',
+    fecha: fecha,
+    finca: finca,
+    lote: loteLabel,
+    filas: envios.map(function(e) { return { tipo_flor: e.tipo_flor, cantidad: e.cantidad, descarte: e.descarte, motivo_descarte: e.motivo_descarte, novedades: e.novedades }; })
+  }).then(function() {
     setTimeout(fetchIngresoSala, 1500);
-  })();
+  }).catch(function() {});
 
   document.getElementById('ing-ok-txt').textContent = finca + ' · ' + loteLabel + ' · ' + resumenOk.join(', ');
   document.getElementById('ing-ok').style.display = 'block';
