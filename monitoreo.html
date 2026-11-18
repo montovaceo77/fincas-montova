@@ -1560,6 +1560,18 @@ function renderTrampas() {
 }
 
 function guardarTrampa(anio, semana) {
+  var okBox = document.getElementById('trampa-ok');
+  var okTxt = document.getElementById('trampa-ok-txt');
+
+  // No guardar si no escribieron nada (evita registros en 0 por un toque de mas)
+  if (!trampasInputs[1] && !trampasInputs[2] && !trampasInputs[3] && !trampasInputs[4]) {
+    if (okBox && okTxt) {
+      okTxt.textContent = 'Escribe el conteo de las trampas antes de guardar.';
+      okBox.style.display = 'block';
+    }
+    return;
+  }
+
   var payload = {
     action: 'addTrampa',
     fecha: new Date().toISOString().split('T')[0],
@@ -1574,15 +1586,32 @@ function guardarTrampa(anio, semana) {
     cid: nuevoCid()
   };
 
-  pendientesTrampas.push(payload);
+  // Si ya hay un conteo IDENTICO (misma finca, semana, dia y los 4 numeros) sin subir
+  // o ya subido, no se agrega otra vez. Si los numeros son distintos, se guarda aparte.
+  var yaExiste = todasTrampas().some(function(r) {
+    return String(r.Finca || r.finca || '') === payload.finca &&
+           String(r.Anio || r.anio || '') === String(payload.anio) &&
+           String(r.Semana || r.semana || '') === String(payload.semana) &&
+           String(r.Dia || r.dia || '') === payload.dia &&
+           String(r.Trampa_1 || r.trampa_1 || '') === payload.trampa_1 &&
+           String(r.Trampa_2 || r.trampa_2 || '') === payload.trampa_2 &&
+           String(r.Trampa_3 || r.trampa_3 || '') === payload.trampa_3 &&
+           String(r.Trampa_4 || r.trampa_4 || '') === payload.trampa_4;
+  });
+  if (!yaExiste) pendientesTrampas.push(payload);
   guardarPendientesTrampasLocal();
   actualizarSyncBar();
+
+  // Dejar el formulario limpio para que no se pueda guardar el mismo conteo otra vez
+  trampasInputs = {1:'', 2:'', 3:'', 4:''};
   renderTrampas();
 
-  var okBox = document.getElementById('trampa-ok');
-  var okTxt = document.getElementById('trampa-ok-txt');
+  okBox = document.getElementById('trampa-ok');
+  okTxt = document.getElementById('trampa-ok-txt');
   if (okBox && okTxt) {
-    okTxt.textContent = trampasFincaSel + ' \u00b7 ' + payload.dia + ' \u2014 falta sincronizar';
+    okTxt.textContent = yaExiste
+      ? payload.finca + ' \u00b7 ' + payload.dia + ' \u2014 este conteo ya estaba guardado, no se repitio'
+      : '\u2713 ' + payload.finca + ' \u00b7 ' + payload.dia + ' \u2014 guardado, falta sincronizar';
     okBox.style.display = 'block';
   }
 }
