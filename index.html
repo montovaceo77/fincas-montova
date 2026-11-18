@@ -1210,8 +1210,15 @@ function renderLotes() {
       <p style="font-size:11px; color:var(--ink-soft); margin-top:6px; text-align:right;">Desliza para ver mas</p>
     </div>
 
-    <div id="lab-abonada-numero-card" style="display:none; background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
+    <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
       <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 5</span>
+      <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:4px;">Equipo que realizo la labor</label>
+      <p style="font-size:12px; color:var(--ink-mid); margin-bottom:8px;">Marca a quienes la hicieron. Puedes elegir varios</p>
+      <div id="lab-equipo-container"><div style="background:#f9fafb; border-radius:8px; padding:0.75rem 1rem; font-size:13px; color:var(--ink-soft); text-align:center; border:1px solid var(--border);">Primero selecciona la finca</div></div>
+    </div>
+
+    <div id="lab-abonada-numero-card" style="display:none; background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
+      <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 6</span>
       <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:4px;">Numero de abonada</label>
       <p style="font-size:12px; color:var(--ink-mid); margin-bottom:12px;">Es la primera, segunda, tercera, cuarta o quinta abonada? Se calcula sola para cada lote.</p>
       <div id="lab-abonada-numero-lista" style="display:flex; flex-direction:column;"></div>
@@ -1219,7 +1226,7 @@ function renderLotes() {
     </div>
 
     <div id="lab-abonada-producto-card" style="display:none; background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
-      <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 6</span>
+      <span style="display:inline-block; background:var(--verde-dark); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Paso 7</span>
       <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:4px;">Producto para abonar</label>
       <p style="font-size:12px; color:var(--ink-mid); margin-bottom:8px;">Puedes elegir mas de uno</p>
       <div id="lab-abonada-producto-lista" style="height:200px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; padding:6px; display:flex; flex-direction:column; gap:6px; background:#fafafa;"></div>
@@ -1826,6 +1833,28 @@ var labSelLotes = [];          // etiquetas tipo 'Lote 7' o 'Lote E3'
 var labAbonadaNumeros = {};    // 'Lote 7' -> '2da' (numero de abonada de cada lote)
 var labAbonadaManual = {};     // 'Lote 7' -> true si la persona lo eligio a mano
 var labSelProductosAbono = [];
+var labSelEquipo = [];         // personas del equipo que hicieron la labor
+var LAB_EQUIPOS = {   // equipo de labores de campo por finca (lista propia, distinta a la de fumigacion)
+  'Flor Esperancita': ['Diego Alexander Garcia Usma','Jose Angel Rivera Rivera','Luz Herminia Morales Cardona'],
+  'Flor Madera': ['Agustin Davila Marin','Aleida Jaramillo','Belisario Ocampo','Cristian Dario Lopez Jaramillo','Daniel De Jesus Cardona Castro','Henry Antonio Franco Jaramillo','Leidy Mireidy Cardona Orozco','Liliana Maria Ospina Osorio','Luis Antonio Pavas Cardona','Luz Edilia Lopez Jaramillo','Martha Elena Garcia','Neiser De Jesus Alvarez Tabares','Wilmar Alonso Castro Tabares'],
+  'Flor de Agua 3': ['Albani Rendon Montes','Alexandra Marulanda','Claudia Valencia Aguirre','Edison De Jesus Otalvaro Giraldo','German Antonio Valencia Orozco','Leidy Johana Pavas Ramirez','Luis Ernesto Ocampo Ocampo','Maria Victoria Rojo Alvarez','Maryory Lopez Rodriguez','Nestor Emilio Giraldo Acevedo','Santiago Patino Marulanda','Yonathan Enrique Gonzalez Diaz'],
+  'La Reserva': ['Esneider De Jesus Ocampo Soto'],
+  'Oasis Garden': ['Alba Rocio Perez Marin','Alexon Antonio Ocampo Soto','Carlos Andres Garcia Areiza','Carlos Humberto Bonilla Manrique','Eliecer De Jesus Valencia Osorio','Elkin Arias Escobar','Jhon Jairo Quintero Posada','John Jairo Martinez Ramirez','Jose Humberto Loaiza','Juan David Palencia Doria','Julian Esteban Londono Alzate','Lina Marcela Ospina Londono','Lino De Jesus Quintero Castano','Pedro Luis Pavas Martinez']
+};
+
+// Lista del equipo segun la finca elegida (seleccion multiple, orden alfabetico).
+function labRenderEquipo() {
+  var cont = document.getElementById('lab-equipo-container');
+  if (!cont) return;
+  var finca = document.getElementById('lab-finca').value;
+  if (!finca) {
+    cont.innerHTML = '<div style="background:#f9fafb; border-radius:8px; padding:0.75rem 1rem; font-size:13px; color:var(--ink-soft); text-align:center; border:1px solid var(--border);">Primero selecciona la finca</div>';
+    return;
+  }
+  var personas = (LAB_EQUIPOS[finca] || []).slice().sort(new Intl.Collator('es').compare);
+  cont.innerHTML = '<div id="lab-equipo-lista" style="max-height:200px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; padding:6px; display:flex; flex-direction:column; gap:6px; background:#fafafa;"></div><p style="font-size:11px; color:var(--ink-soft); margin-top:6px; text-align:right;">Desliza para ver mas</p>';
+  fumMkItemBtn(personas, labSelEquipo, 'lab-equipo-lista', false);
+}
 var laboresCampo = [];
 
 function fetchLaboresCampo() {
@@ -2141,6 +2170,10 @@ function labGuardar() {
     alert('Completa todos los pasos antes de guardar.');
     return;
   }
+  if (!labSelEquipo.length) {
+    alert('Selecciona al menos una persona del equipo que realizo la labor.');
+    return;
+  }
   var esAbonada = labSelLabor.indexOf('Abonada') !== -1;
   if (esAbonada) {
     var sinNumero = labSelLotes.filter(function(l) { return !labAbonadaNumeros[l]; });
@@ -2168,6 +2201,7 @@ function labGuardar() {
   // despues de limpiarlo, y no puede depender de datos ya borrados. La
   // variedad y el numero de abonada son propios de cada lote.
   var laborTxt = labSelLabor.join(', ');
+  var equipoTxt = labSelEquipo.join(', ');
   var productosTxt = esAbonada ? labSelProductosAbono.join(', ') : '';
   var registros = labSelLotes.map(function(loteLabel) {
     var loteNum = loteLabel.replace('Lote ', '');
@@ -2187,10 +2221,11 @@ function labGuardar() {
   // escribe una fila por lote de un solo golpe (antes se mandaban uno por uno y,
   // si uno fallaba, los siguientes se perdian sin avisar).
   postToWS({
-    action: 'addLaboresVarios',
+    action: 'addLaboresConEquipo',
     fecha: fecha,
     finca: finca,
     labor: laborTxt,
+    equipo: equipoTxt,
     abonada_productos: productosTxt,
     registros: registros.map(function(r) { return { lote: r.lote, variedad: r.variedad, abonada_numero: r.abonada_numero }; })
   }).then(function() {
@@ -2208,12 +2243,14 @@ function labResetCampos() {
   labAbonadaNumeros = {};
   labAbonadaManual = {};
   labSelProductosAbono.length = 0;
+  labSelEquipo.length = 0;
   document.getElementById('lab-fecha').value = new Date().toISOString().split('T')[0];
   document.getElementById('lab-finca').selectedIndex = 0;
   labActualizarFechaSemana();
   labRenderLotes();
   labActualizarInfoLote();
   labRenderLabores();
+  labRenderEquipo();
   labActualizarVisibilidadAbonada();
 }
 
@@ -2238,6 +2275,8 @@ function labLimpiar() {
     }
     labAbonadaNumeros = {};
     labAbonadaManual = {};
+    labSelEquipo.length = 0;   // cada finca tiene su propio equipo
+    labRenderEquipo();
     labRenderLotes();
     labActualizarInfoLote();
     labActualizarInfoAbonada();
