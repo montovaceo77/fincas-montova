@@ -1231,6 +1231,14 @@ function renderLotes() {
       <p style="font-size:12px; color:var(--ink-mid); margin-bottom:8px;">Puedes elegir mas de uno</p>
       <div id="lab-abonada-producto-lista" style="height:200px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; padding:6px; display:flex; flex-direction:column; gap:6px; background:#fafafa;"></div>
       <p style="font-size:11px; color:var(--ink-soft); margin-top:6px; text-align:right;">Desliza para ver mas</p>
+      <div id="lab-gramos-container"></div>
+    </div>
+
+    <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem;">
+      <span style="display:inline-block; background:var(--ink-soft); color:#fff; font-size:10px; font-weight:600; padding:3px 10px; border-radius:6px; margin-bottom:10px; letter-spacing:1px; text-transform:uppercase;">Opcional</span>
+      <label style="font-size:15px; font-weight:600; color:var(--ink); display:block; margin-bottom:4px;">Novedades</label>
+      <p style="font-size:12px; color:var(--ink-mid); margin-bottom:8px;">Escribe aqui cualquier comentario sobre esta labor</p>
+      <textarea id="lab-novedades" rows="3" maxlength="500" placeholder="Escribe aqui lo que quieras contar..." style="width:100%; padding:9px 12px; font-size:14px; border:1px solid var(--border); border-radius:8px; color:var(--ink); background:#fafafa; resize:vertical; font-family:inherit; line-height:1.5;"></textarea>
     </div>
 
     <div style="display:flex; gap:10px; margin-top:0.5rem;">
@@ -1833,6 +1841,8 @@ var labSelLotes = [];          // etiquetas tipo 'Lote 7' o 'Lote E3'
 var labAbonadaNumeros = {};    // 'Lote 7' -> '2da' (numero de abonada de cada lote)
 var labAbonadaManual = {};     // 'Lote 7' -> true si la persona lo eligio a mano
 var labSelProductosAbono = [];
+var labGramos = {};            // 'Lote 7' -> { 'Remital': '500' } (cantidad de cada producto en cada lote)
+var labUnidades = {};          // 'Lote 7' -> { 'Remital': 'cc' } (medida: gr por defecto, o cc)
 var labSelEquipo = [];         // personas del equipo que hicieron la labor
 var LAB_EQUIPOS = {   // equipo de labores de campo por finca (lista propia, distinta a la de fumigacion)
   'Flor Esperancita': ['Diego Alexander Garcia Usma','Jose Angel Rivera Rivera','Luz Herminia Morales Cardona'],
@@ -1841,6 +1851,71 @@ var LAB_EQUIPOS = {   // equipo de labores de campo por finca (lista propia, dis
   'La Reserva': ['Esneider De Jesus Ocampo Soto'],
   'Oasis Garden': ['Alba Rocio Perez Marin','Alexon Antonio Ocampo Soto','Carlos Andres Garcia Areiza','Carlos Humberto Bonilla Manrique','Eliecer De Jesus Valencia Osorio','Elkin Arias Escobar','Jhon Jairo Quintero Posada','John Jairo Martinez Ramirez','Jose Humberto Loaiza','Juan David Palencia Doria','Julian Esteban Londono Alzate','Lina Marcela Ospina Londono','Lino De Jesus Quintero Castano','Pedro Luis Pavas Martinez']
 };
+
+// Gramos de cada producto de abono, por lote: cada lote marcado muestra una
+// casilla por cada producto marcado (los lotes pueden llevar cantidades distintas).
+function labRenderGramos() {
+  var cont = document.getElementById('lab-gramos-container');
+  if (!cont) return;
+  // se descartan los gramos de lotes o productos que ya no estan marcados
+  Object.keys(labGramos).forEach(function(l) {
+    if (labSelLotes.indexOf(l) === -1) { delete labGramos[l]; delete labUnidades[l]; return; }
+    Object.keys(labGramos[l]).forEach(function(p) { if (labSelProductosAbono.indexOf(p) === -1) delete labGramos[l][p]; });
+  });
+  cont.innerHTML = '';
+  if (!labSelProductosAbono.length || !labSelLotes.length) return;
+  var t = document.createElement('p');
+  t.style.cssText = 'font-size:13px; font-weight:600; color:var(--ink); margin:14px 0 4px;';
+  t.textContent = 'Cantidad de cada producto por lote';
+  cont.appendChild(t);
+  var sub = document.createElement('p');
+  sub.style.cssText = 'font-size:12px; color:var(--ink-mid); margin-bottom:8px;';
+  sub.textContent = 'Elige la medida (gr o cc). Cada lote puede llevar una cantidad distinta';
+  cont.appendChild(sub);
+  var productos = labSelProductosAbono.slice().sort(new Intl.Collator('es').compare);
+  labSelLotes.forEach(function(lote) {
+    var caja = document.createElement('div');
+    caja.style.cssText = 'border:1px solid var(--border); border-radius:10px; padding:10px 12px; margin-bottom:8px; background:#fafafa;';
+    var nom = document.createElement('div');
+    nom.style.cssText = 'font-size:13px; font-weight:700; color:var(--verde-dark); margin-bottom:6px;';
+    nom.textContent = lote;
+    caja.appendChild(nom);
+    productos.forEach(function(prod) {
+      var fila = document.createElement('div');
+      fila.style.cssText = 'display:flex; align-items:center; gap:8px; margin-bottom:6px;';
+      var lab = document.createElement('span');
+      lab.style.cssText = 'flex:1; font-size:13px; color:var(--ink-mid);';
+      lab.textContent = prod;
+      var inp = document.createElement('input');
+      inp.type = 'text'; inp.inputMode = 'numeric'; inp.pattern = '[0-9]*';
+      inp.className = 'lab-gramos-inp';
+      inp.setAttribute('data-lote', lote); inp.setAttribute('data-producto', prod);
+      inp.setAttribute('aria-label', 'Cantidad de ' + prod + ' en ' + lote);
+      inp.placeholder = '0';
+      inp.value = (labGramos[lote] && labGramos[lote][prod]) || '';
+      inp.style.cssText = 'width:92px; flex-shrink:0; padding:8px 8px; font-size:14px; border:1px solid var(--verde-mid); border-radius:8px; color:var(--ink); background:#fff;';
+      inp.addEventListener('input', function() {
+        this.value = this.value.replace(/[^0-9]/g, '');
+        if (!labGramos[lote]) labGramos[lote] = {};
+        labGramos[lote][prod] = this.value;
+      });
+      var u = document.createElement('select');
+      u.className = 'lab-unidad-sel';
+      u.setAttribute('data-lote', lote); u.setAttribute('data-producto', prod);
+      u.setAttribute('aria-label', 'Medida de ' + prod + ' en ' + lote);
+      u.style.cssText = 'width:62px; flex-shrink:0; padding:8px 4px; font-size:14px; border:1px solid var(--verde-mid); border-radius:8px; color:var(--ink); background:#fff;';
+      ['cc', 'gr'].forEach(function(m) { var o = document.createElement('option'); o.value = m; o.textContent = m; u.appendChild(o); });
+      u.value = (labUnidades[lote] && labUnidades[lote][prod]) || 'gr';
+      u.addEventListener('change', function() {
+        if (!labUnidades[lote]) labUnidades[lote] = {};
+        labUnidades[lote][prod] = this.value;
+      });
+      fila.appendChild(lab); fila.appendChild(inp); fila.appendChild(u);
+      caja.appendChild(fila);
+    });
+    cont.appendChild(caja);
+  });
+}
 
 // Lista del equipo segun la finca elegida (seleccion multiple, orden alfabetico).
 function labRenderEquipo() {
@@ -1908,7 +1983,7 @@ function labActualizarVisibilidadAbonada() {
     labAbonadaManual = {};
     labSelProductosAbono.length = 0;
     labRenderAbonadaNumero();
-    fumMkItemBtn(LAB_PRODUCTOS_ABONO, labSelProductosAbono, 'lab-abonada-producto-lista', false);
+    fumMkItemBtn(LAB_PRODUCTOS_ABONO, labSelProductosAbono, 'lab-abonada-producto-lista', false, labRenderGramos);
   }
 }
 
@@ -2108,6 +2183,7 @@ function labRenderLotes() {
       labRenderLotes();
       labActualizarInfoLote();
       labActualizarInfoAbonada();
+      labRenderGramos();
     };
     c.appendChild(btn);
   });
@@ -2185,6 +2261,16 @@ function labGuardar() {
       alert('Selecciona al menos un producto para la abonada.');
       return;
     }
+    var sinGramos = [];
+    labSelLotes.forEach(function(l) {
+      labSelProductosAbono.forEach(function(p) {
+        if (!(parseInt((labGramos[l] || {})[p], 10) > 0)) sinGramos.push(p + ' en ' + l);
+      });
+    });
+    if (sinGramos.length) {
+      alert('Faltan las cantidades de: ' + sinGramos.join(', '));
+      return;
+    }
   }
   if (!navigator.onLine) {
     alert('No tienes conexion a internet. Este registro no se guardara hasta que recuperes la señal.');
@@ -2202,6 +2288,12 @@ function labGuardar() {
   // variedad y el numero de abonada son propios de cada lote.
   var laborTxt = labSelLabor.join(', ');
   var equipoTxt = labSelEquipo.join(', ');
+  var novedadesTxt = String(document.getElementById('lab-novedades').value || '').replace(/\s+/g, ' ').trim();
+  var prodsOrdenados = labSelProductosAbono.slice().sort(new Intl.Collator('es').compare);
+  var gramosPorLote = {};
+  if (esAbonada) labSelLotes.forEach(function(l) {
+    gramosPorLote[l] = prodsOrdenados.map(function(p) { return p + ' ' + parseInt(labGramos[l][p], 10) + ' ' + ((labUnidades[l] && labUnidades[l][p]) || 'gr'); }).join(', ');
+  });
   var productosTxt = esAbonada ? labSelProductosAbono.join(', ') : '';
   var registros = labSelLotes.map(function(loteLabel) {
     var loteNum = loteLabel.replace('Lote ', '');
@@ -2213,7 +2305,8 @@ function labGuardar() {
     return {
       lote: loteLabel,
       variedad: l ? (l.Variedad || l.variedad || '') : '',
-      abonada_numero: esAbonada ? labAbonadaNumeros[loteLabel] : ''
+      abonada_numero: esAbonada ? labAbonadaNumeros[loteLabel] : '',
+      abonada_productos: esAbonada ? gramosPorLote[loteLabel] : ''
     };
   });
 
@@ -2221,13 +2314,14 @@ function labGuardar() {
   // escribe una fila por lote de un solo golpe (antes se mandaban uno por uno y,
   // si uno fallaba, los siguientes se perdian sin avisar).
   postToWS({
-    action: 'addLaboresConEquipo',
+    action: 'addLaboresCompleto',
     fecha: fecha,
     finca: finca,
     labor: laborTxt,
     equipo: equipoTxt,
+    novedades: novedadesTxt,
     abonada_productos: productosTxt,
-    registros: registros.map(function(r) { return { lote: r.lote, variedad: r.variedad, abonada_numero: r.abonada_numero }; })
+    registros: registros.map(function(r) { return { lote: r.lote, variedad: r.variedad, abonada_numero: r.abonada_numero, abonada_productos: r.abonada_productos }; })
   }).then(function() {
     setTimeout(fetchLaboresCampo, 1500);
   }).catch(function() {});
@@ -2244,6 +2338,9 @@ function labResetCampos() {
   labAbonadaManual = {};
   labSelProductosAbono.length = 0;
   labSelEquipo.length = 0;
+  labGramos = {};
+  labUnidades = {};
+  document.getElementById('lab-novedades').value = '';
   document.getElementById('lab-fecha').value = new Date().toISOString().split('T')[0];
   document.getElementById('lab-finca').selectedIndex = 0;
   labActualizarFechaSemana();
@@ -2252,6 +2349,7 @@ function labResetCampos() {
   labRenderLabores();
   labRenderEquipo();
   labActualizarVisibilidadAbonada();
+  labRenderGramos();
 }
 
 function labLimpiar() {
@@ -2280,13 +2378,14 @@ function labLimpiar() {
     labRenderLotes();
     labActualizarInfoLote();
     labActualizarInfoAbonada();
+    labRenderGramos();
   });
   labRenderLotes();
   setTimeout(fetchLaboresCampo, 750);
   labActualizarInfoLote();
   labRenderLabores();
   labRenderAbonadaNumero();
-  fumMkItemBtn(LAB_PRODUCTOS_ABONO, labSelProductosAbono, 'lab-abonada-producto-lista', false);
+  fumMkItemBtn(LAB_PRODUCTOS_ABONO, labSelProductosAbono, 'lab-abonada-producto-lista', false, labRenderGramos);
   labActualizarVisibilidadAbonada();
 })();
 
